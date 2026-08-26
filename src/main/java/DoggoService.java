@@ -86,8 +86,8 @@ final class DoggoService {
         Trip trip = getTrip(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
         Plan plan = new Plan(UUID.randomUUID(), destination, date, time);
-        trip.addPlan(plan);
-        tripRepository.save(trip);
+        Trip updatedTrip = trip.withAddedPlan(plan);
+        tripRepository.save(updatedTrip);
         return plan;
     }
 }

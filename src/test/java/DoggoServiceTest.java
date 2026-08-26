@@ -1,8 +1,10 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -38,10 +40,50 @@ class DoggoServiceTest {
                 "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(10, 0));
         Plan earlierId = new Plan(UUID.fromString("00000000-0000-0000-0000-000000000001"),
                 "Mount Fuji", LocalDate.of(2027, 1, 5), LocalTime.of(10, 0));
-        trip.addPlan(laterDate);
-        trip.addPlan(laterTime);
-        trip.addPlan(earlierId);
+        trip = trip.withAddedPlan(laterDate);
+        trip = trip.withAddedPlan(laterTime);
+        trip = trip.withAddedPlan(earlierId);
 
         assertEquals(List.of(earlierId, laterTime, laterDate), service.getPlans(trip));
+    }
+
+    @Test
+    void addPlan_failedSave_preservesPreviouslyStoredTrip() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository);
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class, () -> service.addPlan(trip.id(), "Mount Fuji",
+                LocalDate.of(2027, 1, 5), LocalTime.of(9, 0)));
+        assertEquals(0, service.getTrip(trip.id()).orElseThrow().plans().size());
+    }
+
+    private static final class FailingTripRepository implements TripRepository {
+        private final InMemoryTripRepository delegate = new InMemoryTripRepository();
+        private boolean shouldFail;
+
+        @Override
+        public List<Trip> findAll() {
+            return delegate.findAll();
+        }
+
+        @Override
+        public Optional<Trip> findById(UUID id) {
+            return delegate.findById(id);
+        }
+
+        @Override
+        public void save(Trip trip) {
+            if (shouldFail) {
+                throw new RepositoryException("Simulated repository failure.");
+            }
+            delegate.save(trip);
+        }
+
+        void setShouldFail(boolean shouldFail) {
+            this.shouldFail = shouldFail;
+        }
     }
 }

@@ -18,10 +18,11 @@ class TripTest {
     void addPlan_withinInclusiveDates_addsPlan() {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
-        trip.addPlan(new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 9),
-                LocalTime.of(9, 0)));
+        Trip updatedTrip = trip.withAddedPlan(new Plan(UUID.randomUUID(), "Mount Fuji",
+                LocalDate.of(2027, 1, 9), LocalTime.of(9, 0)));
 
-        assertEquals(1, trip.plans().size());
+        assertEquals(0, trip.plans().size());
+        assertEquals(1, updatedTrip.plans().size());
     }
 
     @Test
@@ -29,7 +30,7 @@ class TripTest {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
 
-        assertThrows(IllegalArgumentException.class, () -> trip.addPlan(new Plan(
+        assertThrows(IllegalArgumentException.class, () -> trip.withAddedPlan(new Plan(
                 UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 10), LocalTime.of(9, 0))));
     }
 }

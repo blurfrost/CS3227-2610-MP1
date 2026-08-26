@@ -12,7 +12,7 @@ final class Trip {
     private final String title;
     private final LocalDate startDate;
     private final LocalDate endDate;
-    private final List<Plan> plans = new ArrayList<>();
+    private final List<Plan> plans;
 
     /**
      * Creates a Trip with the specified title and inclusive date range.
@@ -23,10 +23,15 @@ final class Trip {
      * @param endDate Trip end date.
      */
     Trip(UUID id, String title, LocalDate startDate, LocalDate endDate) {
+        this(id, title, startDate, endDate, List.of());
+    }
+
+    private Trip(UUID id, String title, LocalDate startDate, LocalDate endDate, List<Plan> plans) {
         this.id = Objects.requireNonNull(id);
         this.title = requireText(title, "Trip title");
         this.startDate = Objects.requireNonNull(startDate);
         this.endDate = Objects.requireNonNull(endDate);
+        this.plans = List.copyOf(plans);
         if (endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("Trip end date cannot be before its start date.");
         }
@@ -49,20 +54,23 @@ final class Trip {
     }
 
     List<Plan> plans() {
-        return List.copyOf(plans);
+        return plans;
     }
 
     /**
-     * Adds a Plan when its date falls within this Trip's inclusive date range.
+     * Returns a copy with a Plan when its date falls within this Trip's inclusive date range.
      *
      * @param plan Plan to add.
+     * @return Copy of this Trip containing the Plan.
      */
-    void addPlan(Plan plan) {
+    Trip withAddedPlan(Plan plan) {
         Objects.requireNonNull(plan);
         if (plan.date().isBefore(startDate) || plan.date().isAfter(endDate)) {
             throw new IllegalArgumentException("Plan date must fall within the Trip dates.");
         }
-        plans.add(plan);
+        List<Plan> updatedPlans = new ArrayList<>(plans);
+        updatedPlans.add(plan);
+        return new Trip(id, title, startDate, endDate, updatedPlans);
     }
 
     private static String requireText(String value, String fieldName) {
