@@ -1,7 +1,9 @@
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -44,5 +46,48 @@ final class DoggoService {
                         .thenComparing(Trip::title)
                         .thenComparing(Trip::id))
                 .toList();
+    }
+
+    /**
+     * Returns the Trip with the specified identity.
+     *
+     * @param id Trip identity.
+     * @return Matching Trip, if one exists.
+     */
+    Optional<Trip> getTrip(UUID id) {
+        return tripRepository.findById(id);
+    }
+
+    /**
+     * Returns the specified Trip's Plans in deterministic chronological order.
+     *
+     * @param trip Trip whose Plans are returned.
+     * @return Sorted Plans.
+     */
+    List<Plan> getPlans(Trip trip) {
+        Objects.requireNonNull(trip);
+        return trip.plans().stream()
+                .sorted(Comparator.comparing(Plan::date)
+                        .thenComparing(Plan::time)
+                        .thenComparing(Plan::id))
+                .toList();
+    }
+
+    /**
+     * Adds and stores a Plan in the specified Trip.
+     *
+     * @param tripId Selected Trip identity.
+     * @param destination Plan destination.
+     * @param date Plan date.
+     * @param time Plan time.
+     * @return Created Plan.
+     */
+    Plan addPlan(UUID tripId, String destination, LocalDate date, LocalTime time) {
+        Trip trip = getTrip(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
+        Plan plan = new Plan(UUID.randomUUID(), destination, date, time);
+        trip.addPlan(plan);
+        tripRepository.save(trip);
+        return plan;
     }
 }

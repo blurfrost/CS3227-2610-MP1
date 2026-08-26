@@ -1,6 +1,7 @@
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -12,6 +13,11 @@ final class InMemoryTripRepository implements TripRepository {
     @Override
     public List<Trip> findAll() {
         return List.copyOf(trips.values());
+    }
+
+    @Override
+    public Optional<Trip> findById(UUID id) {
+        return Optional.ofNullable(trips.get(id));
     }
 
     @Override
