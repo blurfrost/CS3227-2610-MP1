@@ -1,4 +1,5 @@
 enum CliMode {
     MAIN,
-    ORGANISE
+    ORGANISE,
+    TRIP
 }

@@ -7,11 +7,17 @@ final class UnknownCommand implements Command {
 
     @Override
     public CommandResult execute(CliContext context) {
-        String message = context.session().mode() == CliMode.MAIN
-                ? context.formatter().error("Unknown command \"" + input + "\".\n"
-                        + context.formatter().mainMenu())
-                : context.formatter().error("Unknown command \"" + input + "\".\n"
-                        + context.formatter().organiseMenu(context.service().getTrips()));
+        String menu = context.session().mode() == CliMode.MAIN
+                ? context.formatter().mainMenu()
+                : context.formatter().organiseMenu(context.service().getTrips());
+        if (context.session().mode() == CliMode.TRIP) {
+            menu = context.session().selectedTripId()
+                    .flatMap(context.service()::getTrip)
+                    .map(trip -> context.formatter().tripView(
+                            trip, context.service().getPlans(trip)))
+                    .orElse(menu);
+        }
+        String message = context.formatter().error("Unknown command \"" + input + "\".\n" + menu);
         return new CommandResult(message, false);
     }
 }

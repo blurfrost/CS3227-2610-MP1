@@ -10,6 +10,16 @@ final class Parser {
         if (mode == CliMode.ORGANISE && command.equalsIgnoreCase("new")) {
             return new NewTripCommand();
         }
+        if (mode == CliMode.ORGANISE && command.matches("\\d+")) {
+            try {
+                return new SelectTripCommand(Integer.parseInt(command));
+            } catch (NumberFormatException exception) {
+                return new UnknownCommand(command);
+            }
+        }
+        if (mode == CliMode.TRIP && command.equalsIgnoreCase("new")) {
+            return new NewPlanCommand();
+        }
         if (command.equalsIgnoreCase("back")) {
             return new BackCommand();
         }
