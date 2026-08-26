@@ -1,0 +1,45 @@
+# Gradle
+.gradle/
+build/
+
+# Java compilation and packaging output
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+out/
+
+# IDE files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# Local environments
+.venv/
+.env
+.env.*
+!.env.example
+
+# doggo local runtime data
+data/
+media/
+*.db
+*.db-shm
+*.db-wal
+
+# Codex visual review output
+_temp/
+
+# Python artifacts used by project tooling
+__pycache__/
+*.py[cod]
+
+# Operating-system files
+.DS_Store
+Thumbs.db
