@@ -153,6 +153,16 @@ Use separate command classes for navigation and user actions:
 - Invalid commands remain in the current mode and display actionable help.
 - Deletion commands require explicit confirmation.
 
+### Implemented CLI Feature Sets
+
+- Feature Set 1 supports creating and listing Trips through Organise.
+- Feature Set 2 supports selecting a Trip by its one-based displayed index.
+- Selected Trips display their Plans in chronological date-and-time order.
+- Plans require a destination, a strict `DD/MM/YYYY` date, and a strict `HH:mm` time.
+- Plan dates must fall within the selected Trip's inclusive date range.
+- During Plan creation, `back` is accepted as a destination; for date and time prompts it is invalid input and causes a reprompt.
+- Feature Sets 1 and 2 use the in-memory repository; persistence and remaining CRUD operations are later work.
+
 ## Acceptance and Test Coverage
 
 - Verify Trip and Plan creation, editing, deletion, retrieval, and persistence across application restarts.

@@ -127,3 +127,19 @@ Bundle the uncommitted project changes into sensible groups of local commits usi
 ## Prompt 7 — Correct Documentation Commit Message Spacing
 
 Correct the spacing and formatting of the documentation commit message, using the explicitly supplied `git commit -m` command and message text.
+
+## Prompt 8 — Implement Feature Set 2
+
+Implement Feature Set 2: select a Trip by its displayed index, view its Plans, and create Plans with a destination, strict `DD/MM/YYYY` date, and strict `HH:mm` time. Require Plan dates to stay within the selected Trip's inclusive range, display Plans chronologically, preserve `back` as a destination, and treat `back` as invalid for date and time prompts. Retain the command pattern, add representative tests, and leave changes uncommitted for review.
+
+## Prompt 9 — Review Feature Set 2
+
+Review the Feature Set 2 implementation, focusing on methods or return values that are not used and whether `TripTest` tests Trip and Plan as appropriate individual units.
+
+## Prompt 10 — Apply Feature Set 2 Review Improvements
+
+Move chronological Plan ordering into `DoggoService`, add standalone Plan unit tests, add an explicit selected-Trip clearing method, and guarantee `HH:mm` input and display behavior. Keep created-object return values and other currently used methods unchanged.
+
+## Prompt 11 — Commit Feature Set 2 Changes
+
+Group the Feature Set 2 changes into logical local commits using the `seedu-git-standard` skill. Propose the commit groups and messages before implementing them, then create them after approval.
