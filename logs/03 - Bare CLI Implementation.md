@@ -143,3 +143,42 @@ Move chronological Plan ordering into `DoggoService`, add standalone Plan unit t
 ## Prompt 11 — Commit Feature Set 2 Changes
 
 Group the Feature Set 2 changes into logical local commits using the `seedu-git-standard` skill. Propose the commit groups and messages before implementing them, then create them after approval.
+
+## Prompt 12 — Review the Current Architecture
+
+Read `AGENTS.md` and `DeveloperGuide.md`, inspect the current implementation, and review its overall architecture without modifying the Java code. The review found that the current Feature Set 1–2 layering is sound, while identifying four scaling concerns: mutation of repository-owned Trip aggregates before saves succeed, unhandled persistence failures at the CLI boundary, recomputation of displayed indices instead of retaining UUID mappings, and navigation state that can retain a stale selected Trip. The freshly rerun Gradle test suite passed under Java 25.0.3.
+
+### Architecture Findings
+
+- [x] Finding 1: Protect stored Trip aggregates from partial mutation when a repository save fails. Define an unchecked `RepositoryException`, make Trip updates copy-on-write, and later make SQLite aggregate writes transactional.
+- [ ] Finding 2: Add an application error boundary so repository failures produce actionable CLI errors instead of terminating the application.
+- [ ] Finding 3: Store displayed list-number-to-UUID mappings in `CliSession` instead of resolving indices from a freshly fetched and sorted Trip list.
+- [ ] Finding 4: Replace independent session mode and selected-Trip mutations with navigation transitions that preserve session invariants and clear stale selections.
+
+## Prompt 13 — Discuss Finding 1
+
+Evaluate the persistence exception and aggregate-update design needed to address failed saves. Prefer an unchecked `RepositoryException` that wraps infrastructure failures and preserves their causes. Make Trip updates copy-on-write now so a failed save cannot mutate the previously stored aggregate, retain `TripRepository.save(Trip)` as the repository API, and make the future SQLite implementation transactional across the whole aggregate. The decision was made to define the exception contract now, but implementation remains deferred until explicitly authorized.
+
+## Prompt 14 — Track Architecture Review Work
+
+Add accessible TODOs for all four architecture-review findings and backfill the recent review and design conversations in this log. Do not implement Finding 1 yet; wait for explicit permission in a later prompt.
+
+## Prompt 15 — Recap Finding 1 Updates
+
+Recap the agreed Finding 1 implementation before coding. Define an unchecked `RepositoryException` that wraps infrastructure failures and preserves causes, while keeping `IllegalArgumentException` for invalid input and domain state. Make `Trip` copy-on-write so service updates create a new aggregate before calling `TripRepository.save(Trip)`. Keep transactional behavior as a future `SqliteTripRepository.save` responsibility covering the complete aggregate. Add failure-preservation tests, but defer all Java implementation until explicit permission.
+
+## Prompt 16 — Implement Finding 1
+
+Implement Finding 1 after receiving authorization. Add the unchecked `RepositoryException` repository contract, make `Trip` updates copy-on-write through `withAddedPlan`, update `DoggoService` and affected tests, and add a failing-save regression test proving the previously stored Trip remains unchanged. Keep SQLite transaction handling deferred until persistent storage is introduced. The full Gradle test suite passed under Java 25.0.3.
+
+## Prompt 17 — Review Finding 1 Copy-on-Write
+
+Review the Finding 1 changes to confirm copy-on-write is implemented correctly. Verify that `Trip.withAddedPlan` returns a new aggregate backed by an immutable copied Plan list, that `DoggoService` saves the new aggregate rather than mutating the repository-owned instance, and that a failed save leaves the previously stored Trip unchanged. The review found no correctness issues, and the freshly rerun Gradle test suite passed under Java 25.0.3.
+
+## Prompt 18 — Clarify Log Guidance
+
+Clarify that commits containing only changes under `logs/` should use concise commit messages without enumerating the logged content. Prompt summaries in Markdown logs should remain explanatory, preserve the original prompt meaning, and include the AI model's response. Update `AGENTS.md` with this guidance because it improves the repository's instructions for maintaining prompt logs.
+
+## Prompt 19 — Commit Documentation Changes
+
+Proceed with the two suggested documentation commits: commit the updated `AGENTS.md` guidance separately from the implementation log, using concise Git-standard messages for the log-only commit.
