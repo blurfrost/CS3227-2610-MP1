@@ -2,10 +2,10 @@ final class BackCommand implements Command {
     @Override
     public CommandResult execute(CliContext context) {
         if (context.session().mode() == CliMode.TRIP) {
-            context.session().setMode(CliMode.ORGANISE);
+            context.session().enterOrganise();
             return new CommandResult(context.organiseMenu(), false);
         }
-        context.session().setMode(CliMode.MAIN);
+        context.session().enterMain();
         return new CommandResult(context.formatter().mainMenu(), false);
     }
 }

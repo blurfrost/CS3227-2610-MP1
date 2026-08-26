@@ -12,20 +12,26 @@ final class CliSession {
         return mode;
     }
 
-    void setMode(CliMode mode) {
-        this.mode = mode;
+    void enterMain() {
+        mode = CliMode.MAIN;
+        selectedTripId = null;
+        displayedTripIds = List.of();
+    }
+
+    void enterOrganise() {
+        mode = CliMode.ORGANISE;
+        selectedTripId = null;
+        displayedTripIds = List.of();
+    }
+
+    void enterTrip(UUID tripId) {
+        mode = CliMode.TRIP;
+        selectedTripId = Objects.requireNonNull(tripId);
+        displayedTripIds = List.of();
     }
 
     Optional<UUID> selectedTripId() {
         return Optional.ofNullable(selectedTripId);
-    }
-
-    void setSelectedTripId(UUID selectedTripId) {
-        this.selectedTripId = Objects.requireNonNull(selectedTripId);
-    }
-
-    void clearSelectedTripId() {
-        selectedTripId = null;
     }
 
     void setDisplayedTripIds(List<UUID> displayedTripIds) {

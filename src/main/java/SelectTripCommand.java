@@ -23,8 +23,7 @@ final class SelectTripCommand implements Command {
                             + context.organiseMenu()), false);
         }
         Trip selectedTrip = trip.orElseThrow();
-        context.session().setSelectedTripId(selectedTrip.id());
-        context.session().setMode(CliMode.TRIP);
+        context.session().enterTrip(selectedTrip.id());
         return new CommandResult(context.formatter().tripView(
                 selectedTrip, context.service().getPlans(selectedTrip)), false);
     }

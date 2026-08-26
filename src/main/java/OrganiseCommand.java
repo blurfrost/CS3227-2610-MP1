@@ -1,8 +1,7 @@
 final class OrganiseCommand implements Command {
     @Override
     public CommandResult execute(CliContext context) {
-        context.session().clearSelectedTripId();
-        context.session().setMode(CliMode.ORGANISE);
+        context.session().enterOrganise();
         return new CommandResult(context.organiseMenu(), false);
     }
 }
