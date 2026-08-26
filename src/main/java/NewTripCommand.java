@@ -30,7 +30,7 @@ final class NewTripCommand implements Command {
 
         context.service().createTrip(title, startDate, endDate);
         return new CommandResult("Trip successfully added!\n\n"
-                + context.formatter().organiseMenu(context.service().getTrips()), false);
+                + context.organiseMenu(), false);
     }
 
     private static String promptText(CliContext context, String message) {

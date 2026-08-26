@@ -9,7 +9,7 @@ final class UnknownCommand implements Command {
     public CommandResult execute(CliContext context) {
         String menu = context.session().mode() == CliMode.MAIN
                 ? context.formatter().mainMenu()
-                : context.formatter().organiseMenu(context.service().getTrips());
+                : context.organiseMenu();
         if (context.session().mode() == CliMode.TRIP) {
             menu = context.session().selectedTripId()
                     .flatMap(context.service()::getTrip)
