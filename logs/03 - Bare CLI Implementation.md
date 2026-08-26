@@ -194,3 +194,7 @@ Implement Finding 3 by storing the displayed Trip UUID order in `CliSession`, ce
 ## Prompt 22 — Commit Finding 3 Changes
 
 Authorize the approved two-commit plan: commit the Finding 3 implementation and regression test together, then commit the implementation-log updates separately with a concise log-only message. Run the full test suite and verify the final worktree is clean.
+
+## Prompt 23 — Implement Finding 4 Navigation Transitions
+
+Proceed with implementing the proposed Finding 4 navigation design. Add intent-specific transition operations to `CliSession` for entering Main, Organise, and Trip states; update navigation commands to use those operations instead of independently mutating `CliMode` and the selected Trip; clear stale selection and displayed Trip mappings during transitions; and add tests covering the resulting session invariants, including null Trip IDs. The implementation was completed, but the Gradle test run was blocked because the wrapper could not create its lock file under `/Users/keith/.gradle`.
