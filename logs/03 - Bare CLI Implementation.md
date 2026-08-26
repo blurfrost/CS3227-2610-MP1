@@ -152,7 +152,7 @@ Read `AGENTS.md` and `DeveloperGuide.md`, inspect the current implementation, an
 
 - [x] Finding 1: Protect stored Trip aggregates from partial mutation when a repository save fails. Define an unchecked `RepositoryException`, make Trip updates copy-on-write, and later make SQLite aggregate writes transactional.
 - [ ] Finding 2: Add an application error boundary so repository failures produce actionable CLI errors instead of terminating the application.
-- [ ] Finding 3: Store displayed list-number-to-UUID mappings in `CliSession` instead of resolving indices from a freshly fetched and sorted Trip list.
+- [x] Finding 3: Store displayed list-number-to-UUID mappings in `CliSession` instead of resolving indices from a freshly fetched and sorted Trip list.
 - [ ] Finding 4: Replace independent session mode and selected-Trip mutations with navigation transitions that preserve session invariants and clear stale selections.
 
 ## Prompt 13 — Discuss Finding 1
@@ -182,3 +182,15 @@ Clarify that commits containing only changes under `logs/` should use concise co
 ## Prompt 19 — Commit Documentation Changes
 
 Proceed with the two suggested documentation commits: commit the updated `AGENTS.md` guidance separately from the implementation log, using concise Git-standard messages for the log-only commit.
+
+## Prompt 20 — Assess Finding 2 Urgency
+
+Assess whether an application error boundary is urgent before persistent storage exists and whether implementing it now would be overengineering. The AI reviewed the current exception flow and found that `Doggo` only uses `InMemoryTripRepository`, so no production repository operation presently performs fallible external I/O. Finding 2 is therefore low urgency for the current feature set but becomes mandatory before `SqliteTripRepository` is connected, because `Cli.run` otherwise allows `RepositoryException` to terminate the application. Keep the finding open and implement it with the persistence feature using a small centralized boundary handler and failing-repository tests. Defer broader exception hierarchies, retries, and logging infrastructure unless concrete persistence requirements justify them.
+
+## Prompt 21 — Implement Finding 3
+
+Implement Finding 3 by storing the displayed Trip UUID order in `CliSession`, centralizing Organise-menu rendering so the UUID snapshot and displayed list use the same Trip collection, and resolving `SelectTripCommand` indices through that snapshot. Report a refreshed-menu error if a mapped Trip no longer exists. Add a test proving that a repository reorder after display does not change which Trip index 1 selects. The full Gradle test suite passed under Java 25.0.3.
+
+## Prompt 22 — Commit Finding 3 Changes
+
+Authorize the approved two-commit plan: commit the Finding 3 implementation and regression test together, then commit the implementation-log updates separately with a concise log-only message. Run the full test suite and verify the final worktree is clean.
