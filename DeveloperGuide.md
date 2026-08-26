@@ -21,10 +21,10 @@ Development begins with a tested command-line interface (CLI). The application w
 ### CLI MVP
 
 1. As a new user, I can view available commands and usage examples so that I can discover doggo's functions.
-2. As a user, I can create a Trip with its name, destination, start date, and end date so that I can organise an overall journey.
+2. As a user, I can create a Trip with its title, start date, and end date so that I can organise an overall journey.
 3. As a user, I can edit an existing Trip so that I can correct or update its details.
 4. As a user, I can delete a Trip after confirming the action so that I can remove journeys I no longer need.
-5. As a user, I can add a Plan with a title and scheduled date and time to a Trip so that I can build its itinerary.
+5. As a user, I can add a Plan with a destination, date, and time to a Trip so that I can build its itinerary.
 6. As a user, I can edit an existing Plan so that I can adjust my itinerary.
 7. As a user, I can delete an existing Plan after confirming the action so that I can remove unwanted itinerary items.
 8. As a user, I can select a Trip and view its Plans in chronological order so that I can understand its itinerary.
@@ -107,8 +107,8 @@ Domain: Trip -> Plan
 
 ### Domain
 
-- `Trip` is the aggregate root and contains a UUID, name, destination, inclusive start and end dates, Plans, and an optional Review.
-- `Plan` contains a UUID, title, scheduled date and time, and an optional Review.
+- `Trip` is the aggregate root and contains a UUID, title, inclusive start and end dates, Plans, and an optional Review.
+- `Plan` contains a UUID, destination, scheduled date and time, and an optional Review.
 - `Review` is an immutable value containing a required whole-number rating from 1 to 5 and optional text.
 - `TripStatus` contains `FUTURE`, `CURRENT`, and `PAST`. Status is derived from Trip dates and the supplied current date rather than persisted.
 
@@ -148,6 +148,8 @@ Use separate command classes for navigation and user actions:
 - Gallery lists all past Trips, including unreviewed Trips, and exposes review operations after selection.
 - The CLI displays short one-based list numbers while retaining stable UUIDs internally.
 - Creation and editing commands prompt for individual fields instead of requiring long command lines.
+- Trip and Plan dates use the strict `DD/MM/YYYY` format.
+- Plan times use the strict 24-hour `HH:mm` format.
 - Invalid commands remain in the current mode and display actionable help.
 - Deletion commands require explicit confirmation.
 
