@@ -84,6 +84,73 @@ Development begins with a tested command-line interface (CLI). The application w
 - Persistence is accessed through repository interfaces so production and test implementations can be substituted.
 - Photo storage is accessed through a storage interface so local media storage can later be replaced if needed.
 
+## CLI MVP Architecture
+
+All initial Java source files reside directly under `src/main/java/` without package declarations. This default-package layout is a temporary exception for the bare CLI implementation.
+
+The CLI is divided into four areas:
+
+```text
+Doggo
+  -> Cli -> Parser -> Command
+                       |
+                  DoggoService
+                       |
+                TripRepository
+                 /            \
+InMemoryTripRepository    SqliteTripRepository
+
+Domain: Trip -> Plan
+          |       |
+        Review  Review
+```
+
+### Domain
+
+- `Trip` is the aggregate root and contains a UUID, name, destination, inclusive start and end dates, Plans, and an optional Review.
+- `Plan` contains a UUID, title, scheduled date and time, and an optional Review.
+- `Review` is an immutable value containing a required whole-number rating from 1 to 5 and optional text.
+- `TripStatus` contains `FUTURE`, `CURRENT`, and `PAST`. Status is derived from Trip dates and the supplied current date rather than persisted.
+
+### Application and Persistence
+
+- `DoggoService` provides presentation-independent Trip and Plan CRUD, Dashboard queries, Gallery queries, and review operations.
+- `TripRepository` defines `findAll`, `findById`, `save`, and `delete` operations for Trip aggregates.
+- `InMemoryTripRepository` supports early development and isolated application tests.
+- `SqliteTripRepository` provides durable storage and is required before the CLI MVP is complete.
+- `DoggoService` receives a `java.time.Clock` so date-sensitive behaviour can be tested deterministically.
+- Saving or deleting a Trip includes its Plans and reviews in the same persistence operation.
+
+### CLI
+
+- `Doggo` is the composition root and application entry point.
+- `Cli` owns the read-evaluate-print loop and injected input and output streams.
+- `CliMode` identifies `MAIN`, `DASHBOARD`, `ORGANISE`, or `GALLERY` mode.
+- `CliSession` tracks the current mode, selected Trip, and mappings from displayed list numbers to UUIDs.
+- `Parser` interprets input according to the active mode and returns a `Command`.
+- `Command` executes an action through `DoggoService` and `CliSession`.
+- `CommandResult` contains output, navigation changes, and whether the application should exit.
+- `CliFormatter` formats domain information, help, and errors.
+- `CliPrompter` gathers fields interactively for creation and editing commands.
+
+Use separate command classes for navigation and user actions:
+
+- Navigation commands open Dashboard, Organise, or Gallery and support help, back, and exit.
+- Dashboard commands list today's Plans and display a selected Plan.
+- Organise commands list, select, add, edit, and delete Trips and Plans.
+- Gallery commands list and select past Trips and add, edit, or delete Trip and Plan reviews.
+
+### CLI Behaviour
+
+- Main mode accepts `dashboard`, `organise`, `gallery`, `help`, and `exit`.
+- Dashboard lists today's Plans and accepts `list`, `view NUMBER`, and `back`.
+- Organise groups Trips by status and exposes Trip and Plan management after selection.
+- Gallery lists all past Trips, including unreviewed Trips, and exposes review operations after selection.
+- The CLI displays short one-based list numbers while retaining stable UUIDs internally.
+- Creation and editing commands prompt for individual fields instead of requiring long command lines.
+- Invalid commands remain in the current mode and display actionable help.
+- Deletion commands require explicit confirmation.
+
 ## Acceptance and Test Coverage
 
 - Verify Trip and Plan creation, editing, deletion, retrieval, and persistence across application restarts.
@@ -94,3 +161,5 @@ Development begins with a tested command-line interface (CLI). The application w
 - Verify failed writes do not damage previously persisted data.
 - Verify domain and application tests run without JavaFX or the production database.
 - Verify the CLI exposes help for all supported commands and handles invalid input without crashing.
+- Verify mode-specific parsing, navigation, and list-number-to-UUID mappings.
+- Verify date-sensitive behaviour with an injected fixed Clock.
