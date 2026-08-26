@@ -1,0 +1,4 @@
+enum CliMode {
+    MAIN,
+    ORGANISE
+}
