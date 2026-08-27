@@ -86,7 +86,16 @@ Development begins with a tested command-line interface (CLI). The application w
 
 ## CLI MVP Architecture
 
-All initial Java source files reside directly under `src/main/java/` without package declarations. This default-package layout is a temporary exception for the bare CLI implementation.
+Java source files use packages that follow the architectural boundaries:
+
+- `doggo.domain` contains Trip and Plan domain objects.
+- `doggo.application` contains presentation-independent services and repository contracts.
+- `doggo.storage` contains repository implementations.
+- `doggo.ui.cli` contains the CLI and its commands, parsing, formatting, and session state.
+- `doggo.Doggo` is the composition root and application entry point.
+
+Future JavaFX presentation code will use a separate `doggo.ui.javafx` package and
+call the application services without depending on CLI commands.
 
 The CLI is divided into four areas:
 

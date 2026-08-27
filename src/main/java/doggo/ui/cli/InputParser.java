@@ -1,0 +1,59 @@
+package doggo.ui.cli;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
+import java.time.temporal.TemporalAccessor;
+import java.util.function.Function;
+
+/**
+ * Parses the strict date format used by the bare CLI.
+ */
+final class InputParser {
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter
+            .ofPattern("dd/MM/uuuu")
+            .withResolverStyle(ResolverStyle.STRICT);
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter
+            .ofPattern("HH:mm")
+            .withResolverStyle(ResolverStyle.STRICT);
+
+    private InputParser() {
+    }
+
+    /**
+     * Parses a date in exactly the DD/MM/YYYY format.
+     *
+     * @param value Text to parse.
+     * @return Parsed date.
+     * @throws IllegalArgumentException If the value is not a real date in the required format.
+     */
+    static LocalDate parseDate(String value) {
+        return parse(value, "date", DATE_FORMATTER, LocalDate::from, "\\d{2}/\\d{2}/\\d{4}");
+    }
+
+    /**
+     * Parses a time in exactly the HH:mm format.
+     *
+     * @param value Text to parse.
+     * @return Parsed time.
+     * @throws IllegalArgumentException If the value is not a real time in the required format.
+     */
+    static LocalTime parseTime(String value) {
+        return parse(value, "time", TIME_FORMATTER, LocalTime::from, "\\d{2}:\\d{2}");
+    }
+
+    private static <T> T parse(String value, String name, DateTimeFormatter formatter,
+                               Function<TemporalAccessor, T> converter,
+                               String requiredPattern) {
+        if (value == null || !value.trim().matches(requiredPattern)) {
+            throw new IllegalArgumentException("Invalid " + name + " format.");
+        }
+        try {
+            return converter.apply(formatter.parse(value.trim()));
+        } catch (DateTimeParseException exception) {
+            throw new IllegalArgumentException("Invalid " + name + ".", exception);
+        }
+    }
+}

@@ -138,7 +138,7 @@ its acceptance coverage is complete.
 These items follow the near-term Organise stabilization and are deliberately
 separate from Step 5.
 
-1. [ ] Migrate the default-package code into `doggo.domain`,
+1. [x] Migrate the default-package code into `doggo.domain`,
    `doggo.application`, `doggo.storage`, and `doggo.ui.cli` before adding more
    feature classes. Adjust cross-package visibility and Javadoc as needed.
 2. [ ] When adding the next CLI mode, decompose `Parser` into mode-specific

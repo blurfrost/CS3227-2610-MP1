@@ -23,7 +23,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'Doggo'
+    mainClass = 'doggo.Doggo'
 }
 
 test {

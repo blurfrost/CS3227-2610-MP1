@@ -26,7 +26,7 @@ Use JavaFX 26.0.1. This is the latest JavaFX release currently documented and is
 
 After every user prompt:
 
-- Summarize this current prompt and add it to the latest `logs/` Markdown file created. For now, this file is `03 - Bare CLI Implementation.md`.
+- Summarize this current prompt and add it to the latest `logs/` Markdown file created. For now, this file is `04 - Organise Java Files into Packages.md`.
 - Write prompt summaries so they preserve the user's original intent and explain the AI model's response, including decisions, outcomes, and any deferred work. Do not add unrelated feature details merely to make a summary longer.
 - If Java production or test code was written or modified, use the `/seedu-java-coding-standard` skill to review the changed Java code and fix applicable coding-standard violations.
 - Do not stage or commit changes unless the user explicitly instructs you to do so. Leave completed changes in the worktree so `/present-changes-visually` can compare the current Git `HEAD` against `WORKTREE`.
