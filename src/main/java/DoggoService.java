@@ -102,4 +102,60 @@ final class DoggoService {
                 .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
         tripRepository.delete(tripId);
     }
+
+    /**
+     * Deletes one Plan from the specified Trip aggregate.
+     *
+     * @param tripId Trip identity.
+     * @param planId Plan identity.
+     * @throws IllegalArgumentException If the Trip or Plan does not exist.
+     */
+    void deletePlan(UUID tripId, UUID planId) {
+        Trip trip = getTrip(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
+        Trip updatedTrip = trip.withRemovedPlan(planId);
+        tripRepository.save(updatedTrip);
+    }
+
+    /**
+     * Updates and stores a Trip with the specified identity.
+     *
+     * @param tripId Trip identity.
+     * @param title Updated Trip title.
+     * @param startDate Updated inclusive start date.
+     * @param endDate Updated inclusive end date.
+     * @return Updated Trip.
+     * @throws IllegalArgumentException If the Trip or new details are invalid.
+     */
+    Trip editTrip(UUID tripId, String title, LocalDate startDate, LocalDate endDate) {
+        Trip trip = getTrip(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
+        Trip updatedTrip = trip.withUpdatedDetails(title, startDate, endDate);
+        tripRepository.save(updatedTrip);
+        return updatedTrip;
+    }
+
+    /**
+     * Updates and stores a Plan in the specified Trip.
+     *
+     * @param tripId Trip identity.
+     * @param planId Plan identity.
+     * @param destination Updated Plan destination.
+     * @param date Updated Plan date.
+     * @param time Updated Plan time.
+     * @return Updated Plan.
+     * @throws IllegalArgumentException If the Trip, Plan, or new details are invalid.
+     */
+    Plan editPlan(UUID tripId, UUID planId, String destination, LocalDate date, LocalTime time) {
+        Trip trip = getTrip(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
+        trip.plans().stream()
+                .filter(plan -> plan.id().equals(planId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found."));
+        Plan updatedPlan = new Plan(planId, destination, date, time);
+        Trip updatedTrip = trip.withReplacedPlan(updatedPlan);
+        tripRepository.save(updatedTrip);
+        return updatedPlan;
+    }
 }

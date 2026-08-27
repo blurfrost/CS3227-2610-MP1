@@ -73,6 +73,135 @@ class DoggoServiceTest {
         assertEquals(0, service.getTrips().size());
     }
 
+    @Test
+    void deletePlan_removesOnlySelectedPlan() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan firstPlan = service.addPlan(trip.id(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        Plan secondPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 6),
+                LocalTime.of(9, 0));
+
+        service.deletePlan(trip.id(), firstPlan.id());
+
+        assertEquals(List.of(secondPlan), service.getTrip(trip.id()).orElseThrow().plans());
+    }
+
+    @Test
+    void editTrip_updatesDetailsAndPreservesIdentity() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        Trip updatedTrip = service.editTrip(trip.id(), " Korea ", LocalDate.of(2027, 1, 2),
+                LocalDate.of(2027, 1, 10));
+
+        assertEquals(trip.id(), updatedTrip.id());
+        assertEquals("Korea", updatedTrip.title());
+        assertEquals(updatedTrip, service.getTrip(trip.id()).orElseThrow());
+    }
+
+    @Test
+    void editPlan_updatesOnlySelectedPlanAndPreservesIdentities() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan originalPlan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        Plan otherPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 6),
+                LocalTime.of(9, 0));
+
+        Plan updatedPlan = service.editPlan(trip.id(), originalPlan.id(), "Kyoto",
+                LocalDate.of(2027, 1, 7), LocalTime.of(10, 0));
+
+        assertEquals(originalPlan.id(), updatedPlan.id());
+        assertEquals(List.of(otherPlan, updatedPlan), service.getPlans(
+                service.getTrip(trip.id()).orElseThrow()));
+    }
+
+    @Test
+    void editTrip_excludingPlan_rejectsUpdateAndPreservesStoredTrip() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+
+        assertThrows(IllegalArgumentException.class, () -> service.editTrip(trip.id(), "Korea",
+                LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 4)));
+        assertEquals(LocalDate.of(2027, 1, 9), service.getTrip(trip.id()).orElseThrow().endDate());
+    }
+
+    @Test
+    void editPlan_missingPlan_rejectsUpdate() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertThrows(IllegalArgumentException.class, () -> service.editPlan(trip.id(),
+                UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0)));
+    }
+
+    @Test
+    void editTrip_missingTrip_rejectsUpdate() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+
+        assertThrows(IllegalArgumentException.class, () -> service.editTrip(UUID.randomUUID(),
+                "Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9)));
+    }
+
+    @Test
+    void editPlan_outsideTripDates_rejectsUpdate() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        assertThrows(IllegalArgumentException.class, () -> service.editPlan(trip.id(), plan.id(),
+                "Kyoto", LocalDate.of(2027, 1, 10), LocalTime.of(10, 0)));
+    }
+
+    @Test
+    void editTrip_failedSave_preservesPreviouslyStoredTrip() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository);
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class, () -> service.editTrip(trip.id(), "Korea",
+                LocalDate.of(2027, 1, 2), LocalDate.of(2027, 1, 10)));
+        assertEquals("Japan", service.getTrip(trip.id()).orElseThrow().title());
+    }
+
+    @Test
+    void editPlan_failedSave_preservesPreviouslyStoredTrip() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository);
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class, () -> service.editPlan(trip.id(), plan.id(),
+                "Kyoto", LocalDate.of(2027, 1, 6), LocalTime.of(10, 0)));
+        assertEquals("Tokyo", service.getTrip(trip.id()).orElseThrow().plans().get(0).destination());
+    }
+
+    @Test
+    void deleteTrip_failedDelete_preservesStoredTrip() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository);
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class, () -> service.deleteTrip(trip.id()));
+        assertEquals(trip, service.getTrip(trip.id()).orElseThrow());
+    }
+
     private static final class FailingTripRepository implements TripRepository {
         private final InMemoryTripRepository delegate = new InMemoryTripRepository();
         private boolean shouldFail;

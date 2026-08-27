@@ -35,6 +35,10 @@ final class Trip {
         if (endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("Trip end date cannot be before its start date.");
         }
+        if (this.plans.stream().anyMatch(plan -> plan.date().isBefore(startDate)
+                || plan.date().isAfter(endDate))) {
+            throw new IllegalArgumentException("Plan date must fall within the Trip dates.");
+        }
     }
 
     UUID id() {
@@ -71,6 +75,60 @@ final class Trip {
         List<Plan> updatedPlans = new ArrayList<>(plans);
         updatedPlans.add(plan);
         return new Trip(id, title, startDate, endDate, updatedPlans);
+    }
+
+    /**
+     * Returns a copy without the Plan with the specified identity.
+     *
+     * @param planId Plan identity.
+     * @return Copy of this Trip without the selected Plan.
+     * @throws IllegalArgumentException If the Plan does not belong to this Trip.
+     */
+    Trip withRemovedPlan(UUID planId) {
+        Objects.requireNonNull(planId);
+        List<Plan> updatedPlans = plans.stream()
+                .filter(plan -> !plan.id().equals(planId))
+                .toList();
+        if (updatedPlans.size() == plans.size()) {
+            throw new IllegalArgumentException("Plan not found.");
+        }
+        return new Trip(id, title, startDate, endDate, updatedPlans);
+    }
+
+    /**
+     * Returns a copy with updated Trip details.
+     *
+     * @param updatedTitle Updated Trip title.
+     * @param updatedStartDate Updated inclusive start date.
+     * @param updatedEndDate Updated inclusive end date.
+     * @return Copy of this Trip with updated details.
+     */
+    Trip withUpdatedDetails(String updatedTitle, LocalDate updatedStartDate,
+                            LocalDate updatedEndDate) {
+        return new Trip(id, updatedTitle, updatedStartDate, updatedEndDate, plans);
+    }
+
+    /**
+     * Returns a copy with the Plan matching the replacement's identity replaced.
+     *
+     * @param replacement Replacement Plan.
+     * @return Copy of this Trip with the replacement Plan.
+     * @throws IllegalArgumentException If the replacement Plan does not belong to this Trip.
+     */
+    Trip withReplacedPlan(Plan replacement) {
+        Objects.requireNonNull(replacement);
+        List<Plan> updatedPlans = new ArrayList<>(plans);
+        for (int index = 0; index < updatedPlans.size(); index++) {
+            if (updatedPlans.get(index).id().equals(replacement.id())) {
+                if (replacement.date().isBefore(startDate)
+                        || replacement.date().isAfter(endDate)) {
+                    throw new IllegalArgumentException("Plan date must fall within the Trip dates.");
+                }
+                updatedPlans.set(index, replacement);
+                return new Trip(id, title, startDate, endDate, updatedPlans);
+            }
+        }
+        throw new IllegalArgumentException("Plan not found.");
     }
 
     private static String requireText(String value, String fieldName) {
