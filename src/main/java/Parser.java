@@ -29,6 +29,14 @@ final class Parser {
         if (mode == CliMode.TRIP && command.equalsIgnoreCase("new")) {
             return new NewPlanCommand();
         }
+        if (mode == CliMode.TRIP && command.matches("(?i)delete\\s+\\d+")) {
+            try {
+                String index = command.substring("delete".length()).trim();
+                return new DeletePlanCommand(Integer.parseInt(index));
+            } catch (NumberFormatException exception) {
+                return new UnknownCommand(command);
+            }
+        }
         if (command.equalsIgnoreCase("back")) {
             return new BackCommand();
         }

@@ -78,6 +78,20 @@ class CliTest {
     }
 
     @Test
+    void deletePlan_confirmed_removesOnlySelectedPlan() {
+        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00",
+                "new", "Osaka", "06/01/2027", "09:00", "delete 1", "yes", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Plan deleted."));
+        int deletionResult = output.indexOf("Plan deleted.");
+        String refreshedView = output.substring(deletionResult);
+        assertFalse(refreshedView.contains("Mount Fuji (05/01/2027 at 09:00)"));
+        assertTrue(refreshedView.contains("Osaka (06/01/2027 at 09:00)"));
+    }
+
+    @Test
     void bareTripIndex_isRejected() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
                 "09/01/2027", "1", "exit") + "\n";

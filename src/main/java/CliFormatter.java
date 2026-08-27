@@ -61,6 +61,7 @@ final class CliFormatter {
             message.append("\n");
         }
         return message.append("Type \"new\" to create a new Plan.\n")
+                .append("Type \"delete NUMBER\" to delete a Plan.\n")
                 .append("Type \"back\" to go back to the Organise Menu.")
                 .toString();
     }
