@@ -8,4 +8,10 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
         session.setDisplayedTripIds(trips.stream().map(Trip::id).toList());
         return formatter.organiseMenu(trips);
     }
+
+    String selectedTripView(Trip trip) {
+        List<Plan> plans = service.getPlans(trip);
+        session.setDisplayedPlanIds(plans.stream().map(Plan::id).toList());
+        return formatter.tripView(trip, plans);
+    }
 }

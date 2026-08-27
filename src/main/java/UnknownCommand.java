@@ -13,8 +13,7 @@ final class UnknownCommand implements Command {
         if (context.session().mode() == CliMode.TRIP) {
             menu = context.session().selectedTripId()
                     .flatMap(context.service()::getTrip)
-                    .map(trip -> context.formatter().tripView(
-                            trip, context.service().getPlans(trip)))
+                    .map(context::selectedTripView)
                     .orElse(menu);
         }
         String message = context.formatter().error("Unknown command \"" + input + "\".\n" + menu);

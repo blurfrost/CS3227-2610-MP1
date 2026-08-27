@@ -117,8 +117,7 @@ final class NewPlanCommand implements Command {
     private static String selectedTripView(CliContext context) {
         return context.session().selectedTripId()
                 .flatMap(context.service()::getTrip)
-                .map(trip -> context.formatter().tripView(
-                        trip, context.service().getPlans(trip)))
+                .map(context::selectedTripView)
                 .orElse(context.formatter().error("Selected Trip could not be found."));
     }
 }

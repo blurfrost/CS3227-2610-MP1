@@ -7,6 +7,7 @@ final class CliSession {
     private CliMode mode = CliMode.MAIN;
     private UUID selectedTripId;
     private List<UUID> displayedTripIds = List.of();
+    private List<UUID> displayedPlanIds = List.of();
 
     CliMode mode() {
         return mode;
@@ -16,18 +17,21 @@ final class CliSession {
         mode = CliMode.MAIN;
         selectedTripId = null;
         displayedTripIds = List.of();
+        displayedPlanIds = List.of();
     }
 
     void enterOrganise() {
         mode = CliMode.ORGANISE;
         selectedTripId = null;
         displayedTripIds = List.of();
+        displayedPlanIds = List.of();
     }
 
     void enterTrip(UUID tripId) {
         mode = CliMode.TRIP;
         selectedTripId = Objects.requireNonNull(tripId);
         displayedTripIds = List.of();
+        displayedPlanIds = List.of();
     }
 
     Optional<UUID> selectedTripId() {
@@ -43,5 +47,16 @@ final class CliSession {
             return Optional.empty();
         }
         return Optional.of(displayedTripIds.get(oneBasedIndex - 1));
+    }
+
+    void setDisplayedPlanIds(List<UUID> displayedPlanIds) {
+        this.displayedPlanIds = List.copyOf(displayedPlanIds);
+    }
+
+    Optional<UUID> planIdAt(int oneBasedIndex) {
+        if (oneBasedIndex < 1 || oneBasedIndex > displayedPlanIds.size()) {
+            return Optional.empty();
+        }
+        return Optional.of(displayedPlanIds.get(oneBasedIndex - 1));
     }
 }

@@ -24,7 +24,6 @@ final class ViewTripCommand implements Command {
         }
         Trip selectedTrip = trip.orElseThrow();
         context.session().enterTrip(selectedTrip.id());
-        return new CommandResult(context.formatter().tripView(
-                selectedTrip, context.service().getPlans(selectedTrip)), false);
+        return new CommandResult(context.selectedTripView(selectedTrip), false);
     }
 }
