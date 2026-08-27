@@ -32,7 +32,7 @@ class CliTest {
     @Test
     void selectTripAndCreatePlan_displaysPlanAndReturnsToMenus() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "1", "new", "Mount Fuji", "05/01/2027", "09:00", "back",
+                "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00", "back",
                 "back", "exit") + "\n";
         String output = runCli(input);
 
@@ -44,16 +44,25 @@ class CliTest {
 
     @Test
     void selectTrip_invalidIndex_displaysError() {
-        String input = String.join("\n", "organise", "2", "exit") + "\n";
+        String input = String.join("\n", "organise", "view 2", "exit") + "\n";
         String output = runCli(input);
 
         assertTrue(output.contains("Trip index must refer to a listed Trip."));
     }
 
     @Test
+    void bareTripIndex_isRejected() {
+        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
+                "09/01/2027", "1", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Unknown command \"1\""));
+    }
+
+    @Test
     void createPlan_invalidDateAndTime_reprompts() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "1", "new", "back", "back", "05/01/2027", "back", "09:00",
+                "09/01/2027", "view 1", "new", "back", "back", "05/01/2027", "back", "09:00",
                 "exit")
                 + "\n";
         String output = runCli(input);
@@ -66,7 +75,7 @@ class CliTest {
     @Test
     void createPlan_dateOutsideTrip_repromptsBeforeTime() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "1", "new", "Mount Fuji", "10/01/2027", "05/01/2027",
+                "09/01/2027", "view 1", "new", "Mount Fuji", "10/01/2027", "05/01/2027",
                 "09:00", "exit") + "\n";
         String output = runCli(input);
 

@@ -10,9 +10,10 @@ final class Parser {
         if (mode == CliMode.ORGANISE && command.equalsIgnoreCase("new")) {
             return new NewTripCommand();
         }
-        if (mode == CliMode.ORGANISE && command.matches("\\d+")) {
+        if (mode == CliMode.ORGANISE && command.matches("(?i)view\\s+\\d+")) {
             try {
-                return new SelectTripCommand(Integer.parseInt(command));
+                String index = command.substring("view".length()).trim();
+                return new SelectTripCommand(Integer.parseInt(index));
             } catch (NumberFormatException exception) {
                 return new UnknownCommand(command);
             }
