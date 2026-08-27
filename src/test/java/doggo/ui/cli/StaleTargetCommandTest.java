@@ -88,7 +88,7 @@ class StaleTargetCommandTest {
         InMemoryTripRepository repository = new InMemoryTripRepository();
         DoggoService service = new DoggoService(repository);
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
-        Plan stalePlan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 1), LocalTime.of(9, 0));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 1), LocalTime.of(9, 0));
         Plan retainedPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 2), LocalTime.of(10, 0));
         CliContext context = createContext(service, "");
         context.session().enterTrip(trip.id());
