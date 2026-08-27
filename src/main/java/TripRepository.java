@@ -30,4 +30,12 @@ interface TripRepository {
      * @throws RepositoryException If the Trip cannot be stored.
      */
     void save(Trip trip);
+
+    /**
+     * Deletes the Trip aggregate with the specified identity.
+     *
+     * @param id Trip identity.
+     * @throws RepositoryException If the Trip cannot be deleted.
+     */
+    void delete(UUID id);
 }

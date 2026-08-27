@@ -1,3 +1,4 @@
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
@@ -48,6 +49,32 @@ class CliTest {
         String output = runCli(input);
 
         assertTrue(output.contains("Trip index must refer to a listed Trip."));
+    }
+
+    @Test
+    void deleteTrip_confirmed_removesTripAndPlans() {
+        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00",
+                "back", "delete 1", "yes", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Trip deleted."));
+        assertTrue(output.contains("There are no Trips planned."));
+        int deletionResult = output.indexOf("Trip deleted.");
+        assertFalse(output.substring(deletionResult)
+                .contains("Mount Fuji (05/01/2027 at 09:00)"));
+    }
+
+    @Test
+    void deleteTrip_cancelled_keepsTripAndPlans() {
+        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00",
+                "back", "delete 1", "no", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Trip deletion cancelled."));
+        assertTrue(output.contains("Japan trip (from 01/01/2027 to 09/01/2027)"));
+        assertTrue(output.contains("Mount Fuji (05/01/2027 at 09:00)"));
     }
 
     @Test

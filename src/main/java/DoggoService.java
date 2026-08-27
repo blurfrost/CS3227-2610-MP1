@@ -90,4 +90,16 @@ final class DoggoService {
         tripRepository.save(updatedTrip);
         return plan;
     }
+
+    /**
+     * Deletes the Trip aggregate with the specified identity.
+     *
+     * @param tripId Trip identity.
+     * @throws IllegalArgumentException If the Trip does not exist.
+     */
+    void deleteTrip(UUID tripId) {
+        getTrip(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
+        tripRepository.delete(tripId);
+    }
 }

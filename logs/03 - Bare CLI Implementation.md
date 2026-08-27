@@ -222,3 +222,7 @@ Review Finding 2 in this log and record it in `IMPLEMENTATION_PLAN.md` as a futu
 ## Prompt 29 — Rename Trip Viewing Command
 
 Rename the previous Trip-selection command and its test to `ViewTripCommand`, update all production and test references and related test names, and preserve the existing `view NUMBER` behavior. The command class, parser dependency, test class, and historical architecture reference were renamed; no command behavior changed.
+
+## Prompt 30 — Implement Trip Deletion
+
+Implement the first deletion slice from `IMPLEMENTATION_PLAN.md`: support `delete NUMBER` in the displayed Organise Trip list, require exact `yes` or `no` confirmation, and delete the selected Trip together with all Plans stored in its aggregate. The repository contract, in-memory repository, service, parser, formatter, and CLI command were updated. Service and CLI tests cover aggregate removal and cancellation. The full Gradle test suite passed with 38 tests, and `git diff --check` passed. Plan deletion and stable displayed Plan mappings remain deferred.

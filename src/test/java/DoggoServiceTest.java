@@ -60,6 +60,19 @@ class DoggoServiceTest {
         assertEquals(0, service.getTrip(trip.id()).orElseThrow().plans().size());
     }
 
+    @Test
+    void deleteTrip_removesTripAndAllPlans() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        service.addPlan(trip.id(), "Mount Fuji", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+
+        service.deleteTrip(trip.id());
+
+        assertEquals(Optional.empty(), service.getTrip(trip.id()));
+        assertEquals(0, service.getTrips().size());
+    }
+
     private static final class FailingTripRepository implements TripRepository {
         private final InMemoryTripRepository delegate = new InMemoryTripRepository();
         private boolean shouldFail;
@@ -80,6 +93,14 @@ class DoggoServiceTest {
                 throw new RepositoryException("Simulated repository failure.");
             }
             delegate.save(trip);
+        }
+
+        @Override
+        public void delete(UUID id) {
+            if (shouldFail) {
+                throw new RepositoryException("Simulated repository failure.");
+            }
+            delegate.delete(id);
         }
 
         void setShouldFail(boolean shouldFail) {

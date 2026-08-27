@@ -25,4 +25,9 @@ final class InMemoryTripRepository implements TripRepository {
         trips.put(trip.id(), trip);
     }
 
+    @Override
+    public void delete(UUID id) {
+        trips.remove(id);
+    }
+
 }

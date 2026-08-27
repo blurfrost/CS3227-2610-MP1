@@ -27,7 +27,8 @@ Update this checklist after each iterative implementation. Keep prompt history i
 
 ### Repository and Application
 
-- Add `TripRepository.delete(UUID tripId)` to remove a complete Trip aggregate.
+- [x] Add `TripRepository.delete(UUID tripId)` to remove a complete Trip aggregate.
+- [x] Add the Organise `delete NUMBER` Trip flow with exact confirmation.
 - Add presentation-independent service operations to edit and delete Trips and Plans by UUID.
 - Report missing Trip and Plan identities as invalid user operations without changing stored data.
 - Continue saving a Trip and its Plans as one aggregate operation.
