@@ -30,7 +30,7 @@ class CliTest {
     }
 
     @Test
-    void selectTripAndCreatePlan_displaysPlanAndReturnsToMenus() {
+    void viewTripAndCreatePlan_displaysPlanAndReturnsToMenus() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
                 "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00", "back",
                 "back", "exit") + "\n";
@@ -43,7 +43,7 @@ class CliTest {
     }
 
     @Test
-    void selectTrip_invalidIndex_displaysError() {
+    void viewTrip_invalidIndex_displaysError() {
         String input = String.join("\n", "organise", "view 2", "exit") + "\n";
         String output = runCli(input);
 

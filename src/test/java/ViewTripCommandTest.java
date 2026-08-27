@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 
-class SelectTripCommandTest {
+class ViewTripCommandTest {
     @Test
     void execute_repositoryOrderChangesAfterDisplay_selectsDisplayedTrip() {
         DoggoService service = new DoggoService(new InMemoryTripRepository());
@@ -19,7 +19,7 @@ class SelectTripCommandTest {
         context.organiseMenu();
         service.createTrip("Earlier", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 2));
 
-        CommandResult result = new SelectTripCommand(1).execute(context);
+        CommandResult result = new ViewTripCommand(1).execute(context);
 
         assertTrue(result.message().startsWith("Viewing: Japan"));
     }

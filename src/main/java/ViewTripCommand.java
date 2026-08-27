@@ -1,10 +1,10 @@
 import java.util.Optional;
 import java.util.UUID;
 
-final class SelectTripCommand implements Command {
+final class ViewTripCommand implements Command {
     private final int index;
 
-    SelectTripCommand(int index) {
+    ViewTripCommand(int index) {
         this.index = index;
     }
 

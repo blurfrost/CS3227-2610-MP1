@@ -13,7 +13,7 @@ final class Parser {
         if (mode == CliMode.ORGANISE && command.matches("(?i)view\\s+\\d+")) {
             try {
                 String index = command.substring("view".length()).trim();
-                return new SelectTripCommand(Integer.parseInt(index));
+                return new ViewTripCommand(Integer.parseInt(index));
             } catch (NumberFormatException exception) {
                 return new UnknownCommand(command);
             }
