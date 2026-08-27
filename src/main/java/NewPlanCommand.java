@@ -5,13 +5,9 @@ import java.util.UUID;
 final class NewPlanCommand implements Command {
     @Override
     public CommandResult execute(CliContext context) {
-        String destination = promptText(context, "Enter plan destination:");
+        String destination = promptDestination(context);
         if (destination == null) {
             return new CommandResult("Bye!", true);
-        }
-        if (destination.isEmpty()) {
-            return new CommandResult(context.formatter().error(
-                    "Plan destination cannot be blank."), false);
         }
 
         Trip selectedTrip = context.session().selectedTripId()
@@ -62,6 +58,26 @@ final class NewPlanCommand implements Command {
             return null;
         }
         return value.trim();
+    }
+
+    /**
+     * Prompts until a non-blank Plan destination is entered.
+     *
+     * @param context CLI dependencies.
+     * @return Trimmed destination, or null when input ends.
+     */
+    private static String promptDestination(CliContext context) {
+        while (true) {
+            String destination = promptText(context, "Enter plan destination:");
+            if (destination == null) {
+                return null;
+            }
+            if (!destination.isBlank()) {
+                return destination;
+            }
+            context.output().println(context.formatter().error(
+                    "Plan destination cannot be blank."));
+        }
     }
 
     /**

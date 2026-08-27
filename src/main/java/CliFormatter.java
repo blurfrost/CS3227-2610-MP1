@@ -1,3 +1,5 @@
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -7,6 +9,26 @@ final class CliFormatter {
 
     String mainMenu() {
         return "Welcome! Available commands are: \"organise\", \"exit\"";
+    }
+
+    /**
+     * Formats a date for CLI prompts.
+     *
+     * @param date Date to format.
+     * @return Formatted date.
+     */
+    static String formatDate(LocalDate date) {
+        return DATE_FORMATTER.format(date);
+    }
+
+    /**
+     * Formats a time for CLI prompts.
+     *
+     * @param time Time to format.
+     * @return Formatted time.
+     */
+    static String formatTime(LocalTime time) {
+        return TIME_FORMATTER.format(time);
     }
 
     String organiseMenu(List<Trip> trips) {
@@ -28,6 +50,7 @@ final class CliFormatter {
             }
             message.append("\n");
             message.append("View a trip with \"view NUMBER\".\n\n");
+            message.append("Edit a trip with \"edit NUMBER\".\n\n");
             message.append("Delete a trip with \"delete NUMBER\".\n\n");
         }
         message.append("Type \"new\" to create a new Trip.\n")
@@ -61,6 +84,7 @@ final class CliFormatter {
             message.append("\n");
         }
         return message.append("Type \"new\" to create a new Plan.\n")
+                .append("Type \"edit NUMBER\" to edit a Plan.\n")
                 .append("Type \"delete NUMBER\" to delete a Plan.\n")
                 .append("Type \"back\" to go back to the Organise Menu.")
                 .toString();

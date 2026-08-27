@@ -3,12 +3,9 @@ import java.time.LocalDate;
 final class NewTripCommand implements Command {
     @Override
     public CommandResult execute(CliContext context) {
-        String title = promptText(context, "Enter trip name:");
+        String title = promptTitle(context);
         if (title == null) {
             return new CommandResult("Bye!", true);
-        }
-        if (title.isEmpty()) {
-            return new CommandResult(context.formatter().error("Trip title cannot be blank."), false);
         }
 
         LocalDate startDate = promptDate(context, "Enter trip start date:");
@@ -39,6 +36,25 @@ final class NewTripCommand implements Command {
             return null;
         }
         return value.trim();
+    }
+
+    /**
+     * Prompts until a non-blank Trip title is entered.
+     *
+     * @param context CLI dependencies.
+     * @return Trimmed title, or null when input ends.
+     */
+    private static String promptTitle(CliContext context) {
+        while (true) {
+            String title = promptText(context, "Enter trip name:");
+            if (title == null) {
+                return null;
+            }
+            if (!title.isBlank()) {
+                return title;
+            }
+            context.output().println(context.formatter().error("Trip title cannot be blank."));
+        }
     }
 
     private static LocalDate promptDate(CliContext context, String message) {

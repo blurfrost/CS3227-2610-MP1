@@ -10,6 +10,16 @@ final class Parser {
         if (mode == CliMode.ORGANISE && command.equalsIgnoreCase("new")) {
             return new NewTripCommand();
         }
+        if (mode == CliMode.ORGANISE && command.matches("(?i)edit\\s+\\d+")) {
+            try {
+                return new EditTripCommand(parseIndex(command, "edit"));
+            } catch (NumberFormatException exception) {
+                return new InvalidCommand("Usage: edit NUMBER");
+            }
+        }
+        if (mode == CliMode.ORGANISE && command.matches("(?i)edit(?:\\s+.*)?")) {
+            return new InvalidCommand("Usage: edit NUMBER");
+        }
         if (mode == CliMode.ORGANISE && command.matches("(?i)view\\s+\\d+")) {
             try {
                 String index = command.substring("view".length()).trim();
@@ -20,26 +30,57 @@ final class Parser {
         }
         if (mode == CliMode.ORGANISE && command.matches("(?i)delete\\s+\\d+")) {
             try {
-                String index = command.substring("delete".length()).trim();
-                return new DeleteTripCommand(Integer.parseInt(index));
+                return new DeleteTripCommand(parseIndex(command, "delete"));
             } catch (NumberFormatException exception) {
-                return new UnknownCommand(command);
+                return new InvalidCommand("Usage: delete NUMBER");
             }
+        }
+        if (mode == CliMode.ORGANISE && command.matches("(?i)delete(?:\\s+.*)?")) {
+            return new InvalidCommand("Usage: delete NUMBER");
         }
         if (mode == CliMode.TRIP && command.equalsIgnoreCase("new")) {
             return new NewPlanCommand();
         }
+        if (mode == CliMode.TRIP && command.matches("(?i)edit\\s+\\d+")) {
+            try {
+                return new EditPlanCommand(parseIndex(command, "edit"));
+            } catch (NumberFormatException exception) {
+                return new InvalidCommand("Usage: edit NUMBER");
+            }
+        }
+        if (mode == CliMode.TRIP && command.matches("(?i)edit(?:\\s+.*)?")) {
+            return new InvalidCommand("Usage: edit NUMBER");
+        }
         if (mode == CliMode.TRIP && command.matches("(?i)delete\\s+\\d+")) {
             try {
-                String index = command.substring("delete".length()).trim();
-                return new DeletePlanCommand(Integer.parseInt(index));
+                return new DeletePlanCommand(parseIndex(command, "delete"));
             } catch (NumberFormatException exception) {
-                return new UnknownCommand(command);
+                return new InvalidCommand("Usage: delete NUMBER");
             }
+        }
+        if (mode == CliMode.TRIP && command.matches("(?i)delete(?:\\s+.*)?")) {
+            return new InvalidCommand("Usage: delete NUMBER");
         }
         if (command.equalsIgnoreCase("back")) {
             return new BackCommand();
         }
         return new UnknownCommand(command);
+    }
+
+    /**
+     * Parses and validates a positive one-based command index.
+     *
+     * @param command Complete command text.
+     * @param keyword Command keyword.
+     * @return Parsed command index.
+     * @throws NumberFormatException If the index is not positive or cannot be parsed.
+     */
+    private static int parseIndex(String command, String keyword) {
+        String index = command.substring(keyword.length()).trim();
+        int parsedIndex = Integer.parseInt(index);
+        if (parsedIndex < 1) {
+            throw new NumberFormatException("Index must be positive.");
+        }
+        return parsedIndex;
     }
 }
