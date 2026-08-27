@@ -198,3 +198,23 @@ Authorize the approved two-commit plan: commit the Finding 3 implementation and 
 ## Prompt 23 — Implement Finding 4 Navigation Transitions
 
 Proceed with implementing the proposed Finding 4 navigation design. Add intent-specific transition operations to `CliSession` for entering Main, Organise, and Trip states; update navigation commands to use those operations instead of independently mutating `CliMode` and the selected Trip; clear stale selection and displayed Trip mappings during transitions; and add tests covering the resulting session invariants, including null Trip IDs. The implementation was completed, but the Gradle test run was blocked because the wrapper could not create its lock file under `/Users/keith/.gradle`.
+
+## Prompt 24 — Revise CLI Architecture Documentation
+
+Review the `DeveloperGuide.md` CLI and CLI Behaviour wording, specifically whether Organise commands should describe the Trip-and-Plan workflow explicitly and whether “Navigation commands” should be renamed to “Main Menu commands.” The AI recommended describing Organise commands by their selected-Trip workflow, while retaining Trip editing and using “Navigation and global commands” because back and exit are available outside the Main Menu. The guide was updated accordingly; no Java code was changed.
+
+## Prompt 25 — Finalize Organise Command Names and Behaviour
+
+Clarify that Trip and Plan creation should use the `new` command rather than `add`, then authorize the previously agreed documentation update. The AI updated the CLI architecture and CLI Behaviour sections to use `new`, documented explicit Trip-list and viewed-Trip command contexts, retained global command handling, and left the current implemented-feature notes unchanged. No Java code was changed.
+
+## Prompt 26 — Implement Organise View Command Migration
+
+Implement only the first Organise command migration: replace bare Trip-index selection with `view NUMBER`. The parser, Organise help text, Feature Set 2 documentation, and CLI tests were updated; bare numeric input is now rejected while `view NUMBER` selects the displayed Trip. Remaining Organise edit and delete commands remain deferred.
+
+## Prompt 28 — Record Finding 2 as Future Work
+
+Review Finding 2 in this log and record it in `IMPLEMENTATION_PLAN.md` as a future addition. The AI added a persistence-boundary checklist covering when to implement it, centralized handling of `RepositoryException`, actionable CLI recovery, failing-repository tests, cause preservation, and the decision to defer retries, broader exception hierarchies, and logging infrastructure. No Java code was changed.
+
+## Prompt 27 — Record the Remaining Organise Implementation Plan
+
+Decide where to retain the detailed remaining Organise implementation steps so future work can reference them before continuing. The AI recommended a dedicated root-level `IMPLEMENTATION_PLAN.md`, with a concise pointer in `MEMORY.md`, while keeping prompt history in this log and requirements in `DeveloperGuide.md`. The plan was created with the completed `view NUMBER` migration marked done and the remaining CRUD foundations, stable Plan mappings, commands, policies, tests, documentation, and verification recorded as an actionable checklist.
