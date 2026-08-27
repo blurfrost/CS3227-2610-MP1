@@ -3,8 +3,8 @@
 ## Status
 
 - [x] Step 1: Replace bare Trip-index selection with `view NUMBER`.
-- [ ] Step 2: Add safe Trip and Plan CRUD foundations.
-- [ ] Step 3: Add stable displayed Plan mappings.
+- [x] Step 2: Add safe Trip and Plan CRUD foundations.
+- [x] Step 3: Add stable displayed Plan mappings.
 - [ ] Step 4: Implement the remaining Organise commands.
 - [ ] Step 5: Synchronize documentation and complete verification.
 
@@ -29,33 +29,33 @@ Update this checklist after each iterative implementation. Keep prompt history i
 
 - [x] Add `TripRepository.delete(UUID tripId)` to remove a complete Trip aggregate.
 - [x] Add the Organise `delete NUMBER` Trip flow with exact confirmation.
-- Add presentation-independent service operations to edit and delete Trips and Plans by UUID.
-- Report missing Trip and Plan identities as invalid user operations without changing stored data.
-- Continue saving a Trip and its Plans as one aggregate operation.
+- [x] Add presentation-independent Plan deletion by UUID.
+- [x] Report missing Trip and Plan identities as invalid user operations without changing stored data.
+- [x] Continue saving a Trip and its Plans as one aggregate operation.
 
 ### Domain
 
-- Add copy-on-write operations that return a Trip with changed details, a replaced Plan, or a removed Plan.
-- Preserve Trip and Plan UUIDs during edits.
-- Validate edited Trip titles and inclusive date ranges using the existing domain rules.
-- Validate every existing Plan against edited Trip dates and reject the complete edit if any Plan falls outside them.
-- Validate an edited Plan's destination, date, and time, including the selected Trip's inclusive date range.
-- Ensure a failed repository save leaves the previously stored aggregate unchanged.
+- [x] Add the copy-on-write operation that returns a Trip without a selected Plan.
+- [x] Preserve Trip and Plan UUIDs during edits.
+- [x] Validate edited Trip titles and inclusive date ranges using the existing domain rules.
+- [x] Validate every existing Plan against edited Trip dates and reject the complete edit if any Plan falls outside them.
+- [x] Validate an edited Plan's destination, date, and time, including the selected Trip's inclusive date range.
+- [x] Ensure a failed repository save leaves the previously stored aggregate unchanged.
 
 ### Acceptance Tests
 
-- Cover successful Trip and Plan edits and deletions at the domain and service layers.
-- Cover blank or invalid values, missing UUIDs, excluded Plans, and Plan dates outside the Trip range.
-- Cover copy-on-write behavior and preservation of stored data after a failed save.
-- Cover repository deletion of a Trip and all of its Plans.
+- [x] Cover successful Trip and Plan edits and deletions at the domain and service layers.
+- [x] Cover blank or invalid values, missing UUIDs, excluded Plans, and Plan dates outside the Trip range.
+- [x] Cover copy-on-write behavior and preservation of stored data after a failed save.
+- [x] Cover repository deletion of a Trip and all of its Plans.
 
 ## Step 3 — Stable Displayed Plan Mappings
 
-- Extend `CliSession` with an immutable snapshot of displayed Plan UUIDs and one-based lookup.
-- Clear displayed Plan mappings whenever navigation leaves or enters a Trip context.
-- Centralize selected-Trip rendering in `CliContext`, recording the sorted Plan UUIDs from the same collection passed to `CliFormatter`.
-- Resolve future Plan edit and delete targets from that snapshot rather than a freshly sorted list.
-- Add tests proving later repository or ordering changes do not alter which displayed Plan an index identifies.
+- [x] Extend `CliSession` with an immutable snapshot of displayed Plan UUIDs and one-based lookup.
+- [x] Clear displayed Plan mappings whenever navigation leaves or enters a Trip context.
+- [x] Centralize selected-Trip rendering in `CliContext`, recording the sorted Plan UUIDs from the same collection passed to `CliFormatter`.
+- [x] Resolve future Plan edit and delete targets from that snapshot rather than a freshly sorted list.
+- [x] Add tests proving later repository or ordering changes do not alter which displayed Plan an index identifies.
 
 ## Step 4 — Remaining Organise Commands
 

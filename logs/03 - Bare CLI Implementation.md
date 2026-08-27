@@ -225,4 +225,28 @@ Rename the previous Trip-selection command and its test to `ViewTripCommand`, up
 
 ## Prompt 30 — Implement Trip Deletion
 
-Implement the first deletion slice from `IMPLEMENTATION_PLAN.md`: support `delete NUMBER` in the displayed Organise Trip list, require exact `yes` or `no` confirmation, and delete the selected Trip together with all Plans stored in its aggregate. The repository contract, in-memory repository, service, parser, formatter, and CLI command were updated. Service and CLI tests cover aggregate removal and cancellation. The full Gradle test suite passed with 38 tests, and `git diff --check` passed. Plan deletion and stable displayed Plan mappings remain deferred.
+Implement the first deletion slice from `IMPLEMENTATION_PLAN.md`: support `delete NUMBER` in the displayed Organise Trip list, require exact `yes` or `no` confirmation, and delete the selected Trip together with all Plans stored in its aggregate. The repository contract, in-memory repository, service, parser, formatter, and CLI command were updated. Service and CLI tests cover aggregate removal and cancellation. The full Gradle test suite passed, and `git diff --check` passed. Plan deletion and stable displayed Plan mappings remain deferred.
+
+## Prompt 31 — Implement Plan Deletion
+
+Implement Plan deletion so `delete NUMBER` in a viewed Trip removes only the selected Plan. The implementation added stable displayed Plan UUID mappings, centralized selected-Trip rendering, copy-on-write Plan removal in `Trip`, service-level Plan deletion, Trip-mode parsing, and `DeletePlanCommand` confirmation behavior. Tests cover domain copy-on-write behavior, service isolation, displayed Plan lookup, and CLI deletion. The full Gradle test suite passed, and `git diff --check` passed. Trip and Plan editing remain deferred.
+
+## Prompt 32 — Review Remaining Step 2 Work
+
+Walk through the work still required for Step 2 of `IMPLEMENTATION_PLAN.md`. The review found that Trip and Plan deletion foundations are implemented, while Trip editing, Plan editing, edit validation, missing-identity coverage, and failed-save preservation tests remain. Step 2 should stay incomplete until those domain and service foundations and acceptance tests are finished. Step 3's mapping infrastructure is mostly present, but its completion status should be reconsidered separately because the dedicated stable-mapping regression test is still missing.
+
+## Prompt 33 — Distinguish Steps 2 and 4
+
+Explain whether Steps 2 and 4 duplicate each other. The distinction is architectural: Step 2 implements and tests presentation-independent domain, service, and repository behavior for editing and deletion, while Step 4 exposes those operations through mode-specific CLI parsing, prompts, confirmation, index resolution, messages, and refreshed views. They deliver the same user stories in separate layers, allowing Step 2 rules to be reused by the future JavaFX interface.
+
+## Prompt 34 — Implement the Remaining Step 2 Foundations
+
+Implement the remaining presentation-independent Step 2 behavior without adding CLI editing interactions. Add copy-on-write Trip detail updates and Plan replacement, service methods returning updated objects, aggregate date validation, UUID preservation, missing-identity handling, and failed-write regression tests. The full Gradle test suite passed with 54 tests, line-length checks found no violations in changed domain/service/test files, and `git diff --check` passed. Step 2 is complete; Step 3 remains open pending its stable-mapping regression test.
+
+## Prompt 35 — Implement Step 3 Stable Plan Mappings
+
+Implement Step 3 by completing regression coverage for the existing stable displayed Plan UUID mappings. Verify immutable snapshots, clearing during navigation transitions, and deletion of the originally displayed Plan after repository ordering changes. The full Gradle test suite passed with 58 tests, and `git diff --check` passed. Step 3 is complete; CLI editing remains deferred to Step 4.
+
+## Prompt 36 — Commit CRUD and Mapping Changes
+
+Commit the completed CRUD and stable Plan-mapping work in logical groups using the `seedu-git-standard` skill. The changes were split into safe CRUD foundations, stable Plan mappings, Plan deletion command behavior, and implementation tracking. The first three commits were created with imperative subjects and explanatory bodies; the tracking commit remains to be created after this log update.
