@@ -348,3 +348,9 @@ grouped by the iterative tasks and following the SE-EDU Git standard. The
 approved sequence separates the regression assertion, stale-target production
 handling, acceptance coverage, implementation documentation, and this prompt
 log. Commits remain local and unpushed; package migration remains deferred.
+
+## Prompt 51 — Keep Commit Messages Concise
+
+The user requested concise commit messages for implementation details and log
+updates. The documentation and log commits use short imperative subjects with
+brief explanatory bodies; no implementation scope changed.
