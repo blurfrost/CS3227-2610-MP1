@@ -157,11 +157,13 @@ Use separate command classes for navigation and user actions:
 
 - Feature Set 1 supports creating and listing Trips through Organise.
 - Feature Set 2 supports viewing a Trip with `view NUMBER`, using its one-based displayed index.
+- Feature Set 3 supports editing and deleting Trips and Plans through the mode-specific Organise commands.
 - Selected Trips display their Plans in chronological date-and-time order.
 - Plans require a destination, a strict `DD/MM/YYYY` date, and a strict `HH:mm` time.
 - Plan dates must fall within the selected Trip's inclusive date range.
 - During Plan creation, `back` is accepted as a destination; for date and time prompts it is invalid input and causes a reprompt.
-- Feature Sets 1 and 2 use the in-memory repository; persistence and remaining CRUD operations are later work.
+- Displayed Trip and Plan indices use retained UUID mappings, and stale targets are reported without prompting for destructive or edit actions.
+- Feature Sets 1–3 use the in-memory repository; persistence and the remaining product features are later work.
 
 ## Acceptance and Test Coverage
 
