@@ -254,9 +254,14 @@ Commit the completed CRUD and stable Plan-mapping work in logical groups using t
 ## Prompt 37 — Review Step 4 Editing and Delete Parsing
 
 Review Step 4 before implementing CLI editing. Valid `delete NUMBER` input is routed correctly by mode to Trip or Plan deletion, but malformed argument shapes still fall through to generic unknown-command handling, stale mapped records can prompt before their absence is discovered, and some Plan errors do not refresh the selected-Trip view. The proposed edit flow prompts for complete replacement fields while treating blank input as preserving the displayed value. Decisions remain for prompt wording and how Trip date combinations that fail aggregate validation should be reprompted.
+
 ## Prompt 38 — Implement Step 4 Organise Commands
 
 The user requested implementation of the agreed Step 4 plan: add Trip and Plan `edit NUMBER` flows, harden `edit`/`delete` argument validation, preserve blank edit fields, reprompt invalid values, handle stale targets safely, refresh views and mappings, add tests, review Java code, run verification, and generate a visual diff. The implementation added both edit commands, parser routing and usage errors, current-value prompts, validation/retry behavior, stale-target checks, refreshed help text, and CLI/parser tests. Gradle tests and `git diff --check` passed, and `_temp/visual-diff.html` was generated; changes remain uncommitted.
+
+## Prompt 39 — Review Blank Trip Name Behavior
+
+The user asked whether a blank Trip name should silently return to the Organise Menu or instead notify the user that creation was aborted or keep prompting. The current `NewTripCommand` reports `Trip title cannot be blank.` and returns to the menu. Recommendation: keep prompting for a non-blank title, because the name is required and the existing date fields already reprompt on invalid input; an explicit abort notification is less useful than allowing correction. No code was changed.
 
 ## Prompt 40 — Clarify Blank Text Field Behavior
 
@@ -274,6 +279,72 @@ The user asked whether the end-date validation message should explicitly say `Tr
 
 The user requested committing the changes and planning the commit groups first using the SE-EDU Git standard. The proposed groups are: the Organise CLI edit/parser/delete implementation and tests, blank-field reprompt behavior for new Trip/Plan creation and tests, and implementation tracking plus prompt logs. The commits will use imperative subjects, explanatory bodies, staged-diff review, and verification.
 
-## Prompt 39 — Review Blank Trip Name Behavior
+## Prompt 44 — Update the Iterative Implementation Plan
 
-The user asked whether a blank Trip name should silently return to the Organise Menu or instead notify the user that creation was aborted or keep prompting. The current `NewTripCommand` reports `Trip title cannot be blank.` and returns to the menu. Recommendation: keep prompting for a non-blank title, because the name is required and the existing date fields already reprompt on invalid input; an explicit abort notification is less useful than allowing correction. No code was changed.
+The user requested an iterative update to `IMPLEMENTATION_PLAN.md`, with the
+first executable task being the small verification unblock for the stale
+`CliTest` end-date assertion. The model-assisted plan preserved completed Steps
+1–4 and ordered the remaining work as: update that assertion, harden stale-target
+checks and selected-Trip refresh behavior, add the missing CLI/service acceptance
+tests, then synchronize documentation and run the complete verification checklist.
+The plan now separates this near-term checklist from a later architectural
+roadmap: package migration, mode-specific parser decomposition when another mode
+is added, `TripStatus` plus `Clock` and Organise grouping, Dashboard,
+reviews/Gallery, SQLite with the `RepositoryException` boundary, and JavaFX.
+No Java code was edited and no plan task was executed; execution remains deferred
+pending the user's permission to begin task 1. Changes remain uncommitted.
+
+## Prompt 45 — Execute Task 1
+
+The user authorized the first task from the updated implementation plan. The
+stale `CliTest` assertion was updated to expect the precise Trip end-date
+validation message already emitted by production code. No production Java code
+or later implementation tasks were changed.
+
+## Prompt 46 — Execute Task 2
+
+The user authorized the second task from the updated implementation plan. Stale
+Trip deletion targets are now checked before confirmation, new Plan creation
+checks the selected Trip before prompting, and late Plan operation failures
+refresh the active view or return to Organise when necessary. Focused regression
+tests cover stale Trip deletion and missing selected Trips during Plan creation.
+The broader acceptance-test batch and documentation synchronization remain
+deferred to later plan tasks.
+
+## Prompt 47 — Execute Task 3
+
+The user authorized the third task from the updated implementation plan. The
+acceptance suite now covers invalid confirmation retries, cancelled Plan
+deletion, stale edit/delete targets, post-edit displayed-order resolution, and
+missing Trip/Plan deletion identities at the service layer. Initial fixture
+failures were corrected without changing production behavior. The complete
+Gradle test suite passed under Java 25.0.3, and the broader documentation task
+remains deferred.
+
+## Prompt 48 — Execute Task 4
+
+The user authorized the fourth task from the updated implementation plan. The
+Developer Guide now records full Organise Trip and Plan CRUD, stable UUID index
+handling, and the in-memory-only scope of Feature Sets 1–3; future status,
+reviews, Dashboard, Gallery, Clock, and SQLite work remains explicitly planned.
+The existing Organise help text was verified as complete. The full Gradle suite
+and `git diff --check` passed under Java 25.0.3, the SE-EDU review was complete,
+and the visual diff was regenerated. Step 5 is complete; all changes remain
+uncommitted.
+
+## Prompt 49 — Roll Back the Package Migration
+
+The user requested returning to the pre-migration Java layout after the package
+refactor was started but not completed. Every production Java file was moved
+back directly under `src/main/java`, and the added package declarations and
+cross-package imports were removed. The completed Organise stabilization,
+acceptance tests, documentation, and implementation-plan changes from earlier
+tasks were preserved. The package-migration roadmap item remains deferred.
+
+## Prompt 50 — Commit the Organise Changes
+
+The user requested committing the completed changes before packaging classes,
+grouped by the iterative tasks and following the SE-EDU Git standard. The
+approved sequence separates the regression assertion, stale-target production
+handling, acceptance coverage, implementation documentation, and this prompt
+log. Commits remain local and unpushed; package migration remains deferred.
