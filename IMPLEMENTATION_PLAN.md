@@ -5,7 +5,7 @@
 - [x] Step 1: Replace bare Trip-index selection with `view NUMBER`.
 - [x] Step 2: Add safe Trip and Plan CRUD foundations.
 - [x] Step 3: Add stable displayed Plan mappings.
-- [ ] Step 4: Implement the remaining Organise commands.
+- [x] Step 4: Implement the remaining Organise commands.
 - [ ] Step 5: Synchronize documentation and complete verification.
 
 Update this checklist after each iterative implementation. Keep prompt history in

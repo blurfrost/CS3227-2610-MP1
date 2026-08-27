@@ -250,3 +250,30 @@ Implement Step 3 by completing regression coverage for the existing stable displ
 ## Prompt 36 — Commit CRUD and Mapping Changes
 
 Commit the completed CRUD and stable Plan-mapping work in logical groups using the `seedu-git-standard` skill. The changes were split into safe CRUD foundations, stable Plan mappings, Plan deletion command behavior, and implementation tracking. The first three commits were created with imperative subjects and explanatory bodies; the tracking commit remains to be created after this log update.
+
+## Prompt 37 — Review Step 4 Editing and Delete Parsing
+
+Review Step 4 before implementing CLI editing. Valid `delete NUMBER` input is routed correctly by mode to Trip or Plan deletion, but malformed argument shapes still fall through to generic unknown-command handling, stale mapped records can prompt before their absence is discovered, and some Plan errors do not refresh the selected-Trip view. The proposed edit flow prompts for complete replacement fields while treating blank input as preserving the displayed value. Decisions remain for prompt wording and how Trip date combinations that fail aggregate validation should be reprompted.
+## Prompt 38 — Implement Step 4 Organise Commands
+
+The user requested implementation of the agreed Step 4 plan: add Trip and Plan `edit NUMBER` flows, harden `edit`/`delete` argument validation, preserve blank edit fields, reprompt invalid values, handle stale targets safely, refresh views and mappings, add tests, review Java code, run verification, and generate a visual diff. The implementation added both edit commands, parser routing and usage errors, current-value prompts, validation/retry behavior, stale-target checks, refreshed help text, and CLI/parser tests. Gradle tests and `git diff --check` passed, and `_temp/visual-diff.html` was generated; changes remain uncommitted.
+
+## Prompt 40 — Clarify Blank Text Field Behavior
+
+The user clarified that blank input during new Trip and new Plan creation must reprompt for a valid title/destination, while blank input for every field during Trip or Plan editing must preserve the existing value. The implementation was corrected accordingly: new Trip and Plan text prompts reprompt, and Plan editing again preserves a blank destination like the other edit fields. Regression tests, `git diff --check`, and the final visual diff completed successfully; changes remain uncommitted.
+
+## Prompt 41 — Refine Trip Edit Date Retry Behavior
+
+The user requested field-specific immediate retries while editing Trip dates: reject a proposed start date immediately if it exceeds the current end date or an existing Plan date, and reject a proposed end date immediately if it precedes the current/proposed start date or an existing Plan date. The implementation now retries only the invalid date field and does not pass rejected proposals to the service. Regression tests, `git diff --check`, and final verification passed.
+
+## Prompt 42 — Review Trip End-Date Error Message
+
+The user asked whether the end-date validation message should explicitly say `Trip end date cannot be before an existing Plan date.` to match the start-date validation. The recommendation is yes: the current generic message is technically related but less precise than the start-date counterpart. No code was changed.
+
+## Prompt 43 — Commit Step 4 Changes
+
+The user requested committing the changes and planning the commit groups first using the SE-EDU Git standard. The proposed groups are: the Organise CLI edit/parser/delete implementation and tests, blank-field reprompt behavior for new Trip/Plan creation and tests, and implementation tracking plus prompt logs. The commits will use imperative subjects, explanatory bodies, staged-diff review, and verification.
+
+## Prompt 39 — Review Blank Trip Name Behavior
+
+The user asked whether a blank Trip name should silently return to the Organise Menu or instead notify the user that creation was aborted or keep prompting. The current `NewTripCommand` reports `Trip title cannot be blank.` and returns to the menu. Recommendation: keep prompting for a non-blank title, because the name is required and the existing date fields already reprompt on invalid input; an explicit abort notification is less useful than allowing correction. No code was changed.
