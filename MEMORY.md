@@ -33,6 +33,7 @@
 ## Project Practices
 
 - Prompt summaries are maintained in Markdown files under `logs/`.
+- Active multi-step implementation work is tracked in `IMPLEMENTATION_PLAN.md`; read it before resuming that work.
 - Project-local Codex skills are stored under `.codex/skills/`.
 - The project includes local copies of `present-changes-visually`, `seedu-git-standard`, and `seedu-java-coding-standard`.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.

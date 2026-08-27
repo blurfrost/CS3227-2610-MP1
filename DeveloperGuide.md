@@ -135,16 +135,16 @@ Domain: Trip -> Plan
 
 Use separate command classes for navigation and user actions:
 
-- Navigation commands open Dashboard, Organise, or Gallery and support help, back, and exit.
+- Navigation and global commands open Dashboard, Organise, or Gallery; return to the previous menu; display help; or exit the application.
 - Dashboard commands list today's Plans and display a selected Plan.
-- Organise commands list, select, add, edit, and delete Trips and Plans.
+- Organise commands support creating a Trip, viewing a Trip and its Plans, editing or deleting a Trip by index, and managing Plans within a viewed Trip.
 - Gallery commands list and select past Trips and add, edit, or delete Trip and Plan reviews.
 
 ### CLI Behaviour
 
 - Main mode accepts `dashboard`, `organise`, `gallery`, `help`, and `exit`.
 - Dashboard lists today's Plans and accepts `list`, `view NUMBER`, and `back`.
-- Organise groups Trips by status and exposes Trip and Plan management after selection.
+- Organise groups Trips by status. When Trips are displayed, it accepts `new`, `edit NUMBER`, `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, displaying its Plans, it accepts `new`, `edit NUMBER`, `delete NUMBER`, and `back`.
 - Gallery lists all past Trips, including unreviewed Trips, and exposes review operations after selection.
 - The CLI displays short one-based list numbers while retaining stable UUIDs internally.
 - Creation and editing commands prompt for individual fields instead of requiring long command lines.
@@ -156,7 +156,7 @@ Use separate command classes for navigation and user actions:
 ### Implemented CLI Feature Sets
 
 - Feature Set 1 supports creating and listing Trips through Organise.
-- Feature Set 2 supports selecting a Trip by its one-based displayed index.
+- Feature Set 2 supports viewing a Trip with `view NUMBER`, using its one-based displayed index.
 - Selected Trips display their Plans in chronological date-and-time order.
 - Plans require a destination, a strict `DD/MM/YYYY` date, and a strict `HH:mm` time.
 - Plan dates must fall within the selected Trip's inclusive date range.
