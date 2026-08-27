@@ -189,7 +189,7 @@ Assess whether an application error boundary is urgent before persistent storage
 
 ## Prompt 21 — Implement Finding 3
 
-Implement Finding 3 by storing the displayed Trip UUID order in `CliSession`, centralizing Organise-menu rendering so the UUID snapshot and displayed list use the same Trip collection, and resolving `SelectTripCommand` indices through that snapshot. Report a refreshed-menu error if a mapped Trip no longer exists. Add a test proving that a repository reorder after display does not change which Trip index 1 selects. The full Gradle test suite passed under Java 25.0.3.
+Implement Finding 3 by storing the displayed Trip UUID order in `CliSession`, centralizing Organise-menu rendering so the UUID snapshot and displayed list use the same Trip collection, and resolving `ViewTripCommand` indices through that snapshot. Report a refreshed-menu error if a mapped Trip no longer exists. Add a test proving that a repository reorder after display does not change which Trip index 1 selects. The full Gradle test suite passed under Java 25.0.3.
 
 ## Prompt 22 — Commit Finding 3 Changes
 
@@ -211,10 +211,14 @@ Clarify that Trip and Plan creation should use the `new` command rather than `ad
 
 Implement only the first Organise command migration: replace bare Trip-index selection with `view NUMBER`. The parser, Organise help text, Feature Set 2 documentation, and CLI tests were updated; bare numeric input is now rejected while `view NUMBER` selects the displayed Trip. Remaining Organise edit and delete commands remain deferred.
 
+## Prompt 27 — Record the Remaining Organise Implementation Plan
+
+Decide where to retain the detailed remaining Organise implementation steps so future work can reference them before continuing. The AI recommended a dedicated root-level `IMPLEMENTATION_PLAN.md`, with a concise pointer in `MEMORY.md`, while keeping prompt history in this log and requirements in `DeveloperGuide.md`. The plan was created with the completed `view NUMBER` migration marked done and the remaining CRUD foundations, stable Plan mappings, commands, policies, tests, documentation, and verification recorded as an actionable checklist.
+
 ## Prompt 28 — Record Finding 2 as Future Work
 
 Review Finding 2 in this log and record it in `IMPLEMENTATION_PLAN.md` as a future addition. The AI added a persistence-boundary checklist covering when to implement it, centralized handling of `RepositoryException`, actionable CLI recovery, failing-repository tests, cause preservation, and the decision to defer retries, broader exception hierarchies, and logging infrastructure. No Java code was changed.
 
-## Prompt 27 — Record the Remaining Organise Implementation Plan
+## Prompt 29 — Rename Trip Viewing Command
 
-Decide where to retain the detailed remaining Organise implementation steps so future work can reference them before continuing. The AI recommended a dedicated root-level `IMPLEMENTATION_PLAN.md`, with a concise pointer in `MEMORY.md`, while keeping prompt history in this log and requirements in `DeveloperGuide.md`. The plan was created with the completed `view NUMBER` migration marked done and the remaining CRUD foundations, stable Plan mappings, commands, policies, tests, documentation, and verification recorded as an actionable checklist.
+Rename the previous Trip-selection command and its test to `ViewTripCommand`, update all production and test references and related test names, and preserve the existing `view NUMBER` behavior. The command class, parser dependency, test class, and historical architecture reference were renamed; no command behavior changed.
