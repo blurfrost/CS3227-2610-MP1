@@ -89,6 +89,30 @@ class DoggoServiceTest {
     }
 
     @Test
+    void deleteTrip_missingTrip_rejectsDeletion() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+
+        assertThrows(IllegalArgumentException.class, () -> service.deleteTrip(UUID.randomUUID()));
+    }
+
+    @Test
+    void deletePlan_missingTrip_rejectsDeletion() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+
+        assertThrows(IllegalArgumentException.class, () -> service.deletePlan(UUID.randomUUID(), UUID.randomUUID()));
+    }
+
+    @Test
+    void deletePlan_missingPlan_rejectsDeletion() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.deletePlan(trip.id(), UUID.randomUUID()));
+    }
+
+    @Test
     void editTrip_updatesDetailsAndPreservesIdentity() {
         DoggoService service = new DoggoService(new InMemoryTripRepository());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),

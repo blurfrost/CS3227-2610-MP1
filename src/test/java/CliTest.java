@@ -101,6 +101,16 @@ class CliTest {
     }
 
     @Test
+    void deleteTrip_invalidConfirmation_repromptsUntilCancellation() {
+        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
+                "09/01/2027", "organise", "delete 1", "maybe", "no", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Please enter exactly yes or no."));
+        assertTrue(output.contains("Trip deletion cancelled."));
+    }
+
+    @Test
     void deletePlan_confirmed_removesOnlySelectedPlan() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
                 "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00",
@@ -112,6 +122,28 @@ class CliTest {
         String refreshedView = output.substring(deletionResult);
         assertFalse(refreshedView.contains("Mount Fuji (05/01/2027 at 09:00)"));
         assertTrue(refreshedView.contains("Osaka (06/01/2027 at 09:00)"));
+    }
+
+    @Test
+    void deletePlan_cancelled_keepsPlan() {
+        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "delete 1",
+                "no", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Plan deletion cancelled."));
+        assertTrue(output.contains("Tokyo (05/01/2027 at 09:00)"));
+    }
+
+    @Test
+    void deletePlan_invalidConfirmation_repromptsUntilCancellation() {
+        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "delete 1",
+                "later", "no", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Please enter exactly yes or no."));
+        assertTrue(output.contains("Plan deletion cancelled."));
     }
 
     @Test
