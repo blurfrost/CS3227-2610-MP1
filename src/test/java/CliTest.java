@@ -208,7 +208,7 @@ class CliTest {
                 "edit 1", "Korea", "", "04/01/2027", "", "exit") + "\n";
         String output = runCli(input);
 
-        assertTrue(output.contains("Plan date must fall within the Trip dates."));
+        assertTrue(output.contains("Trip end date cannot be before an existing Plan date."));
         assertTrue(output.contains("Korea (from 01/01/2027 to 09/01/2027)"));
     }
 
