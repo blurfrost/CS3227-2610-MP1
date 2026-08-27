@@ -19,6 +19,11 @@ final class DeleteTripCommand implements Command {
                     "Trip index must refer to a listed Trip.\n"
                             + context.organiseMenu()), false);
         }
+        if (context.service().getTrip(tripId.orElseThrow()).isEmpty()) {
+            return new CommandResult(context.formatter().error(
+                    "The selected Trip is no longer available.\n"
+                            + context.organiseMenu()), false);
+        }
 
         String confirmation = context.prompter().prompt(
                 "Type yes to delete this Trip and all its Plans, or no to cancel:");

@@ -5,16 +5,18 @@ import java.util.UUID;
 final class NewPlanCommand implements Command {
     @Override
     public CommandResult execute(CliContext context) {
-        String destination = promptDestination(context);
-        if (destination == null) {
-            return new CommandResult("Bye!", true);
-        }
-
         Trip selectedTrip = context.session().selectedTripId()
                 .flatMap(context.service()::getTrip)
                 .orElse(null);
         if (selectedTrip == null) {
-            return new CommandResult(context.formatter().error("Selected Trip could not be found."), false);
+            context.session().enterOrganise();
+            return new CommandResult(context.formatter().error(
+                    "Selected Trip could not be found.\n" + context.organiseMenu()), false);
+        }
+
+        String destination = promptDestination(context);
+        if (destination == null) {
+            return new CommandResult("Bye!", true);
         }
 
         LocalDate date = promptDate(context, "Enter plan date:");

@@ -66,7 +66,7 @@ final class EditPlanCommand implements Command {
         try {
             context.service().editPlan(tripId.orElseThrow(), planId.orElseThrow(), destination, date, time);
         } catch (IllegalArgumentException exception) {
-            return new CommandResult(context.formatter().error(exception.getMessage()), false);
+            return selectedTripResult(context, context.formatter().error(exception.getMessage()));
         }
         return selectedTripResult(context, "Plan updated.");
     }

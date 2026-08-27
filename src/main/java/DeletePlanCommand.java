@@ -61,8 +61,11 @@ final class DeletePlanCommand implements Command {
         return context.session().selectedTripId()
                 .flatMap(context.service()::getTrip)
                 .map(trip -> new CommandResult(message + "\n" + context.selectedTripView(trip), false))
-                .orElseGet(() -> new CommandResult(context.formatter().error(
-                        "Selected Trip could not be found."), false));
+                .orElseGet(() -> {
+                    context.session().enterOrganise();
+                    return new CommandResult(context.formatter().error(
+                            "Selected Trip could not be found.\n" + context.organiseMenu()), false);
+                });
     }
 
     /**
