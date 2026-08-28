@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+import doggo.TestClock;
 import doggo.application.DoggoService;
 import doggo.storage.InMemoryTripRepository;
 
@@ -336,7 +337,7 @@ class CliTest {
     private static String runCli(String input) {
         StringWriter output = new StringWriter();
         Cli cli = new Cli(new BufferedReader(new StringReader(input)), new PrintWriter(output),
-                new DoggoService(new InMemoryTripRepository()));
+                new DoggoService(new InMemoryTripRepository(), TestClock.fixed()));
         cli.run();
         return output.toString();
     }

@@ -11,6 +11,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+import doggo.TestClock;
 import doggo.application.DoggoService;
 import doggo.domain.Plan;
 import doggo.domain.Trip;
@@ -22,7 +23,7 @@ class CliContextTest {
     @Test
     void deletePlan_usesDisplayedPlanAfterRepositoryOrderChanges() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         UUID tripId = UUID.randomUUID();
         UUID firstPlanId = UUID.randomUUID();
         UUID secondPlanId = UUID.randomUUID();

@@ -1,5 +1,6 @@
 package doggo.application;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Comparator;
@@ -10,20 +11,24 @@ import java.util.UUID;
 
 import doggo.domain.Plan;
 import doggo.domain.Trip;
+import doggo.domain.TripStatus;
 
 /**
  * Coordinates presentation-independent doggo use cases.
  */
 public final class DoggoService {
     private final TripRepository tripRepository;
+    private final Clock clock;
 
     /**
-     * Creates a service backed by the specified Trip repository.
+     * Creates a service backed by the specified Trip repository and Clock.
      *
      * @param tripRepository Repository used by the service.
+     * @param clock Clock used for date-sensitive behavior.
      */
-    public DoggoService(TripRepository tripRepository) {
+    public DoggoService(TripRepository tripRepository, Clock clock) {
         this.tripRepository = Objects.requireNonNull(tripRepository);
+        this.clock = Objects.requireNonNull(clock);
     }
 
     /**
@@ -50,6 +55,30 @@ public final class DoggoService {
                 .sorted(Comparator.comparing(Trip::startDate)
                         .thenComparing(Trip::title)
                         .thenComparing(Trip::id))
+                .toList();
+    }
+
+    /**
+     * Returns all current and future Trips in deterministic start-date order.
+     *
+     * @return Current and future Trips.
+     */
+    public List<Trip> getCurrentAndFutureTrips() {
+        LocalDate currentDate = LocalDate.now(clock);
+        return getTrips().stream()
+                .filter(trip -> trip.statusOn(currentDate) != TripStatus.PAST)
+                .toList();
+    }
+
+    /**
+     * Returns all past Trips in deterministic start-date order.
+     *
+     * @return Past Trips.
+     */
+    public List<Trip> getPastTrips() {
+        LocalDate currentDate = LocalDate.now(clock);
+        return getTrips().stream()
+                .filter(trip -> trip.statusOn(currentDate) == TripStatus.PAST)
                 .toList();
     }
 

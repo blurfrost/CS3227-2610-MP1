@@ -9,16 +9,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import doggo.TestClock;
 import doggo.domain.Plan;
 import doggo.domain.Trip;
+import doggo.domain.TripStatus;
 import doggo.storage.InMemoryTripRepository;
 
 import org.junit.jupiter.api.Test;
 
 class DoggoServiceTest {
     @Test
+    void createService_nullClock_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> new DoggoService(new InMemoryTripRepository(), null));
+    }
+
+    @Test
     void createTrip_andGetTrips_returnsTripsInStartDateOrder() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         service.createTrip("Later", LocalDate.of(2028, 1, 1), LocalDate.of(2028, 1, 2));
         service.createTrip("Earlier", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
 
@@ -27,8 +35,42 @@ class DoggoServiceTest {
     }
 
     @Test
+    void getCurrentAndFutureTrips_excludesPastTrips() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        service.createTrip("Past", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 4));
+        Trip current = service.createTrip("Current", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
+        Trip future = service.createTrip("Future", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(List.of(current, future), service.getCurrentAndFutureTrips());
+    }
+
+    @Test
+    void getPastTrips_excludesCurrentAndFutureTrips() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip past = service.createTrip("Past", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 4));
+        service.createTrip("Current", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
+        service.createTrip("Future", LocalDate.of(2027, 1, 6), LocalDate.of(2027, 1, 9));
+
+        assertEquals(List.of(past), service.getPastTrips());
+    }
+
+    @Test
+    void statusQueries_preserveDeterministicOrdering() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip laterTitle = service.createTrip("Zoo", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 7));
+        Trip earlierTitle = service.createTrip("Aquarium", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 7));
+
+        assertEquals(List.of(earlierTitle, laterTitle), service.getCurrentAndFutureTrips());
+        assertEquals(TripStatus.FUTURE, earlierTitle.statusOn(LocalDate.of(2027, 1, 5)));
+    }
+
+    @Test
     void addPlan_toExistingTrip_storesPlan() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
 
         service.addPlan(trip.id(), "Mount Fuji", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
@@ -38,7 +80,7 @@ class DoggoServiceTest {
 
     @Test
     void getPlans_unsortedPlans_returnsChronologicalOrder() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
         Plan laterDate = new Plan(UUID.fromString("00000000-0000-0000-0000-000000000003"),
                 "Osaka", LocalDate.of(2027, 1, 6), LocalTime.of(9, 0));
@@ -56,7 +98,7 @@ class DoggoServiceTest {
     @Test
     void addPlan_failedSave_preservesPreviouslyStoredTrip() {
         FailingTripRepository repository = new FailingTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         repository.setShouldFail(true);
@@ -68,7 +110,7 @@ class DoggoServiceTest {
 
     @Test
     void deleteTrip_removesTripAndAllPlans() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         service.addPlan(trip.id(), "Mount Fuji", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
@@ -81,7 +123,7 @@ class DoggoServiceTest {
 
     @Test
     void deletePlan_removesOnlySelectedPlan() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         Plan firstPlan = service.addPlan(trip.id(), "Mount Fuji", LocalDate.of(2027, 1, 5),
@@ -96,21 +138,21 @@ class DoggoServiceTest {
 
     @Test
     void deleteTrip_missingTrip_rejectsDeletion() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
 
         assertThrows(IllegalArgumentException.class, () -> service.deleteTrip(UUID.randomUUID()));
     }
 
     @Test
     void deletePlan_missingTrip_rejectsDeletion() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
 
         assertThrows(IllegalArgumentException.class, () -> service.deletePlan(UUID.randomUUID(), UUID.randomUUID()));
     }
 
     @Test
     void deletePlan_missingPlan_rejectsDeletion() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
 
@@ -120,7 +162,7 @@ class DoggoServiceTest {
 
     @Test
     void editTrip_updatesDetailsAndPreservesIdentity() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
 
@@ -134,7 +176,7 @@ class DoggoServiceTest {
 
     @Test
     void editPlan_updatesOnlySelectedPlanAndPreservesIdentities() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         Plan originalPlan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5),
@@ -152,7 +194,7 @@ class DoggoServiceTest {
 
     @Test
     void editTrip_excludingPlan_rejectsUpdateAndPreservesStoredTrip() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
@@ -164,7 +206,7 @@ class DoggoServiceTest {
 
     @Test
     void editPlan_missingPlan_rejectsUpdate() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
 
@@ -174,7 +216,7 @@ class DoggoServiceTest {
 
     @Test
     void editTrip_missingTrip_rejectsUpdate() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
 
         assertThrows(IllegalArgumentException.class, () -> service.editTrip(UUID.randomUUID(),
                 "Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9)));
@@ -182,7 +224,7 @@ class DoggoServiceTest {
 
     @Test
     void editPlan_outsideTripDates_rejectsUpdate() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository());
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         Plan plan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5),
@@ -195,7 +237,7 @@ class DoggoServiceTest {
     @Test
     void editTrip_failedSave_preservesPreviouslyStoredTrip() {
         FailingTripRepository repository = new FailingTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         repository.setShouldFail(true);
@@ -208,7 +250,7 @@ class DoggoServiceTest {
     @Test
     void editPlan_failedSave_preservesPreviouslyStoredTrip() {
         FailingTripRepository repository = new FailingTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         Plan plan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5),
@@ -223,7 +265,7 @@ class DoggoServiceTest {
     @Test
     void deleteTrip_failedDelete_preservesStoredTrip() {
         FailingTripRepository repository = new FailingTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         repository.setShouldFail(true);

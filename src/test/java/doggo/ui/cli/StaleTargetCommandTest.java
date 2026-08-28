@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import doggo.TestClock;
 import doggo.application.DoggoService;
 import doggo.domain.Plan;
 import doggo.domain.Trip;
@@ -23,7 +24,7 @@ class StaleTargetCommandTest {
     @Test
     void deleteTrip_staleDisplayedTarget_doesNotPromptForConfirmation() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
         CliContext context = createContext(service, "");
         context.organiseMenu();
@@ -38,7 +39,7 @@ class StaleTargetCommandTest {
     @Test
     void newPlan_missingSelectedTrip_doesNotPromptForDestination() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
         CliContext context = createContext(service, "");
         context.session().enterTrip(trip.id());
@@ -54,7 +55,7 @@ class StaleTargetCommandTest {
     @Test
     void editTrip_staleDisplayedTarget_doesNotPromptForFields() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
         CliContext context = createContext(service, "");
         context.organiseMenu();
@@ -69,7 +70,7 @@ class StaleTargetCommandTest {
     @Test
     void editPlan_staleSelectedTrip_doesNotPromptForFields() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
         service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 1), LocalTime.of(9, 0));
         CliContext context = createContext(service, "");
@@ -86,7 +87,7 @@ class StaleTargetCommandTest {
     @Test
     void deletePlan_staleDisplayedTarget_doesNotPromptForConfirmation() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
         service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 1), LocalTime.of(9, 0));
         Plan retainedPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 2), LocalTime.of(10, 0));
@@ -106,7 +107,7 @@ class StaleTargetCommandTest {
     @Test
     void editCommands_refreshMappingsAfterSortOrderChanges() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
-        DoggoService service = new DoggoService(repository);
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip japan = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 20));
         Trip korea = service.createTrip("Korea", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 6));
         String input = String.join("\n", "Japan moved", "10/01/2027", "",
