@@ -7,9 +7,10 @@
 - [x] Step 3: Add stable displayed Plan mappings.
 - [x] Step 4: Implement the remaining Organise commands.
 - [x] Step 5: Stabilize the completed Organise slice, synchronize documentation, and complete verification.
+- [x] Step 6: Decompose the CLI parser before adding future CLI modes.
 
 Update this checklist after each iterative implementation. Keep prompt history in
-`logs/03 - Bare CLI Implementation.md` rather than duplicating it here.
+`logs/05 - Transition to adding Dashboard Mode.md` rather than duplicating it here.
 
 ## Locked Decisions
 
@@ -141,7 +142,7 @@ separate from Step 5.
 1. [x] Migrate the default-package code into `doggo.domain`,
    `doggo.application`, `doggo.storage`, and `doggo.ui.cli` before adding more
    feature classes. Adjust cross-package visibility and Javadoc as needed.
-2. [ ] When adding the next CLI mode, decompose `Parser` into mode-specific
+2. [x] When adding the next CLI mode, decompose `Parser` into mode-specific
    parsers so mode/command conditionals do not accumulate prematurely.
 3. [ ] Add `TripStatus` with an injected `Clock`, then implement future/current/
    past Organise grouping and its tests.
@@ -168,3 +169,60 @@ separate from Step 5.
 
 - Dashboard, Gallery, reviews, and SQLite persistence are separate feature work.
 - A separate Plan `view NUMBER` command is unnecessary while the selected-Trip view displays every current Plan field.
+
+## Step 6 — Decompose the CLI Parser
+
+This step prepares the CLI for additional modes without allowing the central
+parser's mode and command conditionals to grow. It is intentionally separate
+from implementing Dashboard behavior.
+
+### Requirements
+
+- Preserve the existing `Parser.parse(String, CliMode)` entry point used by
+  `Cli`.
+- Keep exact global `exit` and `back` handling in `Parser` so every mode shares
+  the same navigation behavior.
+- Delegate mode-specific commands through a `ModeCommandParser` contract.
+- Provide separate mode parsers for `MAIN`, `ORGANISE`, and `TRIP`; adding a
+  future `DASHBOARD` mode must require an explicit coordinator branch.
+- Keep parser and command classes package-private in `doggo.ui.cli`.
+- Preserve case-insensitive commands and surrounding-whitespace handling.
+- Treat zero or multiple arguments for indexed commands as usage errors:
+  `Usage: <command> NUMBER`.
+- Treat exactly one non-numeric, non-positive, or overflowing index as an
+  index-feedback error based on the active displayed Trip or Plan snapshot.
+- Use `There are no <items> to <action>.` when the displayed snapshot is empty.
+- Use `<Item> number should be 1.` for a one-item snapshot and
+  `<Item> number should be from 1 to N.` for larger snapshots.
+- Keep an in-range UUID whose record disappeared on the existing stale-target
+  error path, without prompting or modifying another record.
+
+### Ordered Subtasks
+
+- [x] Introduce the package-private `ModeCommandParser` interface with the
+  shared `Command parse(String command)` contract.
+- [x] Add `MainCommandParser`, `OrganiseCommandParser`, and
+  `TripCommandParser`, moving the existing mode-specific routing without
+  changing behavior beyond the specified indexed-command feedback.
+- [x] Reduce `Parser` to input normalization, global command handling, and
+  exhaustive mode delegation.
+- [x] Add `IndexedCommandParser` and `IndexedEntity` for shared indexed-command
+  construction and Trip/Plan target selection.
+- [x] Add `InvalidIndexCommand`, displayed-item count accessors, and centralized
+  formatter messages for empty, one-item, and multi-item snapshots.
+- [x] Update all five existing indexed commands to use the centralized
+  out-of-range feedback while retaining stale-target checks.
+- [x] Add focused mode-parser, shared-index-parser, and CLI integration tests.
+- [x] Update the Developer Guide, `MEMORY.md`, and this plan after the full
+  decomposition is complete.
+
+### Acceptance Criteria
+
+- [x] Existing valid Main, Organise, Trip, navigation, CRUD, and stale-target
+  behavior remains green.
+- [x] Indexed commands distinguish missing/multiple arguments, malformed or
+  non-positive indexes, empty snapshots, valid out-of-range indexes, and stale
+  mapped records according to the requirements above.
+- [x] `Parser` contains no mode-specific command conditionals after delegation
+  is complete.
+- [x] `./gradlew clean test` and `git diff --check` pass under Java 25.0.3.

@@ -101,13 +101,15 @@ The CLI is divided into four areas:
 
 ```text
 Doggo
-  -> Cli -> Parser -> Command
-                       |
-                  DoggoService
-                       |
-                TripRepository
-                 /            \
-InMemoryTripRepository    SqliteTripRepository
+  -> Cli -> Parser -> ModeCommandParser -> Command
+                                      /       |       \
+                           Main / Organise / Trip parsers
+                                                   |
+                                             DoggoService
+                                                   |
+                                             TripRepository
+                                              /            \
+                                   InMemoryTripRepository    SqliteTripRepository
 
 Domain: Trip -> Plan
           |       |
@@ -134,9 +136,15 @@ Domain: Trip -> Plan
 
 - `Doggo` is the composition root and application entry point.
 - `Cli` owns the read-evaluate-print loop and injected input and output streams.
-- `CliMode` identifies `MAIN`, `DASHBOARD`, `ORGANISE`, or `GALLERY` mode.
+- `CliMode` identifies the currently implemented `MAIN`, `ORGANISE`, and `TRIP`
+  modes; Dashboard and Gallery modes remain planned.
 - `CliSession` tracks the current mode, selected Trip, and mappings from displayed list numbers to UUIDs.
-- `Parser` interprets input according to the active mode and returns a `Command`.
+- `Parser` normalizes input, handles global `exit` and `back` commands, and
+  delegates mode-specific parsing through `ModeCommandParser` implementations.
+- `MainCommandParser`, `OrganiseCommandParser`, and `TripCommandParser` own
+  the command grammar for their respective modes.
+- `IndexedCommandParser` shares indexed-command construction, while
+  `InvalidIndexCommand` reports errors using the active displayed snapshot.
 - `Command` executes an action through `DoggoService` and `CliSession`.
 - `CommandResult` contains output, navigation changes, and whether the application should exit.
 - `CliFormatter` formats domain information, help, and errors.
@@ -151,10 +159,12 @@ Use separate command classes for navigation and user actions:
 
 ### CLI Behaviour
 
-- Main mode accepts `dashboard`, `organise`, `gallery`, `help`, and `exit`.
-- Dashboard lists today's Plans and accepts `list`, `view NUMBER`, and `back`.
-- Organise groups Trips by status. When Trips are displayed, it accepts `new`, `edit NUMBER`, `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, displaying its Plans, it accepts `new`, `edit NUMBER`, `delete NUMBER`, and `back`.
-- Gallery lists all past Trips, including unreviewed Trips, and exposes review operations after selection.
+- Main mode currently accepts `organise` and `exit`; Dashboard, Gallery, and
+  their navigation commands remain planned.
+- Organise currently lists Trips and accepts `new`, `edit NUMBER`,
+  `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, it accepts
+  `new`, `edit NUMBER`, `delete NUMBER`, and `back` for its Plans.
+- Trip status grouping, Dashboard, and Gallery behavior are later roadmap work.
 - The CLI displays short one-based list numbers while retaining stable UUIDs internally.
 - Creation and editing commands prompt for individual fields instead of requiring long command lines.
 - Trip and Plan dates use the strict `DD/MM/YYYY` format.
@@ -172,6 +182,8 @@ Use separate command classes for navigation and user actions:
 - Plan dates must fall within the selected Trip's inclusive date range.
 - During Plan creation, `back` is accepted as a destination; for date and time prompts it is invalid input and causes a reprompt.
 - Displayed Trip and Plan indices use retained UUID mappings, and stale targets are reported without prompting for destructive or edit actions.
+- Mode-specific parsing is delegated through separate Main, Organise, and Trip
+  parsers, with shared indexed-command validation and snapshot-aware feedback.
 - Feature Sets 1–3 use the in-memory repository; persistence and the remaining product features are later work.
 
 ## Acceptance and Test Coverage

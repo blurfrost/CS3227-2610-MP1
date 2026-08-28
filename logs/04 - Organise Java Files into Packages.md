@@ -126,3 +126,25 @@ The user requested committing the current package migration, documentation,
 configuration, source, test, and prompt-log changes. The commit will follow
 the SE-EDU Git standard and will be created only after staging and reviewing
 the complete migration diff.
+
+## Prompt 7 — Review `stalePlan` Test Setup
+
+The user asked whether the `stalePlan` variable in
+`StaleTargetCommandTest.java` is necessary. The review found that the local
+variable binding is unnecessary, but creating that first Plan is essential: it
+populates displayed index 1 before the repository is replaced with only the
+second Plan, making the selected displayed target stale. The line can be
+simplified to an unassigned `service.addPlan(...)` call if desired.
+
+## Prompt 8 — Assess Readiness for Dashboard Mode
+
+The user asked whether the next implementation step can be introducing a new
+Dashboard CLI mode. The codebase review found that the completed Organise CRUD
+slice passes the current test task, but Dashboard prerequisites are not yet
+implemented: `TripStatus` is absent, `DoggoService` has no injected `Clock` or
+today's-Plans query, `CliMode` and the main parser/menu only support MAIN,
+ORGANISE, and TRIP, and the formatter/session have no Dashboard view or Plan
+selection mapping. The recommendation is to implement parser decomposition,
+`TripStatus` with an injected `Clock`, and the application Dashboard query and
+tests before wiring the CLI mode. No production code was changed; the test
+command passed after allowing Gradle access to its external wrapper cache.
