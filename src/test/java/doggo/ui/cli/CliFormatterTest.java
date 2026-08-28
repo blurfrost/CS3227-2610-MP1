@@ -34,6 +34,7 @@ class CliFormatterTest {
 
         assertTrue(output.contains("[MODE: DASHBOARD]"));
         assertTrue(output.contains("There are no Plans scheduled for today."));
+        assertTrue(output.contains("Type \"new\" to create a new Trip."));
         assertTrue(output.contains("Type \"back\" to go back to the Main Menu."));
     }
 

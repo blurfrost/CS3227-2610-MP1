@@ -36,7 +36,8 @@ final class CliFormatter {
             }
             message.append("\n");
         }
-        return message.append("Type \"back\" to go back to the Main Menu.").toString();
+        return message.append("Type \"new\" to create a new Trip.\n")
+                .append("Type \"back\" to go back to the Main Menu.").toString();
     }
 
     /**

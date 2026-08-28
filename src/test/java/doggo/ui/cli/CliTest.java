@@ -60,6 +60,18 @@ class CliTest {
     }
 
     @Test
+    void createTripFromDashboard_entersOrganiseMode() {
+        String input = String.join("\n", "dashboard", "new", "Japan trip", "01/01/2027",
+                "09/01/2027", "back", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Trip successfully added!"));
+        assertTrue(output.contains("[MODE: ORGANISE]"));
+        assertTrue(output.contains("Japan trip (from 01/01/2027 to 09/01/2027)"));
+        assertTrue(output.endsWith("Bye!\n"));
+    }
+
+    @Test
     void createTripFlow_displaysTripAndExits() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
                 "09/01/2027", "back", "exit") + "\n";

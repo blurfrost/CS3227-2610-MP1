@@ -6,6 +6,9 @@ package doggo.ui.cli;
 final class DashboardCommandParser implements ModeCommandParser {
     @Override
     public Command parse(String command) {
+        if (command.equalsIgnoreCase("new")) {
+            return new NewTripCommand();
+        }
         return new UnknownCommand(command);
     }
 }

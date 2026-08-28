@@ -37,6 +37,7 @@ class ParserTest {
     void parseDashboard_delegatesToDashboardParser() {
         Parser parser = new Parser();
 
+        assertInstanceOf(NewTripCommand.class, parser.parse("new", CliMode.DASHBOARD));
         assertInstanceOf(UnknownCommand.class, parser.parse("edit 1", CliMode.DASHBOARD));
     }
 }
