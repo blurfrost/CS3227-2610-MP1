@@ -34,12 +34,12 @@ class ModeCommandParserTest {
     }
 
     @Test
-    void dashboardCommandParser_routesCreationAndEditingAndRejectsDeletion() {
+    void dashboardCommandParser_routesCreationEditingAndDeletion() {
         ModeCommandParser parser = new DashboardCommandParser();
 
         assertInstanceOf(NewTripCommand.class, parser.parse("NeW"));
         assertInstanceOf(EditPlanCommand.class, parser.parse("EdIt 1"));
-        assertInstanceOf(UnknownCommand.class, parser.parse("delete 1"));
+        assertInstanceOf(DeletePlanCommand.class, parser.parse("DeLeTe 1"));
         assertInstanceOf(UnknownCommand.class, parser.parse("new 1"));
     }
 }

@@ -110,6 +110,82 @@ class CliTest {
     }
 
     @Test
+    void deletePlanFromDashboard_confirmedUpdatesOwningTrip() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
+                "Osaka", "05/01/2027", "10:00", "back", "back", "dashboard", "delete 1",
+                "yes", "back", "organise", "view 1", "exit") + "\n";
+        String output = runCli(input);
+        String refreshedView = output.substring(output.indexOf("Plan deleted."));
+
+        assertTrue(refreshedView.contains("1. 10:00 - Osaka (Trip: Japan)"));
+        assertTrue(refreshedView.contains("Osaka (05/01/2027 at 10:00)"));
+        assertFalse(refreshedView.contains("Tokyo (05/01/2027 at 09:00)"));
+    }
+
+    @Test
+    void deletePlanFromDashboard_cancelledKeepsPlanAndDashboard() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "delete 1", "no", "exit") + "\n";
+        String output = runCli(input);
+        String refreshedDashboard = output.substring(output.indexOf("Plan deletion cancelled."));
+
+        assertTrue(refreshedDashboard.contains("1. 09:00 - Tokyo (Trip: Japan)"));
+    }
+
+    @Test
+    void deletePlanFromDashboard_invalidConfirmationRepromptsExactly() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "delete 1", "maybe", "Yes", "no", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Please enter exactly yes or no."));
+        assertTrue(output.contains("Plan deletion cancelled."));
+        assertTrue(output.substring(output.indexOf("Plan deletion cancelled."))
+                .contains("1. 09:00 - Tokyo (Trip: Japan)"));
+    }
+
+    @Test
+    void deletePlanFromDashboard_refreshesTargetsForSequentialDeletes() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
+                "Osaka", "05/01/2027", "10:00", "new", "Kyoto", "05/01/2027", "11:00",
+                "back", "back", "dashboard", "delete 1", "yes", "delete 1", "yes",
+                "exit") + "\n";
+        String output = runCli(input);
+        int lastDeletion = output.lastIndexOf("Plan deleted.");
+        String refreshedDashboard = output.substring(lastDeletion);
+
+        assertTrue(refreshedDashboard.contains("1. 11:00 - Kyoto (Trip: Japan)"));
+        assertFalse(refreshedDashboard.contains("Tokyo"));
+        assertFalse(refreshedDashboard.contains("Osaka"));
+    }
+
+    @Test
+    void deletePlanFromDashboard_invalidIndexKeepsDashboardView() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "delete abc", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Error: Plan number should be 1."));
+        assertTrue(output.contains("[MODE: DASHBOARD]"));
+        assertTrue(output.contains("1. 09:00 - Tokyo (Trip: Japan)"));
+    }
+
+    @Test
+    void deletePlanFromDashboard_endOfInputExitsWithoutConfirmation() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "delete 1") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.endsWith("Bye!\n"));
+    }
+
+    @Test
     void createTripFromMain_entersOrganiseMode() {
         String input = String.join("\n", "new", "Japan trip", "01/01/2027", "09/01/2027",
                 "back", "exit") + "\n";

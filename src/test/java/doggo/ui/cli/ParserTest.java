@@ -39,6 +39,7 @@ class ParserTest {
 
         assertInstanceOf(NewTripCommand.class, parser.parse("new", CliMode.DASHBOARD));
         assertInstanceOf(EditPlanCommand.class, parser.parse("edit 1", CliMode.DASHBOARD));
+        assertInstanceOf(DeletePlanCommand.class, parser.parse("delete 1", CliMode.DASHBOARD));
     }
 
     @Test
@@ -49,5 +50,7 @@ class ParserTest {
                 parser.parse("edit 1 2", CliMode.DASHBOARD));
         assertInstanceOf(InvalidIndexCommand.class,
                 parser.parse("edit abc", CliMode.DASHBOARD));
+        assertInstanceOf(InvalidIndexCommand.class,
+                parser.parse("delete 0", CliMode.DASHBOARD));
     }
 }

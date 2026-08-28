@@ -161,6 +161,74 @@ class StaleTargetCommandTest {
     }
 
     @Test
+    void deletePlan_staleDashboardTrip_doesNotPromptForConfirmation() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+        CliContext context = createContext(service, "");
+        context.session().enterDashboard();
+        context.dashboardMenu();
+        repository.delete(trip.id());
+
+        CommandResult result = new DeletePlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.DASHBOARD, context.session().mode());
+        assertTrue(result.message().contains("Selected Trip could not be found."));
+        assertTrue(result.message().contains("[MODE: DASHBOARD]"));
+    }
+
+    @Test
+    void deletePlan_staleDashboardPlan_doesNotPromptForConfirmation() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+        CliContext context = createContext(service, "");
+        context.session().enterDashboard();
+        context.dashboardMenu();
+        repository.save(new Trip(trip.id(), trip.title(), trip.startDate(), trip.endDate()));
+
+        CommandResult result = new DeletePlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.DASHBOARD, context.session().mode());
+        assertTrue(result.message().contains("The selected Plan is no longer available."));
+        assertTrue(result.message().contains("[MODE: DASHBOARD]"));
+    }
+
+    @Test
+    void deletePlan_dashboardTargetBecomesStaleAfterConfirmation_doesNotDeleteAnotherPlan() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+        StringWriter output = new StringWriter();
+        PrintWriter writer = new PrintWriter(output);
+        BufferedReader input = new BufferedReader(new StringReader("yes\n")) {
+            @Override
+            public String readLine() throws IOException {
+                String confirmation = super.readLine();
+                repository.save(new Trip(trip.id(), trip.title(), trip.startDate(), trip.endDate()));
+                return confirmation;
+            }
+        };
+        CliSession session = new CliSession();
+        CliContext context = new CliContext(service, session,
+                new CliPrompter(input, writer), new CliFormatter(), writer);
+        session.enterDashboard();
+        context.dashboardMenu();
+
+        CommandResult result = new DeletePlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertTrue(result.message().contains("Plan not found."));
+        assertTrue(result.message().contains("[MODE: DASHBOARD]"));
+        assertTrue(service.getTrip(trip.id()).orElseThrow().plans().isEmpty());
+    }
+
+    @Test
     void deletePlan_staleDisplayedTarget_doesNotPromptForConfirmation() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
         DoggoService service = new DoggoService(repository, TestClock.fixed());
