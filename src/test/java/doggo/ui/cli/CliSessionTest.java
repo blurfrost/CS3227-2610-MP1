@@ -27,14 +27,14 @@ class CliSessionTest {
         CliSession session = new CliSession();
         session.enterTrip(UUID.randomUUID());
         session.setDisplayedTripIds(List.of(UUID.randomUUID()));
-        session.setDisplayedPlanIds(List.of(UUID.randomUUID()));
+        session.setDisplayedPlanTargets(UUID.randomUUID(), List.of(UUID.randomUUID()));
 
         session.enterOrganise();
 
         assertEquals(CliMode.ORGANISE, session.mode());
         assertFalse(session.selectedTripId().isPresent());
         assertFalse(session.tripIdAt(1).isPresent());
-        assertFalse(session.planIdAt(1).isPresent());
+        assertFalse(session.planTargetAt(1).isPresent());
     }
 
     @Test
@@ -42,14 +42,14 @@ class CliSessionTest {
         CliSession session = new CliSession();
         session.enterTrip(UUID.randomUUID());
         session.setDisplayedTripIds(List.of(UUID.randomUUID()));
-        session.setDisplayedPlanIds(List.of(UUID.randomUUID()));
+        session.setDisplayedPlanTargets(UUID.randomUUID(), List.of(UUID.randomUUID()));
 
         session.enterMain();
 
         assertEquals(CliMode.MAIN, session.mode());
         assertFalse(session.selectedTripId().isPresent());
         assertFalse(session.tripIdAt(1).isPresent());
-        assertFalse(session.planIdAt(1).isPresent());
+        assertFalse(session.planTargetAt(1).isPresent());
     }
 
     @Test
@@ -62,32 +62,49 @@ class CliSessionTest {
     @Test
     void enterTrip_clearsDisplayedPlans() {
         CliSession session = new CliSession();
-        session.setDisplayedPlanIds(List.of(UUID.randomUUID()));
+        session.setDisplayedPlanTargets(UUID.randomUUID(), List.of(UUID.randomUUID()));
 
         session.enterTrip(UUID.randomUUID());
 
-        assertFalse(session.planIdAt(1).isPresent());
+        assertFalse(session.planTargetAt(1).isPresent());
     }
 
     @Test
-    void planIdAt_returnsDisplayedPlanByOneBasedIndex() {
+    void enterDashboard_setsDashboardModeAndClearsDisplayedState() {
         CliSession session = new CliSession();
+        session.enterTrip(UUID.randomUUID());
+        session.setDisplayedTripIds(List.of(UUID.randomUUID()));
+        session.setDisplayedPlanTargets(UUID.randomUUID(), List.of(UUID.randomUUID()));
+
+        session.enterDashboard();
+
+        assertEquals(CliMode.DASHBOARD, session.mode());
+        assertFalse(session.selectedTripId().isPresent());
+        assertFalse(session.tripIdAt(1).isPresent());
+        assertFalse(session.planTargetAt(1).isPresent());
+    }
+
+    @Test
+    void planTargetAt_returnsDisplayedTargetByOneBasedIndex() {
+        CliSession session = new CliSession();
+        UUID tripId = UUID.randomUUID();
         UUID planId = UUID.randomUUID();
-        session.setDisplayedPlanIds(List.of(planId));
+        session.setDisplayedPlanTargets(tripId, List.of(planId));
 
-        assertEquals(planId, session.planIdAt(1).orElseThrow());
+        assertEquals(new PlanTarget(tripId, planId), session.planTargetAt(1).orElseThrow());
     }
 
     @Test
-    void setDisplayedPlanIds_copiesInputList() {
+    void setDisplayedPlanTargets_copiesInputList() {
         CliSession session = new CliSession();
+        UUID tripId = UUID.randomUUID();
         ArrayList<UUID> planIds = new ArrayList<>();
         UUID planId = UUID.randomUUID();
         planIds.add(planId);
 
-        session.setDisplayedPlanIds(planIds);
+        session.setDisplayedPlanTargets(tripId, planIds);
         planIds.clear();
 
-        assertEquals(planId, session.planIdAt(1).orElseThrow());
+        assertEquals(new PlanTarget(tripId, planId), session.planTargetAt(1).orElseThrow());
     }
 }

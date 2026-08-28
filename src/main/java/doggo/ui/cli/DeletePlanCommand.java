@@ -17,21 +17,24 @@ final class DeletePlanCommand implements Command {
 
     @Override
     public CommandResult execute(CliContext context) {
-        Optional<UUID> planId = context.session().planIdAt(index);
-        if (planId.isEmpty()) {
+        Optional<PlanTarget> planTarget = context.session().planTargetAt(index);
+        if (planTarget.isEmpty()) {
             return new CommandResult(context.formatter().error(
                     context.formatter().invalidIndex("delete", IndexedEntity.PLAN,
                             context.session().displayedPlanCount()) + "\n"
                             + refreshSelectedTrip(context)), false);
         }
-        Optional<Trip> selectedTrip = context.session().selectedTripId().flatMap(context.service()::getTrip);
+        PlanTarget target = planTarget.orElseThrow();
+        Optional<Trip> selectedTrip = context.session().selectedTripId()
+                .filter(target.tripId()::equals)
+                .flatMap(context.service()::getTrip);
         if (selectedTrip.isEmpty()) {
             context.session().enterOrganise();
             return new CommandResult(context.formatter().error(
                     "Selected Trip could not be found.\n" + context.organiseMenu()), false);
         }
         if (selectedTrip.orElseThrow().plans().stream().noneMatch(
-                plan -> plan.id().equals(planId.orElseThrow()))) {
+                plan -> plan.id().equals(target.planId()))) {
             return new CommandResult(context.formatter().error(
                     "The selected Plan is no longer available.\n" + refreshSelectedTrip(context)), false);
         }
@@ -54,8 +57,7 @@ final class DeletePlanCommand implements Command {
         }
 
         try {
-            context.service().deletePlan(context.session().selectedTripId().orElseThrow(),
-                    planId.orElseThrow());
+            context.service().deletePlan(target.tripId(), target.planId());
         } catch (IllegalArgumentException exception) {
             return new CommandResult(context.formatter().error(
                     exception.getMessage() + "\n" + refreshSelectedTrip(context)), false);

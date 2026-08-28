@@ -42,6 +42,9 @@ class CliContextTest {
                         new PrintWriter(output)), new CliFormatter(), new PrintWriter(output));
 
         context.selectedTripView(service.getTrip(tripId).orElseThrow());
+
+        assertEquals(new PlanTarget(tripId, firstPlanId), session.planTargetAt(1).orElseThrow());
+
         Trip reorderedTrip = new Trip(tripId, "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         Plan movedFirstPlan = new Plan(firstPlanId, "Tokyo", LocalDate.of(2027, 1, 7),

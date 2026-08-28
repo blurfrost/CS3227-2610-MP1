@@ -17,7 +17,11 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
 
     String selectedTripView(Trip trip) {
         List<Plan> plans = service.getPlans(trip);
-        session.setDisplayedPlanIds(plans.stream().map(Plan::id).toList());
+        session.setDisplayedPlanTargets(trip.id(), plans.stream().map(Plan::id).toList());
         return formatter.tripView(trip, plans);
+    }
+
+    String dashboardMenu() {
+        return formatter.dashboardMenu();
     }
 }

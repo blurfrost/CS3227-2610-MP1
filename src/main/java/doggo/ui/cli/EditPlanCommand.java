@@ -17,22 +17,28 @@ final class EditPlanCommand implements Command {
 
     @Override
     public CommandResult execute(CliContext context) {
-        Optional<UUID> tripId = context.session().selectedTripId();
-        Optional<UUID> planId = context.session().planIdAt(index);
-        Optional<Trip> trip = tripId.flatMap(context.service()::getTrip);
+        Optional<PlanTarget> planTarget = context.session().planTargetAt(index);
+        Optional<UUID> selectedTripId = context.session().selectedTripId();
+        Optional<Trip> trip = planTarget.flatMap(target -> context.service().getTrip(target.tripId()));
         if (trip.isEmpty()) {
             context.session().enterOrganise();
             return new CommandResult(context.formatter().error(
                     "Selected Trip could not be found.\n" + context.organiseMenu()), false);
         }
-        if (planId.isEmpty()) {
+        if (planTarget.isEmpty()) {
             return new CommandResult(context.formatter().error(
                     context.formatter().invalidIndex("edit", IndexedEntity.PLAN,
                             context.session().displayedPlanCount()) + "\n"
                             + context.selectedTripView(trip.orElseThrow())), false);
         }
+        PlanTarget target = planTarget.orElseThrow();
+        if (selectedTripId.isEmpty() || !selectedTripId.orElseThrow().equals(target.tripId())) {
+            return new CommandResult(context.formatter().error(
+                    "The selected Plan is no longer available.\n"
+                            + context.selectedTripView(trip.orElseThrow())), false);
+        }
         Optional<Plan> plan = trip.orElseThrow().plans().stream()
-                .filter(candidate -> candidate.id().equals(planId.orElseThrow()))
+                .filter(candidate -> candidate.id().equals(target.planId()))
                 .findFirst();
         if (plan.isEmpty()) {
             return new CommandResult(context.formatter().error(
@@ -71,7 +77,7 @@ final class EditPlanCommand implements Command {
             return selectedTripResult(context, "No changes made.");
         }
         try {
-            context.service().editPlan(tripId.orElseThrow(), planId.orElseThrow(), destination, date, time);
+            context.service().editPlan(target.tripId(), target.planId(), destination, date, time);
         } catch (IllegalArgumentException exception) {
             return selectedTripResult(context, context.formatter().error(exception.getMessage()));
         }
