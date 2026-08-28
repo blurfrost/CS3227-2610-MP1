@@ -145,7 +145,7 @@ separate from Step 5.
 2. [x] When adding the next CLI mode, decompose `Parser` into mode-specific
    parsers so mode/command conditionals do not accumulate prematurely.
 3. [ ] Add `TripStatus` with an injected `Clock`, then implement future/current/
-   past Organise grouping and its tests.
+   past application queries and Organise grouping when Gallery is available.
 4. [ ] Add Dashboard queries and its CLI mode over the application services.
 5. [ ] Add reviews and Gallery, including completed-Trip filtering and rating/
    review rules.
@@ -226,3 +226,70 @@ from implementing Dashboard behavior.
 - [x] `Parser` contains no mode-specific command conditionals after delegation
   is complete.
 - [x] `./gradlew clean test` and `git diff --check` pass under Java 25.0.3.
+
+## Step 7 — Add Trip Status and an Injected Clock
+
+This step establishes deterministic date-sensitive behavior for Organise,
+Dashboard, and Gallery. It does not add Dashboard or Gallery yet. Organise
+continues showing all stored Trips until Gallery is available, so past Trips
+do not become inaccessible through the current CLI.
+
+### Requirements
+
+- Add a public `TripStatus` enum with `PAST`, `CURRENT`, and `FUTURE` values.
+- Derive a Trip's status from its inclusive date range and a supplied current
+  date; do not persist status.
+- Classify a Trip as `PAST` when its end date is before the current date.
+- Classify a Trip as `FUTURE` when its start date is after the current date.
+- Classify all other valid date ranges as `CURRENT`, including Trips starting
+  or ending on the current date and single-day Trips on the current date.
+- Add `Trip.statusOn(LocalDate currentDate)` as the domain classification API.
+- Require `DoggoService` to receive a `Clock`, and use `LocalDate.now(clock)`
+  for date-sensitive application behavior.
+- Supply `Clock.systemDefaultZone()` from the composition root and fixed Clocks
+  in tests.
+- Preserve `DoggoService.getTrips()` as the sorted query for every Trip.
+- Add sorted application queries for current-and-future Trips and past Trips so
+  future Organise and Gallery implementations share the same classification.
+- Preserve the existing deterministic start-date, title, and UUID ordering for
+  every status query.
+- Make `new` available from Main; it creates a Trip and enters Organise after
+  successful creation. Organise and selected-Trip `new` behavior remains
+  unchanged.
+- Keep the eventual mode invariant explicit: top-level modes create Trips with
+  `new`, while a selected Trip creates a Plan with `new`.
+- Defer switching Organise to the current-and-future query until Gallery can
+  display and manage past Trips. Organise will then use one combined list with
+  current and future Trips.
+
+### Ordered Subtasks
+
+- [x] Specify the status boundary rules in `DeveloperGuide.md` and update the
+  roadmap and active prompt log.
+- [x] Add the public `TripStatus` enum with `PAST`, `CURRENT`, and `FUTURE`.
+- [x] Add `Trip.statusOn(LocalDate)` with null and boundary behavior covered by
+  domain tests.
+- [x] Add the injected `Clock` to `DoggoService` and update the composition
+  root and existing callers.
+- [x] Add current-and-future and past Trip queries while retaining the existing
+  all-Trips query and deterministic ordering.
+- [x] Add fixed-Clock application tests for every status boundary and query.
+- [x] Add Main `new` parsing, help text, and CLI coverage for entering Organise.
+- [x] Review changed Java against the SE-EDU Java coding standard.
+- [x] Run `./gradlew clean test` and `git diff --check` under Java 25.0.3.
+- [x] Generate `_temp/visual-diff.html` from `HEAD` to `WORKTREE`; leave the
+  implementation changes uncommitted unless explicitly instructed otherwise.
+
+### Acceptance Criteria
+
+- [x] Every valid Trip date range has exactly one status, with inclusive
+  current-date boundaries.
+- [x] Status and application query tests are deterministic with a fixed Clock.
+- [x] `getTrips()` still returns past, current, and future Trips in its existing
+  deterministic order.
+- [x] Current-and-future and past queries return only their specified statuses
+  in deterministic order.
+- [x] Main accepts `new`, creates a Trip, and enters Organise successfully.
+- [x] Existing CRUD, navigation, parser, and stale-index behavior remains
+  green.
+- [x] The full test suite and diff checks pass.

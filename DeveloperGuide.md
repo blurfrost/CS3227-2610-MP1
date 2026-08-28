@@ -63,10 +63,12 @@ Development begins with a tested command-line interface (CLI). The application w
 
 - A Trip contains zero or more Plans.
 - A Plan belongs to exactly one Trip.
-- Trip status is derived from inclusive start and end dates:
+- Trip status is derived from inclusive start and end dates relative to a
+  supplied current date:
   - A future Trip starts after the current date.
-  - A current Trip includes the current date within its start and end dates.
   - A past Trip ends before the current date.
+  - Every other valid range is current, including either boundary date and a
+    single-day Trip on the current date.
 - Gallery includes every past Trip. Reviews are optional and are displayed only when present.
 - A Review requires a whole-number rating from 1 to 5 and may contain written text.
 - Reviews can be added only after the associated Trip or Plan has been completed.
@@ -159,8 +161,8 @@ Use separate command classes for navigation and user actions:
 
 ### CLI Behaviour
 
-- Main mode currently accepts `organise` and `exit`; Dashboard, Gallery, and
-  their navigation commands remain planned.
+- Main mode currently accepts `new`, `organise`, and `exit`; Dashboard, Gallery,
+  and their navigation commands remain planned.
 - Organise currently lists Trips and accepts `new`, `edit NUMBER`,
   `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, it accepts
   `new`, `edit NUMBER`, `delete NUMBER`, and `back` for its Plans.
