@@ -130,7 +130,8 @@ Domain: Trip -> Plan
 
 ### Application and Persistence
 
-- `DoggoService` provides presentation-independent Trip and Plan CRUD, Dashboard queries, Gallery queries, and review operations.
+- `DoggoService` provides presentation-independent Trip and Plan CRUD, Dashboard
+  queries, and Gallery queries. Review operations remain future work.
 - `TripRepository` defines `findAll`, `findById`, `save`, and `delete` operations for Trip aggregates.
 - `InMemoryTripRepository` supports early development and isolated application tests.
 - `SqliteTripRepository` provides durable storage and is required before the CLI MVP is complete.
@@ -146,8 +147,9 @@ Domain: Trip -> Plan
 - `CliSession` tracks the current mode, selected Trip, and mappings from displayed list numbers to UUIDs.
 - `Parser` normalizes input, handles global `exit` and `back` commands, and
   delegates mode-specific parsing through `ModeCommandParser` implementations.
-- Main, Organise, selected-Trip, Dashboard, Gallery, and selected-Gallery-Trip
-  parsers own the command grammar for their respective modes.
+- All six Main, Organise, selected-Trip, Dashboard, Gallery, and
+  selected-Gallery-Trip parsers own the command grammar for their respective
+  modes.
 - `IndexedCommandParser` shares indexed-command construction, while
   `InvalidIndexCommand` reports errors using the active displayed snapshot.
 - `Command` executes an action through `DoggoService` and `CliSession`.
@@ -163,21 +165,27 @@ Use separate command classes for navigation and user actions:
   and delete a Plan by number. Dashboard Plan creation and detailed Plan
   viewing remain deferred.
 - Organise commands support creating a Trip, viewing a Trip and its Plans, editing or deleting a Trip by index, and managing Plans within a viewed Trip.
-- Gallery currently lists and selects past Trips and displays their Plans
-  read-only. Trip and Plan review commands are planned.
+- Gallery lists past Trips and supports Trip `new`, `edit`, and `delete`.
+  Selected Gallery Trips support Plan `new`, `edit`, and `delete`. Trip and
+  Plan review commands are planned.
 
 ### CLI Behaviour
 
 - Main mode accepts `new`, `organise`, `dashboard`, `gallery`, and `exit`.
 - Dashboard mode accepts `new`, `edit NUMBER`, `delete NUMBER`, and `back`;
-  global `exit` remains available. Creating a Trip from Dashboard enters
-  Organise, while Plan edits and deletions keep Dashboard active.
+  global `exit` remains available. Plan edits and deletions keep Dashboard
+  active.
+- Trip creation can originate in Main, Dashboard, Organise, or Gallery and
+  enters the resulting status list with list-first behavior. Trip editing
+  originates in Organise or Gallery and also routes by the resulting status.
+  Plan mutations remain in the selected Trip mode.
 - Organise lists current and future Trips and accepts `new`, `edit NUMBER`,
   `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, it accepts
   `new`, `edit NUMBER`, `delete NUMBER`, and `back` for its Plans.
-- Gallery lists past Trips and accepts `view NUMBER` and `back`. A selected
-  Gallery Trip displays its Plans read-only and accepts `back`; global `exit`
-  remains available in both Gallery modes.
+- Gallery lists past Trips and accepts `new`, `view NUMBER`, `edit NUMBER`,
+  `delete NUMBER`, and `back`. A selected Gallery Trip accepts Plan `new`,
+  `edit NUMBER`, `delete NUMBER`, and `back`; global `exit` remains available
+  in both Gallery modes.
 - The CLI displays short one-based list numbers while retaining stable UUIDs internally.
 - Creation and editing commands prompt for individual fields instead of requiring long command lines.
 - Trip and Plan dates use the strict `DD/MM/YYYY` format.
@@ -187,21 +195,25 @@ Use separate command classes for navigation and user actions:
 
 ### Implemented CLI Feature Sets
 
-- Feature Set 1 supports creating and listing Trips through Organise.
+- Feature Set 1 supports creating and listing Trips through the available Trip
+  creation modes, with status-aware list-first routing.
 - Feature Set 2 supports viewing a Trip with `view NUMBER`, using its one-based displayed index.
-- Feature Set 3 supports editing and deleting Trips and Plans through the mode-specific Organise commands.
+- Feature Set 3 supports editing and deleting Trips and Plans through the
+  mode-specific Organise and Gallery commands.
 - Selected Trips display their Plans in chronological date-and-time order.
 - Plans require a destination, a strict `DD/MM/YYYY` date, and a strict `HH:mm` time.
 - Plan dates must fall within the selected Trip's inclusive date range.
 - During Plan creation, `back` is accepted as a destination; for date and time prompts it is invalid input and causes a reprompt.
 - Displayed Trip and Plan indices use retained UUID mappings, and stale targets are reported without prompting for destructive or edit actions.
-- Mode-specific parsing is delegated through separate Main, Organise, and Trip
-  parsers, with shared indexed-command validation and snapshot-aware feedback.
+- Mode-specific parsing is delegated through parsers for Main, Organise,
+  selected Trip, Dashboard, Gallery, and selected Gallery Trip, with shared
+  indexed-command validation and snapshot-aware feedback.
 - Dashboard lists today's Plans in deterministic order and supports
   repository-backed Plan editing and deletion through composite UUID targets.
-- Gallery lists every past Trip and provides a read-only itinerary view through
-  retained UUID targets.
-- Feature Sets 1–3, Dashboard, and read-only Gallery use the in-memory
+- Gallery lists every past Trip and provides retained UUID-targeted Trip and
+  Plan maintenance. Trip mutations route by resulting status and Plan
+  mutations stay in the selected Trip view.
+- Feature Sets 1–3, Dashboard, and Gallery maintenance use the in-memory
   repository; reviews, persistence, and JavaFX remain later work.
 
 ## Acceptance and Test Coverage
@@ -209,7 +221,8 @@ Use separate command classes for navigation and user actions:
 - Verify Trip and Plan creation, editing, deletion, retrieval, and persistence across application restarts.
 - Verify Trip status at start-date and end-date boundaries.
 - Verify Dashboard includes only today's Plans and orders them deterministically.
-- Verify Gallery excludes current and future Trips and includes past Trips without reviews.
+- Verify Gallery excludes current and future Trips, includes past Trips without
+  reviews, and supports safe Trip and Plan maintenance.
 - Verify Trip and Plan review eligibility and rating validation.
 - Verify failed writes do not damage previously persisted data.
 - Verify domain and application tests run without JavaFX or the production database.

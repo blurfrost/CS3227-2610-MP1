@@ -36,11 +36,13 @@
 - Active multi-step implementation work is tracked in `IMPLEMENTATION_PLAN.md`; read it before resuming that work.
 - Project-local Codex skills are stored under `.codex/skills/`.
 - The project includes local copies of `present-changes-visually`, `seedu-git-standard`, and `seedu-java-coding-standard`.
-- CLI parsing uses a package-private `ModeCommandParser` contract with separate
-  Main, Organise, and Trip parsers; shared indexed parsing uses retained display
-  snapshots for Trip/Plan feedback.
+- CLI parsing uses a package-private `ModeCommandParser` contract with
+  mode-specific parsers for all implemented CLI modes; shared indexed parsing
+  uses retained display snapshots for Trip/Plan feedback.
 - Dashboard CLI mode is implemented with a Clock-backed current-day Plan query,
   composite Trip/Plan targets, and repository-backed Plan editing and deletion.
-- Read-only Gallery CLI modes list Clock-classified past Trips and their Plans;
-  Organise lists only current and future Trips now that Gallery is available.
+- Gallery CLI modes maintain Clock-classified past Trips and their Plans with
+  status-aware Trip creation/edit routing; Plan mutations remain in the
+  selected context, while retained UUID/composite targets protect stale or
+  reclassified records.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.

@@ -4,7 +4,8 @@
 
 - [x] Steps 1–8: Organise CRUD, stable targeting, parser decomposition,
   Trip status, and Dashboard CLI
-- [ ] Step 9: Add Gallery and reviews
+- [x] Step 9: Add Gallery navigation and maintenance
+- [ ] Step 10: Add reviews
 
 Keep completed implementation detail in the prompt logs and Git history. Keep
 this file focused on durable decisions, the active milestone, and future work.
@@ -33,7 +34,8 @@ this file focused on durable decisions, the active milestone, and future work.
   Trip dates without persisting status.
 - `DoggoService` uses an injected `Clock` for deterministic current/future,
   past, and Dashboard queries.
-- Top-level `new` creates a Trip and enters Organise.
+- Trip creation routes by status to the resulting Trip list and preserves
+  list-first behavior.
 
 ### Dashboard — Step 8
 
@@ -65,61 +67,22 @@ this file focused on durable decisions, the active milestone, and future work.
 - Deletion confirmation accepts only exact lowercase `yes` or `no`.
 - Repository-backed aggregate operations remain presentation-independent.
 
-## Step 9 — Add Gallery and Reviews
+## Gallery Navigation and Maintenance — Step 9
 
-Gallery is delivered in vertical slices so past Trips remain useful before the
-review model and review commands are introduced.
+- [x] Gallery navigation and maintenance subtasks 1–9.
+- The Gallery LIST supports Trip creation, editing, and deletion. A selected
+  Gallery Trip supports Plan creation, editing, and deletion.
+- Trip creation and successful date-changing edits route to the resulting
+  status list while preserving list-first behavior; Plan mutations stay in the
+  selected Trip view.
+- Retained Trip UUIDs and composite Trip/Plan targets, active-list validation,
+  confirmation, stale/reclassified protection, and refreshed numbering are
+  implemented and covered by unit, integration, and end-to-end tests.
+- Gallery maintenance acceptance coverage is complete. Reviews are not part
+  of this milestone.
 
-### Ordered Subtasks
+## Review Subtasks
 
-1. [x] Add read-only Gallery navigation and past-Trip views.
-   - Add Main `gallery`, Gallery list and selected-Trip modes, mode-specific
-     parsers, `view NUMBER`, `back`, global `exit`, and help text.
-   - Query `DoggoService.getPastTrips()`, retain displayed Trip UUIDs, and
-     render selected Trip Plans without Organise mutation commands.
-   - Change Organise to list `getCurrentAndFutureTrips()` after Gallery becomes
-     reachable.
-   - Cover empty, boundary, ordering, malformed-index, stale-target,
-     read-only, and navigation behavior.
-2. [ ] Add Clock-backed status classification and centralized Trip-list
-   routing.
-   - Add `DoggoService.getTripStatus(Trip)` using the injected Clock.
-   - Add one CLI helper that enters Gallery for a past Trip or Organise for a
-     current/future Trip and renders the corresponding list.
-   - Cover inclusive status boundaries and both routing destinations.
-3. [ ] Make Trip creation status-aware in every Trip-creation mode.
-   - Add Gallery-list `new` and reuse `NewTripCommand`.
-   - Route newly created past Trips to the Gallery list and current/future
-     Trips to the Organise list, regardless of whether creation began in Main,
-     Dashboard, Organise, or Gallery.
-   - Do not automatically open the new Trip.
-4. [ ] Add Gallery Trip editing with active-list validation.
-   - Route Gallery `edit NUMBER` to the existing `EditTripCommand`.
-   - Reuse existing prompts and validation while refreshing the initiating
-     list for no-op, invalid, stale, and failed outcomes.
-   - After a successful edit, route by the updated Trip status. Past-to-active
-     edits enter Organise; active-to-past edits enter Gallery.
-5. [ ] Add Gallery Trip deletion.
-   - Route Gallery `delete NUMBER` to the existing `DeleteTripCommand`.
-   - Preserve exact confirmation and aggregate deletion behavior, including
-     eventual removal of owned reviews.
-   - Refresh Gallery after deletion or cancellation and safely reject stale or
-     reclassified targets before prompting.
-6. [ ] Add Plan creation to selected Gallery Trips.
-   - Record composite Trip/Plan targets while rendering Gallery Trip details.
-   - Route selected-Gallery-Trip `new` to the existing `NewPlanCommand`.
-   - Reuse inclusive Trip-date validation and refresh the Gallery Trip detail
-     after success or failure.
-7. [ ] Add Gallery Plan editing.
-   - Route selected-Gallery-Trip `edit NUMBER` to `EditPlanCommand`.
-   - Validate the selected Trip and composite Plan target in Gallery mode,
-     then refresh chronological ordering after every non-exit outcome.
-8. [ ] Add Gallery Plan deletion.
-   - Route selected-Gallery-Trip `delete NUMBER` to `DeletePlanCommand`.
-   - Preserve exact confirmation, cancellation, stale-target protection, and
-     refreshed numbering.
-9. [ ] Complete Gallery maintenance acceptance coverage and synchronize
-   documentation before starting reviews.
 10. [ ] Add an immutable `Review` value with a required whole-number rating
    from 1 to 5 and optional normalized text.
 11. [ ] Add optional Trip and Plan reviews to copy-on-write aggregates without
@@ -132,54 +95,13 @@ review model and review commands are introduced.
 15. [ ] Complete review acceptance coverage, documentation synchronization,
    Java-standard review, full tests, diff checks, and visual review.
 
-### First-Slice Acceptance Criteria
-
-- [x] Gallery includes only past Trips and includes Trips without reviews.
-- [x] Organise lists only current and future Trips.
-- [x] Gallery selection uses the displayed UUID snapshot and rejects stale or
-  out-of-range targets without opening another Trip.
-- [x] Selected Gallery Trips display Plans chronologically and expose no Trip
-  or Plan mutation commands.
-- [x] Gallery detail `back` returns to Gallery; Gallery `back` returns to Main;
-  global `exit` remains available.
-
-### Gallery Maintenance Requirements
-
-- Gallery list commands are `new`, `view NUMBER`, `edit NUMBER`,
-  `delete NUMBER`, and `back`; global `exit` remains available.
-- Selected Gallery Trip commands are Plan-level `new`, `edit NUMBER`,
-  `delete NUMBER`, and `back`; global `exit` remains available.
-- Existing Trip and Plan CRUD commands and service operations are reused. Do
-  not introduce duplicate Gallery-specific mutation commands.
-- A displayed Trip must still belong to the initiating Organise or Gallery
-  query before prompting. Deleted or reclassified records are stale targets.
-- Selected Trip operations must match the selected Trip UUID, and Plan
-  operations must resolve through the retained composite target.
-- Trip creation and successful Trip editing route by resulting status and show
-  the corresponding Trip list. Plan mutations stay in the selected Trip view.
-- Invalid input, cancellation, stale targets, and late failures refresh the
-  initiating mode without mutating another aggregate.
-- Gallery permits historical Plan creation so manually entered past Trips can
-  be populated before reviews are added.
-
-### Gallery Maintenance Acceptance Criteria
-
-- [ ] Creating a past Trip from any Trip-creation mode shows it in Gallery;
-  creating a current/future Trip shows it in Organise.
-- [ ] Gallery Trip edits and deletions reuse existing validation, confirmation,
-  copy-on-write, and stable-target behavior.
-- [ ] A Trip edited across the past/current boundary moves to and displays in
-  the correct list automatically.
-- [ ] Selected Gallery Trips support Plan creation, editing, and deletion and
-  remain in the historical Trip context after each Plan mutation.
-- [ ] Gallery and Organise reject stale or reclassified Trip and Plan targets
-  without prompting or mutating a different record.
-- [ ] Existing Main, Dashboard, Organise, and selected-Trip behavior remains
-  green under the complete test suite.
+- Gallery acceptance coverage verifies status-aware creation, cross-status Trip
+  editing, historical Trip/Plan mutations, refreshed numbering, cancellation,
+  stale-target handling, and unchanged behavior in existing modes.
 
 ## Future Roadmap
 
-1. [ ] Complete reviews and Gallery (Step 9).
+1. [ ] Complete reviews (Step 10).
 2. [ ] Add SQLite persistence after the aggregate schema is stable.
 3. [ ] Add a centralized `RepositoryException` boundary before connecting a
    fallible repository, with failing read/save/delete tests and cause

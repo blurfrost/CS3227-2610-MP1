@@ -100,7 +100,7 @@ class CliSessionTest {
     }
 
     @Test
-    void enterGalleryTrip_setsReadOnlyTripModeAndSelection() {
+    void enterGalleryTrip_setsTripModeAndSelection() {
         CliSession session = new CliSession();
         UUID tripId = UUID.randomUUID();
 

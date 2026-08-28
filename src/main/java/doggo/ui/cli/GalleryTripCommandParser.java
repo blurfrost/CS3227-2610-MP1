@@ -1,7 +1,7 @@
 package doggo.ui.cli;
 
 /**
- * Parses commands available while viewing a read-only Gallery Trip.
+ * Parses commands available while viewing a selected Gallery Trip.
  */
 final class GalleryTripCommandParser implements ModeCommandParser {
     @Override

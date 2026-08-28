@@ -55,6 +55,52 @@ class CliTest {
     }
 
     @Test
+    void galleryMaintenance_endToEnd_updatesPlansAndCancelsTripDeletion() {
+        String input = String.join("\n", "new", "Past trip", "01/01/2027", "04/01/2027",
+                "edit 1", "Historical trip", "", "", "view 1", "new", "Museum",
+                "02/01/2027", "09:00", "new", "Dinner", "03/01/2027", "19:00", "edit 1",
+                "Museum updated", "02/01/2027", "10:00", "new", "Park", "01/01/2027", "08:00",
+                "delete 2", "yes", "back", "delete 1", "no", "exit") + "\n";
+        String output = runCli(input);
+        int planDeletionMarker = output.indexOf("Plan deleted.");
+
+        assertTrue(planDeletionMarker >= 0);
+        String afterPlanDeletion = output.substring(planDeletionMarker);
+        assertTrue(output.contains("Trip updated."));
+        assertTrue(output.contains("Plan created!"));
+        assertTrue(output.contains("Plan updated."));
+        assertTrue(output.contains("Plan deleted."));
+        assertTrue(output.contains("Trip deletion cancelled."));
+        assertTrue(afterPlanDeletion.contains("1. Park (01/01/2027 at 08:00)"));
+        assertTrue(afterPlanDeletion.contains("2. Dinner (03/01/2027 at 19:00)"));
+        assertFalse(afterPlanDeletion.contains("Museum updated (02/01/2027 at 10:00)"));
+        assertTrue(output.endsWith("Bye!\n"));
+    }
+
+    @Test
+    void galleryMaintenance_editingAcrossStatusBoundary_routesListFirst() {
+        String input = String.join("\n", "new", "Historical trip", "01/01/2027", "04/01/2027",
+                "edit 1", "", "", "06/01/2027", "edit 1", "", "", "04/01/2027", "exit")
+                + "\n";
+        String output = runCli(input);
+        int firstUpdate = output.indexOf("Trip updated.");
+        int secondUpdate = output.indexOf("Trip updated.", firstUpdate + 1);
+
+        assertTrue(firstUpdate >= 0);
+        assertTrue(secondUpdate > firstUpdate);
+        String betweenUpdates = output.substring(firstUpdate, secondUpdate);
+        String afterSecondUpdate = output.substring(secondUpdate);
+
+        assertTrue(betweenUpdates.contains("[MODE: ORGANISE]"));
+        assertTrue(betweenUpdates.contains("Historical trip (from 01/01/2027 to 06/01/2027)"));
+        assertFalse(betweenUpdates.contains("Viewing: Historical trip"));
+        assertTrue(afterSecondUpdate.contains("[MODE: GALLERY]"));
+        assertTrue(afterSecondUpdate.contains("Historical trip (from 01/01/2027 to 04/01/2027)"));
+        assertFalse(afterSecondUpdate.contains("Viewing past Trip: Historical trip"));
+        assertTrue(output.endsWith("Bye!\n"));
+    }
+
+    @Test
     void dashboardNavigation_returnsToMain() {
         String input = String.join("\n", "DaShBoArD", "back", "exit") + "\n";
         String output = runCli(input);
