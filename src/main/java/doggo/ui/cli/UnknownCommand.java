@@ -9,15 +9,15 @@ final class UnknownCommand implements Command {
 
     @Override
     public CommandResult execute(CliContext context) {
-        String menu = context.session().mode() == CliMode.MAIN
-                ? context.formatter().mainMenu()
-                : context.organiseMenu();
-        if (context.session().mode() == CliMode.TRIP) {
-            menu = context.session().selectedTripId()
-                    .flatMap(context.service()::getTrip)
-                    .map(context::selectedTripView)
-                    .orElse(menu);
-        }
+        String menu = switch (context.session().mode()) {
+        case MAIN -> context.formatter().mainMenu();
+        case ORGANISE -> context.organiseMenu();
+        case DASHBOARD -> context.dashboardMenu();
+        case TRIP -> context.session().selectedTripId()
+                .flatMap(context.service()::getTrip)
+                .map(context::selectedTripView)
+                .orElseGet(context::organiseMenu);
+        };
         String message = context.formatter().error("Unknown command \"" + input + "\".\n" + menu);
         return new CommandResult(message, false);
     }

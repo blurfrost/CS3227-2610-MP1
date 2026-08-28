@@ -32,4 +32,11 @@ class ParserTest {
         assertInstanceOf(InvalidIndexCommand.class, parser.parse("view abc", CliMode.ORGANISE));
         assertInstanceOf(InvalidIndexCommand.class, parser.parse("view 0", CliMode.ORGANISE));
     }
+
+    @Test
+    void parseDashboard_delegatesToDashboardParser() {
+        Parser parser = new Parser();
+
+        assertInstanceOf(UnknownCommand.class, parser.parse("edit 1", CliMode.DASHBOARD));
+    }
 }

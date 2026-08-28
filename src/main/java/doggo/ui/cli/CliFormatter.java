@@ -13,7 +13,13 @@ final class CliFormatter {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     String mainMenu() {
-        return "Welcome! Available commands are: \"new\", \"organise\", \"exit\"";
+        return "Welcome! Available commands are: \"new\", \"organise\", \"dashboard\", \"exit\"";
+    }
+
+    String dashboardMenu() {
+        return "[MODE: DASHBOARD]\n"
+                + "Dashboard commands are not available yet.\n\n"
+                + "Type \"back\" to go back to the Main Menu.";
     }
 
     /**

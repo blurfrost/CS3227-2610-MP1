@@ -11,6 +11,7 @@ class ModeCommandParserTest {
 
         assertInstanceOf(OrganiseCommand.class, parser.parse("organise"));
         assertInstanceOf(NewTripCommand.class, parser.parse("new"));
+        assertInstanceOf(DashboardCommand.class, parser.parse("DaShBoArD"));
     }
 
     @Test
@@ -30,5 +31,14 @@ class ModeCommandParserTest {
         assertInstanceOf(NewPlanCommand.class, parser.parse("new"));
         assertInstanceOf(EditPlanCommand.class, parser.parse("edit 1"));
         assertInstanceOf(DeletePlanCommand.class, parser.parse("delete 1"));
+    }
+
+    @Test
+    void dashboardCommandParser_rejectsUnsupportedCommandsForNow() {
+        ModeCommandParser parser = new DashboardCommandParser();
+
+        assertInstanceOf(UnknownCommand.class, parser.parse("new"));
+        assertInstanceOf(UnknownCommand.class, parser.parse("edit 1"));
+        assertInstanceOf(UnknownCommand.class, parser.parse("delete 1"));
     }
 }

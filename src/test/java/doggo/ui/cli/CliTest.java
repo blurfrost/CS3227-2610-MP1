@@ -16,6 +16,27 @@ import org.junit.jupiter.api.Test;
 
 class CliTest {
     @Test
+    void dashboardNavigation_returnsToMain() {
+        String input = String.join("\n", "DaShBoArD", "back", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("[MODE: DASHBOARD]"));
+        assertTrue(output.contains("Dashboard commands are not available yet."));
+        assertTrue(output.contains("Welcome! Available commands are"));
+        assertTrue(output.endsWith("Bye!\n"));
+    }
+
+    @Test
+    void unknownDashboardCommand_keepsDashboardView() {
+        String input = String.join("\n", "dashboard", "unknown", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Error: Unknown command \"unknown\"."));
+        assertTrue(output.contains("[MODE: DASHBOARD]"));
+        assertFalse(output.contains("[MODE: ORGANISE]"));
+    }
+
+    @Test
     void createTripFromMain_entersOrganiseMode() {
         String input = String.join("\n", "new", "Japan trip", "01/01/2027", "09/01/2027",
                 "back", "exit") + "\n";
