@@ -104,7 +104,8 @@ final class CliFormatter {
                 .append(DATE_FORMATTER.format(trip.endDate()))
                 .append(")\n");
         appendPlans(message, plans);
-        return message.append("Type \"back\" to go back to the Gallery.").toString();
+        return message.append("Type \"new\" to create a new Plan.\n")
+                .append("Type \"back\" to go back to the Gallery.").toString();
     }
 
     String tripView(Trip trip, List<Plan> plans) {

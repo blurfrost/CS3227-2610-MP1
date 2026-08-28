@@ -55,7 +55,8 @@ class ModeCommandParserTest {
         assertInstanceOf(EditTripCommand.class, galleryParser.parse("edit 1"));
         assertInstanceOf(DeleteTripCommand.class, galleryParser.parse("delete 1"));
         assertInstanceOf(InvalidCommand.class, galleryParser.parse("delete"));
-        assertInstanceOf(UnknownCommand.class, galleryTripParser.parse("new"));
+        assertInstanceOf(NewPlanCommand.class, galleryTripParser.parse("NeW"));
+        assertInstanceOf(UnknownCommand.class, galleryTripParser.parse("new 1"));
         assertInstanceOf(UnknownCommand.class, galleryTripParser.parse("delete 1"));
     }
 }

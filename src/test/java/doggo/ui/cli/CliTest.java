@@ -18,13 +18,13 @@ class CliTest {
     @Test
     void galleryNavigation_viewsPastTripAndReturnsToMain() {
         String input = String.join("\n", "new", "Japan", "01/01/2027", "04/01/2027",
-                "back", "gallery", "view 1", "new", "back", "back", "exit") + "\n";
+                "back", "gallery", "view 1", "back", "back", "exit") + "\n";
         String output = runCli(input);
 
         assertTrue(output.contains("[MODE: GALLERY]"));
         assertTrue(output.contains("1. Japan (from 01/01/2027 to 04/01/2027)"));
         assertTrue(output.contains("Viewing past Trip: Japan"));
-        assertTrue(output.contains("Error: Unknown command \"new\"."));
+        assertTrue(output.contains("Type \"new\" to create a new Plan."));
         assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
         assertTrue(output.endsWith("Bye!\n"));
     }

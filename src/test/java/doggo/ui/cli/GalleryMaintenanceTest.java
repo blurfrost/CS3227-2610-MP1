@@ -317,6 +317,112 @@ class GalleryMaintenanceTest {
         assertEquals(CliMode.ORGANISE, organiseContext.session().mode());
     }
 
+    @Test
+    void newPlanGalleryTrip_createsPlanAndStaysInHistoricalTripView() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        CliContext context = createContext(service, "Tokyo\n01/01/2027\n09:00\n");
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(trip);
+
+        CommandResult result = new NewPlanCommand().execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY_TRIP, context.session().mode());
+        assertTrue(result.message().contains("Plan created!"));
+        assertTrue(result.message().contains("Tokyo (01/01/2027 at 09:00)"));
+        assertEquals(trip.id(), context.session().planTargetAt(1).orElseThrow().tripId());
+    }
+
+    @Test
+    void newPlanGalleryTrip_acceptsInclusiveEndDate() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        CliContext context = createContext(service, "Tokyo\n04/01/2027\n09:00\n");
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(trip);
+
+        CommandResult result = new NewPlanCommand().execute(context);
+
+        assertFalse(result.shouldExit());
+        assertTrue(result.message().contains("Tokyo (04/01/2027 at 09:00)"));
+    }
+
+    @Test
+    void newPlanGalleryTrip_missingSelection_doesNotPromptAndReturnsToGallery() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        CliContext context = createNoPromptContext(service);
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(trip);
+        repository.delete(trip.id());
+
+        CommandResult result = new NewPlanCommand().execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY, context.session().mode());
+        assertTrue(result.message().contains("There are no past Trips."));
+    }
+
+    @Test
+    void newPlanGalleryTrip_reclassifiedSelection_doesNotPromptAndReturnsToOwningList() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        CliContext context = createNoPromptContext(service);
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(trip);
+        repository.save(new Trip(trip.id(), trip.title(), LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5)));
+
+        CommandResult result = new NewPlanCommand().execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.ORGANISE, context.session().mode());
+        assertTrue(result.message().contains("Japan (from 05/01/2027 to 05/01/2027)"));
+    }
+
+    @Test
+    void newPlanGalleryTrip_lateDeletionFallsBackWithoutMutatingAnotherTrip() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        StringWriter output = new StringWriter();
+        PrintWriter writer = new PrintWriter(output);
+        BufferedReader input = new BufferedReader(new StringReader("Tokyo\n01/01/2027\n09:00\n")) {
+            private int linesRead;
+
+            @Override
+            public String readLine() throws IOException {
+                String line = super.readLine();
+                linesRead++;
+                if (linesRead == 3) {
+                    repository.delete(trip.id());
+                }
+                return line;
+            }
+        };
+        CliContext context = new CliContext(service, new CliSession(),
+                new CliPrompter(input, writer), new CliFormatter(), writer);
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(trip);
+
+        CommandResult result = new NewPlanCommand().execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY, context.session().mode());
+        assertTrue(result.message().contains("Selected Trip is no longer available."));
+        assertTrue(service.getTrip(trip.id()).isEmpty());
+    }
+
     private static CliContext createContext(DoggoService service, String input) {
         StringWriter output = new StringWriter();
         PrintWriter writer = new PrintWriter(output);

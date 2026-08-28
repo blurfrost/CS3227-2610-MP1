@@ -50,7 +50,7 @@ class StaleTargetCommandTest {
         CommandResult result = new NewPlanCommand().execute(context);
 
         assertFalse(result.shouldExit());
-        assertTrue(result.message().contains("Selected Trip could not be found."));
+        assertTrue(result.message().contains("Selected Trip is no longer available."));
         assertTrue(result.message().contains("[MODE: ORGANISE]"));
     }
 

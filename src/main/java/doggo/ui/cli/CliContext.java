@@ -82,7 +82,71 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
     }
 
     String selectedGalleryTripView(Trip trip) {
-        return formatter.galleryTripView(trip, service.getPlans(trip));
+        List<Plan> plans = service.getPlans(trip);
+        session.setDisplayedPlanTargets(trip.id(), plans.stream().map(Plan::id).toList());
+        return formatter.galleryTripView(trip, plans);
+    }
+
+    Optional<Trip> selectedTripForMode() {
+        Optional<Trip> selectedTrip = session.selectedTripId().flatMap(service::getTrip);
+        if (selectedTrip.isEmpty()) {
+            return Optional.empty();
+        }
+
+        TripStatus status = service.getTripStatus(selectedTrip.orElseThrow());
+        boolean isValidSelection = switch (session.mode()) {
+        case TRIP -> status != TripStatus.PAST;
+        case GALLERY_TRIP -> status == TripStatus.PAST;
+        default -> false;
+        };
+        return isValidSelection ? selectedTrip : Optional.empty();
+    }
+
+    String refreshSelectedTripMode() {
+        return switch (session.mode()) {
+        case TRIP -> {
+            Optional<Trip> selectedTrip = selectedTripForMode();
+            if (selectedTrip.isPresent()) {
+                yield selectedTripView(selectedTrip.orElseThrow());
+            }
+            Optional<Trip> storedTrip = session.selectedTripId().flatMap(service::getTrip);
+            if (storedTrip.isPresent()) {
+                yield enterTripListFor(storedTrip.orElseThrow());
+            }
+            yield refreshOwningTripList(CliMode.ORGANISE);
+        }
+        case GALLERY_TRIP -> {
+            Optional<Trip> selectedTrip = selectedTripForMode();
+            if (selectedTrip.isPresent()) {
+                yield selectedGalleryTripView(selectedTrip.orElseThrow());
+            }
+            Optional<Trip> storedTrip = session.selectedTripId().flatMap(service::getTrip);
+            if (storedTrip.isPresent()) {
+                yield enterTripListFor(storedTrip.orElseThrow());
+            }
+            yield refreshOwningTripList(CliMode.GALLERY);
+        }
+        default -> throw new IllegalArgumentException("Mode must be a selected Trip mode.");
+        };
+    }
+
+    /**
+     * Enters and renders the specified owning Trip list.
+     *
+     * @param mode Trip list mode to enter.
+     * @return Rendered Trip list.
+     */
+    private String refreshOwningTripList(CliMode mode) {
+        switch (mode) {
+        case ORGANISE:
+            session.enterOrganise();
+            return organiseMenu();
+        case GALLERY:
+            session.enterGallery();
+            return galleryMenu();
+        default:
+            throw new IllegalArgumentException("Mode must be a Trip list mode.");
+        }
     }
 
     String refreshCurrentView() {
@@ -91,22 +155,7 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
         case ORGANISE -> organiseMenu();
         case DASHBOARD -> dashboardMenu();
         case GALLERY -> galleryMenu();
-        case TRIP -> session.selectedTripId()
-                .flatMap(service::getTrip)
-                .map(this::selectedTripView)
-                .orElseGet(() -> {
-                    session.enterOrganise();
-                    return organiseMenu();
-                });
-        case GALLERY_TRIP -> session.selectedTripId()
-                .flatMap(selectedTripId -> service.getPastTrips().stream()
-                        .filter(trip -> trip.id().equals(selectedTripId))
-                        .findFirst())
-                .map(this::selectedGalleryTripView)
-                .orElseGet(() -> {
-                    session.enterGallery();
-                    return galleryMenu();
-                });
+        case TRIP, GALLERY_TRIP -> refreshSelectedTripMode();
         };
     }
 }

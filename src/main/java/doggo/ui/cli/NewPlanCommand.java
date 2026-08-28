@@ -2,22 +2,19 @@ package doggo.ui.cli;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.UUID;
+import java.util.Optional;
 
 import doggo.domain.Trip;
 
 final class NewPlanCommand implements Command {
     @Override
     public CommandResult execute(CliContext context) {
-        Trip selectedTrip = context.session().selectedTripId()
-                .flatMap(context.service()::getTrip)
-                .orElse(null);
+        Trip selectedTrip = context.selectedTripForMode().orElse(null);
         if (selectedTrip == null) {
-            context.session().enterOrganise();
             return new CommandResult(context.formatter().error(
-                    "Selected Trip could not be found.\n" + context.organiseMenu()), false);
+                    "Selected Trip is no longer available.\n"
+                            + context.refreshSelectedTripMode()), false);
         }
-
         String destination = promptDestination(context);
         if (destination == null) {
             return new CommandResult("Bye!", true);
@@ -41,14 +38,18 @@ final class NewPlanCommand implements Command {
         }
 
         try {
-            UUID selectedTripId = context.session().selectedTripId()
-                    .orElseThrow(() -> new IllegalStateException("No Trip is selected."));
-            context.service().addPlan(selectedTripId, destination, date, time);
+            Optional<Trip> refreshedTrip = context.selectedTripForMode();
+            if (refreshedTrip.isEmpty()) {
+                return new CommandResult(context.formatter().error(
+                        "Selected Trip is no longer available.\n"
+                                + context.refreshSelectedTripMode()), false);
+            }
+            context.service().addPlan(refreshedTrip.orElseThrow().id(), destination, date, time);
         } catch (IllegalArgumentException exception) {
             context.output().println(context.formatter().error(exception.getMessage()));
-            return new CommandResult(selectedTripView(context), false);
+            return new CommandResult(context.refreshSelectedTripMode(), false);
         }
-        return new CommandResult("Plan created!\n" + selectedTripView(context), false);
+        return new CommandResult("Plan created!\n" + context.refreshSelectedTripMode(), false);
     }
 
     /**
@@ -128,18 +129,5 @@ final class NewPlanCommand implements Command {
                         "Time must use the HH:mm format and be a real time."));
             }
         }
-    }
-
-    /**
-     * Formats the currently selected Trip.
-     *
-     * @param context CLI dependencies.
-     * @return Selected Trip view, or an error when it is unavailable.
-     */
-    private static String selectedTripView(CliContext context) {
-        return context.session().selectedTripId()
-                .flatMap(context.service()::getTrip)
-                .map(context::selectedTripView)
-                .orElse(context.formatter().error("Selected Trip could not be found."));
     }
 }

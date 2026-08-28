@@ -171,4 +171,27 @@ class CliContextTest {
 
         assertEquals(List.of(secondPlan), service.getTrip(tripId).orElseThrow().plans());
     }
+
+    @Test
+    void selectedGalleryTripView_sortsPlansAndRecordsCompositeTargets() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        UUID tripId = UUID.randomUUID();
+        Plan laterPlan = new Plan(UUID.randomUUID(), "Later", LocalDate.of(2027, 1, 3),
+                LocalTime.of(9, 0));
+        Plan earlierPlan = new Plan(UUID.randomUUID(), "Earlier", LocalDate.of(2027, 1, 2),
+                LocalTime.of(9, 0));
+        Trip trip = new Trip(tripId, "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        repository.save(trip.withAddedPlan(laterPlan).withAddedPlan(earlierPlan));
+        CliSession session = new CliSession();
+        session.enterGalleryTrip(tripId);
+        CliContext context = new CliContext(service, session, null, new CliFormatter(), null);
+
+        String output = context.selectedGalleryTripView(service.getTrip(tripId).orElseThrow());
+
+        assertEquals(new PlanTarget(tripId, earlierPlan.id()), session.planTargetAt(1).orElseThrow());
+        assertEquals(new PlanTarget(tripId, laterPlan.id()), session.planTargetAt(2).orElseThrow());
+        assertTrue(output.indexOf("Earlier") < output.indexOf("Later"));
+    }
 }

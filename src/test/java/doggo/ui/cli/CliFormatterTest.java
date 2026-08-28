@@ -86,8 +86,8 @@ class CliFormatterTest {
 
         assertTrue(output.contains("Viewing past Trip: Japan"));
         assertTrue(output.contains("Tokyo (02/01/2027 at 09:00)"));
+        assertTrue(output.contains("Type \"new\" to create a new Plan."));
         assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
-        assertFalse(output.contains("create a new Plan"));
         assertFalse(output.contains("edit NUMBER"));
     }
 }

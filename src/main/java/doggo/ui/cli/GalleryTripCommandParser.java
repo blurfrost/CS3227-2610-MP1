@@ -6,6 +6,9 @@ package doggo.ui.cli;
 final class GalleryTripCommandParser implements ModeCommandParser {
     @Override
     public Command parse(String command) {
+        if (command.equalsIgnoreCase("new")) {
+            return new NewPlanCommand();
+        }
         return new UnknownCommand(command);
     }
 }
