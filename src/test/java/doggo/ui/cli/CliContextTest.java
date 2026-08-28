@@ -1,6 +1,7 @@
 package doggo.ui.cli;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -20,6 +21,34 @@ import doggo.storage.InMemoryTripRepository;
 import org.junit.jupiter.api.Test;
 
 class CliContextTest {
+    @Test
+    void dashboardMenu_recordsTargetsInDisplayedOrder() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        UUID firstTripId = UUID.randomUUID();
+        UUID secondTripId = UUID.randomUUID();
+        UUID firstPlanId = UUID.randomUUID();
+        UUID secondPlanId = UUID.randomUUID();
+        Trip firstTrip = new Trip(firstTripId, "Japan", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
+        Trip secondTrip = new Trip(secondTripId, "Korea", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
+        Plan firstPlan = new Plan(firstPlanId, "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(13, 0));
+        Plan secondPlan = new Plan(secondPlanId, "Seoul", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        repository.save(firstTrip.withAddedPlan(firstPlan));
+        repository.save(secondTrip.withAddedPlan(secondPlan));
+        CliSession session = new CliSession();
+        CliContext context = new CliContext(service, session, null, new CliFormatter(), null);
+
+        String output = context.dashboardMenu();
+
+        assertEquals(new PlanTarget(secondTripId, secondPlanId), session.planTargetAt(1).orElseThrow());
+        assertEquals(new PlanTarget(firstTripId, firstPlanId), session.planTargetAt(2).orElseThrow());
+        assertTrue(output.indexOf("Seoul") < output.indexOf("Tokyo"));
+    }
+
     @Test
     void deletePlan_usesDisplayedPlanAfterRepositoryOrderChanges() {
         InMemoryTripRepository repository = new InMemoryTripRepository();

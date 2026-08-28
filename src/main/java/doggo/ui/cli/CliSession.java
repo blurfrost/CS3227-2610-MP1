@@ -64,9 +64,13 @@ final class CliSession {
 
     void setDisplayedPlanTargets(UUID tripId, List<UUID> planIds) {
         Objects.requireNonNull(tripId);
-        this.displayedPlanTargets = planIds.stream()
+        setDisplayedPlanTargets(planIds.stream()
                 .map(planId -> new PlanTarget(tripId, planId))
-                .toList();
+                .toList());
+    }
+
+    void setDisplayedPlanTargets(List<PlanTarget> displayedPlanTargets) {
+        this.displayedPlanTargets = List.copyOf(displayedPlanTargets);
     }
 
     Optional<PlanTarget> planTargetAt(int oneBasedIndex) {

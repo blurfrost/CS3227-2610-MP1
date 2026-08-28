@@ -21,7 +21,7 @@ class CliTest {
         String output = runCli(input);
 
         assertTrue(output.contains("[MODE: DASHBOARD]"));
-        assertTrue(output.contains("Dashboard commands are not available yet."));
+        assertTrue(output.contains("There are no Plans scheduled for today."));
         assertTrue(output.contains("Welcome! Available commands are"));
         assertTrue(output.endsWith("Bye!\n"));
     }
@@ -34,6 +34,17 @@ class CliTest {
         assertTrue(output.contains("Error: Unknown command \"unknown\"."));
         assertTrue(output.contains("[MODE: DASHBOARD]"));
         assertFalse(output.contains("[MODE: ORGANISE]"));
+    }
+
+    @Test
+    void dashboard_displaysPlansScheduledForCurrentDate() {
+        String input = String.join("\n", "organise", "new", "Japan", "05/01/2027",
+                "05/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Today's itinerary:"));
+        assertTrue(output.contains("1. 09:00 - Tokyo (Trip: Japan)"));
     }
 
     @Test

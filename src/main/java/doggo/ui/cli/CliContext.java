@@ -3,6 +3,7 @@ package doggo.ui.cli;
 import java.io.PrintWriter;
 import java.util.List;
 
+import doggo.application.DashboardEntry;
 import doggo.application.DoggoService;
 import doggo.domain.Plan;
 import doggo.domain.Trip;
@@ -22,6 +23,10 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
     }
 
     String dashboardMenu() {
-        return formatter.dashboardMenu();
+        List<DashboardEntry> entries = service.getDashboardEntries();
+        session.setDisplayedPlanTargets(entries.stream()
+                .map(entry -> new PlanTarget(entry.tripId(), entry.plan().id()))
+                .toList());
+        return formatter.dashboardMenu(entries);
     }
 }

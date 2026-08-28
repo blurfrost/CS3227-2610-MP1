@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import doggo.application.DashboardEntry;
 import doggo.domain.Plan;
 import doggo.domain.Trip;
 
@@ -16,10 +17,26 @@ final class CliFormatter {
         return "Welcome! Available commands are: \"new\", \"organise\", \"dashboard\", \"exit\"";
     }
 
-    String dashboardMenu() {
-        return "[MODE: DASHBOARD]\n"
-                + "Dashboard commands are not available yet.\n\n"
-                + "Type \"back\" to go back to the Main Menu.";
+    String dashboardMenu(List<DashboardEntry> entries) {
+        StringBuilder message = new StringBuilder("[MODE: DASHBOARD]\n");
+        if (entries.isEmpty()) {
+            message.append("There are no Plans scheduled for today.\n\n");
+        } else {
+            message.append("Today's itinerary:\n");
+            for (int index = 0; index < entries.size(); index++) {
+                DashboardEntry entry = entries.get(index);
+                message.append(index + 1)
+                        .append(". ")
+                        .append(TIME_FORMATTER.format(entry.plan().time()))
+                        .append(" - ")
+                        .append(entry.plan().destination())
+                        .append(" (Trip: ")
+                        .append(entry.tripTitle())
+                        .append(")\n");
+            }
+            message.append("\n");
+        }
+        return message.append("Type \"back\" to go back to the Main Menu.").toString();
     }
 
     /**
