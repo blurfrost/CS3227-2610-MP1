@@ -11,10 +11,65 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class TripTest {
+    private static final LocalDate CURRENT_DATE = LocalDate.of(2027, 1, 5);
+
     @Test
     void createTrip_endBeforeStart_throwsException() {
         assertThrows(IllegalArgumentException.class, () -> new Trip(
                 UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 9), LocalDate.of(2027, 1, 1)));
+    }
+
+    @Test
+    void statusOn_pastTrip_returnsPast() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+
+        assertEquals(TripStatus.PAST, trip.statusOn(CURRENT_DATE));
+    }
+
+    @Test
+    void statusOn_futureTrip_returnsFuture() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(TripStatus.FUTURE, trip.statusOn(CURRENT_DATE));
+    }
+
+    @Test
+    void statusOn_tripSpanningCurrentDate_returnsCurrent() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(TripStatus.CURRENT, trip.statusOn(CURRENT_DATE));
+    }
+
+    @Test
+    void statusOn_tripStartingOnCurrentDate_returnsCurrent() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", CURRENT_DATE, LocalDate.of(2027, 1, 9));
+
+        assertEquals(TripStatus.CURRENT, trip.statusOn(CURRENT_DATE));
+    }
+
+    @Test
+    void statusOn_tripEndingOnCurrentDate_returnsCurrent() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1), CURRENT_DATE);
+
+        assertEquals(TripStatus.CURRENT, trip.statusOn(CURRENT_DATE));
+    }
+
+    @Test
+    void statusOn_singleDayTripOnCurrentDate_returnsCurrent() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", CURRENT_DATE, CURRENT_DATE);
+
+        assertEquals(TripStatus.CURRENT, trip.statusOn(CURRENT_DATE));
+    }
+
+    @Test
+    void statusOn_nullCurrentDate_throwsException() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertThrows(NullPointerException.class, () -> trip.statusOn(null));
     }
 
     @Test

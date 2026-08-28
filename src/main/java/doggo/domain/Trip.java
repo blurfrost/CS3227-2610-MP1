@@ -64,6 +64,24 @@ public final class Trip {
     }
 
     /**
+     * Returns this Trip's status relative to the specified current date.
+     * A Trip is current when the date falls within its inclusive date range.
+     *
+     * @param currentDate Date used to classify the Trip.
+     * @return Trip status relative to the current date.
+     */
+    public TripStatus statusOn(LocalDate currentDate) {
+        Objects.requireNonNull(currentDate);
+        if (endDate.isBefore(currentDate)) {
+            return TripStatus.PAST;
+        }
+        if (startDate.isAfter(currentDate)) {
+            return TripStatus.FUTURE;
+        }
+        return TripStatus.CURRENT;
+    }
+
+    /**
      * Returns a copy with a Plan when its date falls within this Trip's inclusive date range.
      *
      * @param plan Plan to add.
