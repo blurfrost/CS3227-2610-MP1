@@ -16,6 +16,45 @@ import org.junit.jupiter.api.Test;
 
 class CliTest {
     @Test
+    void galleryNavigation_viewsPastTripAndReturnsToMain() {
+        String input = String.join("\n", "new", "Japan", "01/01/2027", "04/01/2027",
+                "back", "gallery", "view 1", "new", "back", "back", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("[MODE: GALLERY]"));
+        assertTrue(output.contains("1. Japan (from 01/01/2027 to 04/01/2027)"));
+        assertTrue(output.contains("Viewing past Trip: Japan"));
+        assertTrue(output.contains("Error: Unknown command \"new\"."));
+        assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
+        assertTrue(output.endsWith("Bye!\n"));
+    }
+
+    @Test
+    void galleryAndOrganise_partitionTripsAtInclusiveDateBoundary() {
+        String input = String.join("\n", "new", "Past", "01/01/2027", "04/01/2027",
+                "back", "new", "Current", "05/01/2027", "05/01/2027", "back",
+                "gallery", "exit") + "\n";
+        String output = runCli(input);
+        int galleryStart = output.lastIndexOf("[MODE: GALLERY]");
+        String galleryOutput = output.substring(galleryStart);
+
+        assertTrue(output.contains("[MODE: ORGANISE]"));
+        assertTrue(output.contains("Current (from 05/01/2027 to 05/01/2027)"));
+        assertTrue(galleryOutput.contains("Past (from 01/01/2027 to 04/01/2027)"));
+        assertFalse(galleryOutput.contains("Current"));
+    }
+
+    @Test
+    void galleryMalformedAndOutOfRangeIndexes_keepGalleryView() {
+        String input = String.join("\n", "gallery", "view abc", "view 2", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("There are no trips to view."));
+        assertTrue(output.contains("[MODE: GALLERY]"));
+        assertFalse(output.contains("[MODE: ORGANISE]"));
+    }
+
+    @Test
     void dashboardNavigation_returnsToMain() {
         String input = String.join("\n", "DaShBoArD", "back", "exit") + "\n";
         String output = runCli(input);
@@ -456,8 +495,8 @@ class CliTest {
 
     @Test
     void malformedTripIndexes_showDisplayedRange() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "02/01/2027", "new", "Korea", "03/01/2027", "04/01/2027", "view abc",
+        String input = String.join("\n", "organise", "new", "Japan", "05/01/2027",
+                "06/01/2027", "new", "Korea", "07/01/2027", "08/01/2027", "view abc",
                 "edit -1", "delete 0", "exit") + "\n";
         String output = runCli(input);
 
@@ -487,8 +526,8 @@ class CliTest {
 
     @Test
     void malformedTripIndex_withOneTrip_usesExactNumber() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "02/01/2027", "edit abc", "exit") + "\n";
+        String input = String.join("\n", "organise", "new", "Japan", "05/01/2027",
+                "06/01/2027", "edit abc", "exit") + "\n";
         String output = runCli(input);
 
         assertTrue(output.contains("Trip number should be 1."));

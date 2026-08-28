@@ -18,12 +18,12 @@ class ViewTripCommandTest {
     @Test
     void execute_repositoryOrderChangesAfterDisplay_selectsDisplayedTrip() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
-        service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
+        service.createTrip("Japan", LocalDate.of(2027, 1, 6), LocalDate.of(2027, 1, 7));
         service.createTrip("Korea", LocalDate.of(2028, 1, 1), LocalDate.of(2028, 1, 2));
         CliContext context = createContext(service);
 
         context.organiseMenu();
-        service.createTrip("Earlier", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 2));
+        service.createTrip("Earlier", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
 
         CommandResult result = new ViewTripCommand(1).execute(context);
 

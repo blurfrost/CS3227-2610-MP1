@@ -51,4 +51,34 @@ class CliFormatterTest {
         assertTrue(output.contains("Edit a Plan with \"edit NUMBER\"."));
         assertTrue(output.contains("Delete a Plan with \"delete NUMBER\"."));
     }
+
+    @Test
+    void galleryMenu_pastTrips_displaysReadOnlyNavigation() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+
+        String output = new CliFormatter().galleryMenu(List.of(trip));
+
+        assertTrue(output.contains("[MODE: GALLERY]"));
+        assertTrue(output.contains("1. Japan (from 01/01/2027 to 04/01/2027)"));
+        assertTrue(output.contains("View a past Trip with \"view NUMBER\"."));
+        assertFalse(output.contains("edit NUMBER"));
+        assertFalse(output.contains("delete NUMBER"));
+    }
+
+    @Test
+    void galleryTripView_plans_displaysReadOnlyItinerary() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Plan plan = new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 2),
+                LocalTime.of(9, 0));
+
+        String output = new CliFormatter().galleryTripView(trip, List.of(plan));
+
+        assertTrue(output.contains("Viewing past Trip: Japan"));
+        assertTrue(output.contains("Tokyo (02/01/2027 at 09:00)"));
+        assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
+        assertFalse(output.contains("create a new Plan"));
+        assertFalse(output.contains("edit NUMBER"));
+    }
 }

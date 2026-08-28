@@ -11,7 +11,7 @@ import doggo.domain.Trip;
 record CliContext(DoggoService service, CliSession session, CliPrompter prompter,
                   CliFormatter formatter, PrintWriter output) {
     String organiseMenu() {
-        List<Trip> trips = service.getTrips();
+        List<Trip> trips = service.getCurrentAndFutureTrips();
         session.setDisplayedTripIds(trips.stream().map(Trip::id).toList());
         return formatter.organiseMenu(trips);
     }
@@ -30,17 +30,37 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
         return formatter.dashboardMenu(entries);
     }
 
+    String galleryMenu() {
+        List<Trip> trips = service.getPastTrips();
+        session.setDisplayedTripIds(trips.stream().map(Trip::id).toList());
+        return formatter.galleryMenu(trips);
+    }
+
+    String selectedGalleryTripView(Trip trip) {
+        return formatter.galleryTripView(trip, service.getPlans(trip));
+    }
+
     String refreshCurrentView() {
         return switch (session.mode()) {
         case MAIN -> formatter.mainMenu();
         case ORGANISE -> organiseMenu();
         case DASHBOARD -> dashboardMenu();
+        case GALLERY -> galleryMenu();
         case TRIP -> session.selectedTripId()
                 .flatMap(service::getTrip)
                 .map(this::selectedTripView)
                 .orElseGet(() -> {
                     session.enterOrganise();
                     return organiseMenu();
+                });
+        case GALLERY_TRIP -> session.selectedTripId()
+                .flatMap(selectedTripId -> service.getPastTrips().stream()
+                        .filter(trip -> trip.id().equals(selectedTripId))
+                        .findFirst())
+                .map(this::selectedGalleryTripView)
+                .orElseGet(() -> {
+                    session.enterGallery();
+                    return galleryMenu();
                 });
         };
     }

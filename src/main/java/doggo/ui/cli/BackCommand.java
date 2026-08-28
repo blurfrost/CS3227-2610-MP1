@@ -7,9 +7,13 @@ final class BackCommand implements Command {
         case TRIP:
             context.session().enterOrganise();
             return new CommandResult(context.organiseMenu(), false);
+        case GALLERY_TRIP:
+            context.session().enterGallery();
+            return new CommandResult(context.galleryMenu(), false);
         case MAIN:
         case ORGANISE:
         case DASHBOARD:
+        case GALLERY:
             context.session().enterMain();
             return new CommandResult(context.formatter().mainMenu(), false);
         default:

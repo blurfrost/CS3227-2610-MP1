@@ -85,6 +85,32 @@ class CliSessionTest {
     }
 
     @Test
+    void enterGallery_setsGalleryModeAndClearsDisplayedState() {
+        CliSession session = new CliSession();
+        session.enterTrip(UUID.randomUUID());
+        session.setDisplayedTripIds(List.of(UUID.randomUUID()));
+        session.setDisplayedPlanTargets(UUID.randomUUID(), List.of(UUID.randomUUID()));
+
+        session.enterGallery();
+
+        assertEquals(CliMode.GALLERY, session.mode());
+        assertFalse(session.selectedTripId().isPresent());
+        assertFalse(session.tripIdAt(1).isPresent());
+        assertFalse(session.planTargetAt(1).isPresent());
+    }
+
+    @Test
+    void enterGalleryTrip_setsReadOnlyTripModeAndSelection() {
+        CliSession session = new CliSession();
+        UUID tripId = UUID.randomUUID();
+
+        session.enterGalleryTrip(tripId);
+
+        assertEquals(CliMode.GALLERY_TRIP, session.mode());
+        assertEquals(tripId, session.selectedTripId().orElseThrow());
+    }
+
+    @Test
     void planTargetAt_returnsDisplayedTargetByOneBasedIndex() {
         CliSession session = new CliSession();
         UUID tripId = UUID.randomUUID();

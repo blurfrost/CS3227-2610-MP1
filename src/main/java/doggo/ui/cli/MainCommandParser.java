@@ -15,6 +15,9 @@ final class MainCommandParser implements ModeCommandParser {
         if (command.equalsIgnoreCase("dashboard")) {
             return new DashboardCommand();
         }
+        if (command.equalsIgnoreCase("gallery")) {
+            return new GalleryCommand();
+        }
         return new UnknownCommand(command);
     }
 }

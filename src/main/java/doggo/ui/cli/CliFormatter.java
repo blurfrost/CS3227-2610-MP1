@@ -14,7 +14,8 @@ final class CliFormatter {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     String mainMenu() {
-        return "Welcome! Available commands are: \"new\", \"organise\", \"dashboard\", \"exit\"";
+        return "Welcome! Available commands are: \"new\", \"organise\", \"dashboard\", "
+                + "\"gallery\", \"exit\"";
     }
 
     String dashboardMenu(List<DashboardEntry> entries) {
@@ -68,17 +69,7 @@ final class CliFormatter {
             message.append("There are no Trips planned.\n\n");
         } else {
             message.append("Here are your trips:\n");
-            for (int index = 0; index < trips.size(); index++) {
-                Trip trip = trips.get(index);
-                message.append(index + 1)
-                        .append(". ")
-                        .append(trip.title())
-                        .append(" (from ")
-                        .append(DATE_FORMATTER.format(trip.startDate()))
-                        .append(" to ")
-                        .append(DATE_FORMATTER.format(trip.endDate()))
-                        .append(")\n");
-            }
+            appendTrips(message, trips);
             message.append("\n");
             message.append("View a trip with \"view NUMBER\".\n\n");
             message.append("Edit a trip with \"edit NUMBER\".\n\n");
@@ -89,6 +80,30 @@ final class CliFormatter {
         return message.toString();
     }
 
+    String galleryMenu(List<Trip> trips) {
+        StringBuilder message = new StringBuilder("[MODE: GALLERY]\n");
+        if (trips.isEmpty()) {
+            message.append("There are no past Trips.\n\n");
+        } else {
+            message.append("Past trips:\n");
+            appendTrips(message, trips);
+            message.append("\nView a past Trip with \"view NUMBER\".\n\n");
+        }
+        return message.append("Type \"back\" to go back to the Main Menu.").toString();
+    }
+
+    String galleryTripView(Trip trip, List<Plan> plans) {
+        StringBuilder message = new StringBuilder("[MODE: GALLERY]\nViewing past Trip: ")
+                .append(trip.title())
+                .append(" (from ")
+                .append(DATE_FORMATTER.format(trip.startDate()))
+                .append(" to ")
+                .append(DATE_FORMATTER.format(trip.endDate()))
+                .append(")\n");
+        appendPlans(message, plans);
+        return message.append("Type \"back\" to go back to the Gallery.").toString();
+    }
+
     String tripView(Trip trip, List<Plan> plans) {
         StringBuilder message = new StringBuilder("Viewing: ")
                 .append(trip.title())
@@ -97,28 +112,58 @@ final class CliFormatter {
                 .append(" to ")
                 .append(DATE_FORMATTER.format(trip.endDate()))
                 .append(")\n");
-        if (plans.isEmpty()) {
-            message.append("There are no plans!\n\n");
-        } else {
-            message.append("Plans:\n");
-            for (int index = 0; index < plans.size(); index++) {
-                Plan plan = plans.get(index);
-                message.append(index + 1)
-                        .append(". ")
-                        .append(plan.destination())
-                        .append(" (")
-                        .append(DATE_FORMATTER.format(plan.date()))
-                        .append(" at ")
-                        .append(TIME_FORMATTER.format(plan.time()))
-                        .append(")\n");
-            }
-            message.append("\n");
-        }
+        appendPlans(message, plans);
         return message.append("Type \"new\" to create a new Plan.\n")
                 .append("Type \"edit NUMBER\" to edit a Plan.\n")
                 .append("Type \"delete NUMBER\" to delete a Plan.\n")
                 .append("Type \"back\" to go back to the Organise Menu.")
                 .toString();
+    }
+
+    /**
+     * Appends numbered Trip summaries to a message.
+     *
+     * @param message Message receiving the summaries.
+     * @param trips Trips to append in display order.
+     */
+    private static void appendTrips(StringBuilder message, List<Trip> trips) {
+        for (int index = 0; index < trips.size(); index++) {
+            Trip trip = trips.get(index);
+            message.append(index + 1)
+                    .append(". ")
+                    .append(trip.title())
+                    .append(" (from ")
+                    .append(DATE_FORMATTER.format(trip.startDate()))
+                    .append(" to ")
+                    .append(DATE_FORMATTER.format(trip.endDate()))
+                    .append(")\n");
+        }
+    }
+
+    /**
+     * Appends numbered Plan summaries or an empty state to a message.
+     *
+     * @param message Message receiving the summaries.
+     * @param plans Plans to append in display order.
+     */
+    private static void appendPlans(StringBuilder message, List<Plan> plans) {
+        if (plans.isEmpty()) {
+            message.append("There are no plans!\n\n");
+            return;
+        }
+        message.append("Plans:\n");
+        for (int index = 0; index < plans.size(); index++) {
+            Plan plan = plans.get(index);
+            message.append(index + 1)
+                    .append(". ")
+                    .append(plan.destination())
+                    .append(" (")
+                    .append(DATE_FORMATTER.format(plan.date()))
+                    .append(" at ")
+                    .append(TIME_FORMATTER.format(plan.time()))
+                    .append(")\n");
+        }
+        message.append("\n");
     }
 
     String error(String message) {

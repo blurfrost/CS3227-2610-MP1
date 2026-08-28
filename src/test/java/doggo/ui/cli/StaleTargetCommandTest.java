@@ -26,7 +26,7 @@ class StaleTargetCommandTest {
     void deleteTrip_staleDisplayedTarget_doesNotPromptForConfirmation() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
         DoggoService service = new DoggoService(repository, TestClock.fixed());
-        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 6));
         CliContext context = createContext(service, "");
         context.organiseMenu();
         repository.delete(trip.id());
@@ -57,7 +57,7 @@ class StaleTargetCommandTest {
     void editTrip_staleDisplayedTarget_doesNotPromptForFields() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
         DoggoService service = new DoggoService(repository, TestClock.fixed());
-        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 6));
         CliContext context = createContext(service, "");
         context.organiseMenu();
         repository.delete(trip.id());

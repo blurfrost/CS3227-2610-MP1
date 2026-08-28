@@ -5,6 +5,8 @@ final class Parser {
     private final ModeCommandParser organiseCommandParser = new OrganiseCommandParser();
     private final ModeCommandParser tripCommandParser = new TripCommandParser();
     private final ModeCommandParser dashboardCommandParser = new DashboardCommandParser();
+    private final ModeCommandParser galleryCommandParser = new GalleryCommandParser();
+    private final ModeCommandParser galleryTripCommandParser = new GalleryTripCommandParser();
 
     Command parse(String input, CliMode mode) {
         String command = input == null ? "" : input.trim();
@@ -23,6 +25,8 @@ final class Parser {
             case ORGANISE -> organiseCommandParser.parse(command);
             case TRIP -> tripCommandParser.parse(command);
             case DASHBOARD -> dashboardCommandParser.parse(command);
+            case GALLERY -> galleryCommandParser.parse(command);
+            case GALLERY_TRIP -> galleryTripCommandParser.parse(command);
         };
     }
 }

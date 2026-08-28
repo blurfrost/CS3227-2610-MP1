@@ -1,6 +1,7 @@
 package doggo.ui.cli;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
@@ -21,6 +22,44 @@ import doggo.storage.InMemoryTripRepository;
 import org.junit.jupiter.api.Test;
 
 class CliContextTest {
+    @Test
+    void galleryMenu_recordsOnlyPastTripTargetsInDisplayedOrder() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip laterPastTrip = service.createTrip("Later", LocalDate.of(2027, 1, 3),
+                LocalDate.of(2027, 1, 4));
+        Trip earlierPastTrip = service.createTrip("Earlier", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 2));
+        service.createTrip("Current", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
+        CliSession session = new CliSession();
+        CliContext context = new CliContext(service, session, null, new CliFormatter(), null);
+
+        String output = context.galleryMenu();
+
+        assertEquals(earlierPastTrip.id(), session.tripIdAt(1).orElseThrow());
+        assertEquals(laterPastTrip.id(), session.tripIdAt(2).orElseThrow());
+        assertTrue(output.indexOf("Earlier") < output.indexOf("Later"));
+        assertFalse(output.contains("Current"));
+    }
+
+    @Test
+    void organiseMenu_recordsOnlyCurrentAndFutureTripTargets() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        service.createTrip("Past", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 4));
+        Trip current = service.createTrip("Current", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
+        Trip future = service.createTrip("Future", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 7));
+        CliSession session = new CliSession();
+        CliContext context = new CliContext(service, session, null, new CliFormatter(), null);
+
+        String output = context.organiseMenu();
+
+        assertEquals(current.id(), session.tripIdAt(1).orElseThrow());
+        assertEquals(future.id(), session.tripIdAt(2).orElseThrow());
+        assertFalse(output.contains("Past"));
+    }
+
     @Test
     void dashboardMenu_recordsTargetsInDisplayedOrder() {
         InMemoryTripRepository repository = new InMemoryTripRepository();

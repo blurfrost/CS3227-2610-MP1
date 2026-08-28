@@ -4,5 +4,7 @@ enum CliMode {
     MAIN,
     ORGANISE,
     TRIP,
-    DASHBOARD
+    DASHBOARD,
+    GALLERY,
+    GALLERY_TRIP
 }

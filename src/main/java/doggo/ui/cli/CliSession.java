@@ -43,6 +43,20 @@ final class CliSession {
         displayedPlanTargets = List.of();
     }
 
+    void enterGallery() {
+        mode = CliMode.GALLERY;
+        selectedTripId = null;
+        displayedTripIds = List.of();
+        displayedPlanTargets = List.of();
+    }
+
+    void enterGalleryTrip(UUID tripId) {
+        mode = CliMode.GALLERY_TRIP;
+        selectedTripId = Objects.requireNonNull(tripId);
+        displayedTripIds = List.of();
+        displayedPlanTargets = List.of();
+    }
+
     Optional<UUID> selectedTripId() {
         return Optional.ofNullable(selectedTripId);
     }

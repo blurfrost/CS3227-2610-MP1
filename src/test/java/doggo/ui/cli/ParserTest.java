@@ -53,4 +53,20 @@ class ParserTest {
         assertInstanceOf(InvalidIndexCommand.class,
                 parser.parse("delete 0", CliMode.DASHBOARD));
     }
+
+    @Test
+    void parseGallery_routesViewAndRejectsMutationCommands() {
+        Parser parser = new Parser();
+
+        assertInstanceOf(ViewGalleryTripCommand.class,
+                parser.parse("view 1", CliMode.GALLERY));
+        assertInstanceOf(InvalidCommand.class,
+                parser.parse("view 1 2", CliMode.GALLERY));
+        assertInstanceOf(InvalidIndexCommand.class,
+                parser.parse("view abc", CliMode.GALLERY));
+        assertInstanceOf(UnknownCommand.class,
+                parser.parse("edit 1", CliMode.GALLERY));
+        assertInstanceOf(UnknownCommand.class,
+                parser.parse("delete 1", CliMode.GALLERY_TRIP));
+    }
 }

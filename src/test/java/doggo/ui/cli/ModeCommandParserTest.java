@@ -12,6 +12,7 @@ class ModeCommandParserTest {
         assertInstanceOf(OrganiseCommand.class, parser.parse("organise"));
         assertInstanceOf(NewTripCommand.class, parser.parse("new"));
         assertInstanceOf(DashboardCommand.class, parser.parse("DaShBoArD"));
+        assertInstanceOf(GalleryCommand.class, parser.parse("GaLlErY"));
     }
 
     @Test
@@ -41,5 +42,16 @@ class ModeCommandParserTest {
         assertInstanceOf(EditPlanCommand.class, parser.parse("EdIt 1"));
         assertInstanceOf(DeletePlanCommand.class, parser.parse("DeLeTe 1"));
         assertInstanceOf(UnknownCommand.class, parser.parse("new 1"));
+    }
+
+    @Test
+    void galleryCommandParsers_exposeOnlyReadOnlyNavigation() {
+        ModeCommandParser galleryParser = new GalleryCommandParser();
+        ModeCommandParser galleryTripParser = new GalleryTripCommandParser();
+
+        assertInstanceOf(ViewGalleryTripCommand.class, galleryParser.parse("ViEw 1"));
+        assertInstanceOf(UnknownCommand.class, galleryParser.parse("edit 1"));
+        assertInstanceOf(UnknownCommand.class, galleryTripParser.parse("new"));
+        assertInstanceOf(UnknownCommand.class, galleryTripParser.parse("delete 1"));
     }
 }
