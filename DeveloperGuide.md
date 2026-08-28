@@ -99,19 +99,19 @@ Java source files use packages that follow the architectural boundaries:
 Future JavaFX presentation code will use a separate `doggo.ui.javafx` package and
 call the application services without depending on CLI commands.
 
-The CLI is divided into four areas:
+The CLI is divided into Main navigation and Dashboard, Organise, selected-Trip,
+Gallery, and selected-Gallery-Trip modes:
 
 ```text
 Doggo
   -> Cli -> Parser -> ModeCommandParser -> Command
-                                      /       |       \
-                           Main / Organise / Trip parsers
-                                                   |
-                                             DoggoService
-                                                   |
-                                             TripRepository
-                                              /            \
-                                   InMemoryTripRepository    SqliteTripRepository
+                    Main / Dashboard / Organise / Trip / Gallery parsers
+                                             |
+                                       DoggoService
+                                             |
+                                       TripRepository
+                                        /            \
+                             InMemoryTripRepository    SqliteTripRepository
 
 Domain: Trip -> Plan
           |       |
@@ -120,9 +120,12 @@ Domain: Trip -> Plan
 
 ### Domain
 
-- `Trip` is the aggregate root and contains a UUID, title, inclusive start and end dates, Plans, and an optional Review.
-- `Plan` contains a UUID, destination, scheduled date and time, and an optional Review.
-- `Review` is an immutable value containing a required whole-number rating from 1 to 5 and optional text.
+- `Trip` is the aggregate root and currently contains a UUID, title, inclusive
+  start and end dates, and Plans. An optional Review is planned.
+- `Plan` currently contains a UUID, destination, scheduled date, and time. An
+  optional Review is planned.
+- The planned `Review` is an immutable value containing a required whole-number
+  rating from 1 to 5 and optional text.
 - `TripStatus` contains `FUTURE`, `CURRENT`, and `PAST`. Status is derived from Trip dates and the supplied current date rather than persisted.
 
 ### Application and Persistence
@@ -138,13 +141,13 @@ Domain: Trip -> Plan
 
 - `Doggo` is the composition root and application entry point.
 - `Cli` owns the read-evaluate-print loop and injected input and output streams.
-- `CliMode` identifies the implemented `MAIN`, `ORGANISE`, `TRIP`, and
-  `DASHBOARD` modes; Gallery remains planned.
+- `CliMode` identifies the implemented `MAIN`, `ORGANISE`, `TRIP`, `DASHBOARD`,
+  `GALLERY`, and `GALLERY_TRIP` modes.
 - `CliSession` tracks the current mode, selected Trip, and mappings from displayed list numbers to UUIDs.
 - `Parser` normalizes input, handles global `exit` and `back` commands, and
   delegates mode-specific parsing through `ModeCommandParser` implementations.
-- `MainCommandParser`, `OrganiseCommandParser`, `TripCommandParser`, and
-  `DashboardCommandParser` own the command grammar for their respective modes.
+- Main, Organise, selected-Trip, Dashboard, Gallery, and selected-Gallery-Trip
+  parsers own the command grammar for their respective modes.
 - `IndexedCommandParser` shares indexed-command construction, while
   `InvalidIndexCommand` reports errors using the active displayed snapshot.
 - `Command` executes an action through `DoggoService` and `CliSession`.
@@ -154,25 +157,27 @@ Domain: Trip -> Plan
 
 Use separate command classes for navigation and user actions:
 
-- Navigation and global commands open Dashboard or Organise, return to the
-  previous menu, display help, or exit the application. Gallery navigation is
-  planned.
+- Navigation and global commands open Dashboard, Organise, or Gallery, return
+  to the previous menu, display help, or exit the application.
 - Dashboard commands list today's Plans, create a Trip, edit a Plan by number,
   and delete a Plan by number. Dashboard Plan creation and detailed Plan
   viewing remain deferred.
 - Organise commands support creating a Trip, viewing a Trip and its Plans, editing or deleting a Trip by index, and managing Plans within a viewed Trip.
-- Gallery commands list and select past Trips and add, edit, or delete Trip and Plan reviews.
+- Gallery currently lists and selects past Trips and displays their Plans
+  read-only. Trip and Plan review commands are planned.
 
 ### CLI Behaviour
 
-- Main mode accepts `new`, `organise`, `dashboard`, and `exit`.
+- Main mode accepts `new`, `organise`, `dashboard`, `gallery`, and `exit`.
 - Dashboard mode accepts `new`, `edit NUMBER`, `delete NUMBER`, and `back`;
   global `exit` remains available. Creating a Trip from Dashboard enters
   Organise, while Plan edits and deletions keep Dashboard active.
-- Organise currently lists Trips and accepts `new`, `edit NUMBER`,
+- Organise lists current and future Trips and accepts `new`, `edit NUMBER`,
   `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, it accepts
   `new`, `edit NUMBER`, `delete NUMBER`, and `back` for its Plans.
-- Trip status grouping and Gallery behavior remain later roadmap work.
+- Gallery lists past Trips and accepts `view NUMBER` and `back`. A selected
+  Gallery Trip displays its Plans read-only and accepts `back`; global `exit`
+  remains available in both Gallery modes.
 - The CLI displays short one-based list numbers while retaining stable UUIDs internally.
 - Creation and editing commands prompt for individual fields instead of requiring long command lines.
 - Trip and Plan dates use the strict `DD/MM/YYYY` format.
@@ -194,8 +199,10 @@ Use separate command classes for navigation and user actions:
   parsers, with shared indexed-command validation and snapshot-aware feedback.
 - Dashboard lists today's Plans in deterministic order and supports
   repository-backed Plan editing and deletion through composite UUID targets.
-- Feature Sets 1–3 and Dashboard use the in-memory repository; persistence and
-  the remaining product features are later work.
+- Gallery lists every past Trip and provides a read-only itinerary view through
+  retained UUID targets.
+- Feature Sets 1–3, Dashboard, and read-only Gallery use the in-memory
+  repository; reviews, persistence, and JavaFX remain later work.
 
 ## Acceptance and Test Coverage
 

@@ -41,4 +41,6 @@
   snapshots for Trip/Plan feedback.
 - Dashboard CLI mode is implemented with a Clock-backed current-day Plan query,
   composite Trip/Plan targets, and repository-backed Plan editing and deletion.
+- Read-only Gallery CLI modes list Clock-classified past Trips and their Plans;
+  Organise lists only current and future Trips now that Gallery is available.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.
