@@ -102,6 +102,25 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
         return isValidSelection ? selectedTrip : Optional.empty();
     }
 
+    /**
+     * Resolves a Plan target against the Trip selected by the current mode.
+     * Dashboard targets are composite and do not require a selected Trip.
+     *
+     * @param target Composite Plan target to validate.
+     * @return Target when it belongs to the selected Trip, or empty otherwise.
+     */
+    Optional<PlanTarget> resolvePlanTargetForCurrentMode(PlanTarget target) {
+        if (session.mode() == CliMode.DASHBOARD) {
+            return Optional.of(target);
+        }
+        if (session.mode() != CliMode.TRIP && session.mode() != CliMode.GALLERY_TRIP) {
+            return Optional.empty();
+        }
+        return selectedTripForMode()
+                .filter(trip -> trip.id().equals(target.tripId()))
+                .map(trip -> target);
+    }
+
     String refreshSelectedTripMode() {
         return switch (session.mode()) {
         case TRIP -> {

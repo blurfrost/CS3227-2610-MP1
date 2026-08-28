@@ -25,7 +25,20 @@ final class EditPlanCommand implements Command {
         }
         PlanTarget target = planTarget.orElseThrow();
         if (context.session().mode() == CliMode.TRIP
-                && context.session().selectedTripId().filter(target.tripId()::equals).isEmpty()) {
+                || context.session().mode() == CliMode.GALLERY_TRIP) {
+            Optional<Trip> selectedTrip = context.selectedTripForMode();
+            if (selectedTrip.isEmpty()) {
+                String message = context.session().selectedTripId()
+                        .flatMap(context.service()::getTrip)
+                        .isEmpty()
+                                ? "Selected Trip could not be found."
+                                : "Selected Trip is no longer available.";
+                return new CommandResult(context.formatter().error(
+                        message + "\n"
+                                + context.refreshCurrentView()), false);
+            }
+        }
+        if (context.resolvePlanTargetForCurrentMode(target).isEmpty()) {
             return new CommandResult(context.formatter().error(
                     "The selected Plan is no longer available.\n"
                             + context.refreshCurrentView()), false);

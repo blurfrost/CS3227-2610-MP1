@@ -76,7 +76,7 @@ class CliFormatterTest {
     }
 
     @Test
-    void galleryTripView_plans_displaysReadOnlyItinerary() {
+    void galleryTripView_plans_advertisesPlanEditing() {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 4));
         Plan plan = new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 2),
@@ -88,6 +88,16 @@ class CliFormatterTest {
         assertTrue(output.contains("Tokyo (02/01/2027 at 09:00)"));
         assertTrue(output.contains("Type \"new\" to create a new Plan."));
         assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
+        assertTrue(output.contains("Type \"edit NUMBER\" to edit a Plan."));
+    }
+
+    @Test
+    void galleryTripView_withoutPlans_doesNotAdvertisePlanEditing() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+
+        String output = new CliFormatter().galleryTripView(trip, List.of());
+
         assertFalse(output.contains("edit NUMBER"));
     }
 }

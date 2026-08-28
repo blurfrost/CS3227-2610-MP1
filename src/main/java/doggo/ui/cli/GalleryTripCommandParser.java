@@ -9,6 +9,10 @@ final class GalleryTripCommandParser implements ModeCommandParser {
         if (command.equalsIgnoreCase("new")) {
             return new NewPlanCommand();
         }
+        if (command.matches("(?i)edit(?:\\s+.*)?")) {
+            return IndexedCommandParser.parse(command, "edit", IndexedEntity.PLAN,
+                    EditPlanCommand::new);
+        }
         return new UnknownCommand(command);
     }
 }
