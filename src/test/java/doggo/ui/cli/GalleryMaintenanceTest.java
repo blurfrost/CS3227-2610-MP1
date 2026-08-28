@@ -596,6 +596,164 @@ class GalleryMaintenanceTest {
         assertEquals(plan.id(), context.session().planTargetAt(1).orElseThrow().planId());
     }
 
+    @Test
+    void deletePlanGalleryTrip_confirmed_removesSelectedPlanAndRefreshesTargets() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 2), LocalTime.of(9, 0));
+        Plan secondPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 3),
+                LocalTime.of(9, 0));
+        CliContext context = createContext(service, "yes\n");
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(service.getTrip(trip.id()).orElseThrow());
+
+        CommandResult result = new DeletePlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY_TRIP, context.session().mode());
+        assertTrue(result.message().contains("Plan deleted."));
+        assertEquals(List.of(secondPlan), service.getTrip(trip.id()).orElseThrow().plans());
+        assertEquals(secondPlan.id(), context.session().planTargetAt(1).orElseThrow().planId());
+    }
+
+    @Test
+    void deletePlanGalleryTrip_sequentialDeletion_usesRefreshedNumbering() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 2), LocalTime.of(9, 0));
+        service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 3), LocalTime.of(9, 0));
+        CliContext context = createContext(service, "yes\nyes\n");
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(service.getTrip(trip.id()).orElseThrow());
+
+        new DeletePlanCommand(1).execute(context);
+        CommandResult result = new DeletePlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertTrue(result.message().contains("Plan deleted."));
+        assertTrue(service.getTrip(trip.id()).orElseThrow().plans().isEmpty());
+        assertTrue(context.session().planTargetAt(1).isEmpty());
+        assertEquals(CliMode.GALLERY_TRIP, context.session().mode());
+    }
+
+    @Test
+    void deletePlanGalleryTrip_cancelledOrUppercaseConfirmation_preservesPlanAndRefreshes() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Plan plan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 2),
+                LocalTime.of(9, 0));
+        CliContext context = createContext(service, "YES\nno\n");
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(service.getTrip(trip.id()).orElseThrow());
+
+        CommandResult result = new DeletePlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY_TRIP, context.session().mode());
+        assertTrue(result.message().contains("Plan deletion cancelled."));
+        assertEquals(List.of(plan), service.getTrip(trip.id()).orElseThrow().plans());
+        assertEquals(plan.id(), context.session().planTargetAt(1).orElseThrow().planId());
+    }
+
+    @Test
+    void deletePlanGalleryTrip_missingOrReclassifiedTrip_doesNotPromptAndReturnsToOwner() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip missingTrip = service.createTrip("Missing", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Trip reclassifiedTrip = service.createTrip("Reclassified", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        service.addPlan(missingTrip.id(), "Tokyo", LocalDate.of(2027, 1, 2), LocalTime.of(9, 0));
+        service.addPlan(reclassifiedTrip.id(), "Osaka", LocalDate.of(2027, 1, 2), LocalTime.of(9, 0));
+
+        CliContext missingContext = createNoPromptContext(service);
+        missingContext.session().enterGalleryTrip(missingTrip.id());
+        missingContext.selectedGalleryTripView(service.getTrip(missingTrip.id()).orElseThrow());
+        repository.delete(missingTrip.id());
+        CommandResult missingResult = new DeletePlanCommand(1).execute(missingContext);
+
+        CliContext reclassifiedContext = createNoPromptContext(service);
+        reclassifiedContext.session().enterGalleryTrip(reclassifiedTrip.id());
+        reclassifiedContext.selectedGalleryTripView(
+                service.getTrip(reclassifiedTrip.id()).orElseThrow());
+        repository.save(new Trip(reclassifiedTrip.id(), reclassifiedTrip.title(),
+                LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5)));
+        CommandResult reclassifiedResult = new DeletePlanCommand(1).execute(reclassifiedContext);
+
+        assertTrue(missingResult.message().contains("Selected Trip could not be found."));
+        assertEquals(CliMode.GALLERY, missingContext.session().mode());
+        assertTrue(reclassifiedResult.message().contains("Selected Trip is no longer available."));
+        assertEquals(CliMode.ORGANISE, reclassifiedContext.session().mode());
+    }
+
+    @Test
+    void deletePlanGalleryTrip_mismatchedOrRemovedTarget_doesNotPrompt() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip selectedTrip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Trip otherTrip = service.createTrip("Korea", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Plan plan = service.addPlan(selectedTrip.id(), "Tokyo", LocalDate.of(2027, 1, 2),
+                LocalTime.of(9, 0));
+        CliContext mismatchContext = createNoPromptContext(service);
+        mismatchContext.session().enterGalleryTrip(selectedTrip.id());
+        mismatchContext.selectedGalleryTripView(selectedTrip);
+        mismatchContext.session().setDisplayedPlanTargets(
+                List.of(new PlanTarget(otherTrip.id(), plan.id())));
+        CommandResult mismatchResult = new DeletePlanCommand(1).execute(mismatchContext);
+
+        CliContext removedContext = createNoPromptContext(service);
+        removedContext.session().enterGalleryTrip(selectedTrip.id());
+        removedContext.selectedGalleryTripView(service.getTrip(selectedTrip.id()).orElseThrow());
+        assertEquals(List.of(plan), service.getTrip(selectedTrip.id()).orElseThrow().plans());
+        repository.save(selectedTrip);
+        CommandResult removedResult = new DeletePlanCommand(1).execute(removedContext);
+
+        assertTrue(mismatchResult.message().contains("The selected Plan is no longer available."));
+        assertTrue(removedResult.message().contains("The selected Plan is no longer available."));
+    }
+
+    @Test
+    void deletePlanGalleryTrip_removedAfterConfirmation_failsSafelyAndKeepsOtherPlan() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 2), LocalTime.of(9, 0));
+        Plan retainedPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 3),
+                LocalTime.of(9, 0));
+        StringWriter output = new StringWriter();
+        PrintWriter writer = new PrintWriter(output);
+        BufferedReader input = new BufferedReader(new StringReader("yes\n")) {
+            @Override
+            public String readLine() throws IOException {
+                String line = super.readLine();
+                repository.save(new Trip(trip.id(), trip.title(), trip.startDate(), trip.endDate())
+                        .withAddedPlan(retainedPlan));
+                return line;
+            }
+        };
+        CliContext context = new CliContext(service, new CliSession(),
+                new CliPrompter(input, writer), new CliFormatter(), writer);
+        context.session().enterGalleryTrip(trip.id());
+        context.selectedGalleryTripView(service.getTrip(trip.id()).orElseThrow());
+
+        CommandResult result = new DeletePlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertTrue(result.message().contains("Plan not found."));
+        assertEquals(CliMode.GALLERY_TRIP, context.session().mode());
+        assertEquals(List.of(retainedPlan), service.getTrip(trip.id()).orElseThrow().plans());
+        assertEquals(retainedPlan.id(), context.session().planTargetAt(1).orElseThrow().planId());
+    }
+
     private static CliContext createContext(DoggoService service, String input) {
         StringWriter output = new StringWriter();
         PrintWriter writer = new PrintWriter(output);

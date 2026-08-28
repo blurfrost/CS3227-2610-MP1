@@ -107,6 +107,7 @@ final class CliFormatter {
         message.append("Type \"new\" to create a new Plan.\n");
         if (!plans.isEmpty()) {
             message.append("Type \"edit NUMBER\" to edit a Plan.\n");
+            message.append("Type \"delete NUMBER\" to delete a Plan.\n");
         }
         return message
                 .append("Type \"back\" to go back to the Gallery.").toString();

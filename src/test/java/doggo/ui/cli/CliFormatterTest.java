@@ -89,6 +89,7 @@ class CliFormatterTest {
         assertTrue(output.contains("Type \"new\" to create a new Plan."));
         assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
         assertTrue(output.contains("Type \"edit NUMBER\" to edit a Plan."));
+        assertTrue(output.contains("Type \"delete NUMBER\" to delete a Plan."));
     }
 
     @Test
@@ -99,5 +100,6 @@ class CliFormatterTest {
         String output = new CliFormatter().galleryTripView(trip, List.of());
 
         assertFalse(output.contains("edit NUMBER"));
+        assertFalse(output.contains("delete NUMBER"));
     }
 }

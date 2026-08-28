@@ -13,6 +13,10 @@ final class GalleryTripCommandParser implements ModeCommandParser {
             return IndexedCommandParser.parse(command, "edit", IndexedEntity.PLAN,
                     EditPlanCommand::new);
         }
+        if (command.matches("(?i)delete(?:\\s+.*)?")) {
+            return IndexedCommandParser.parse(command, "delete", IndexedEntity.PLAN,
+                    DeletePlanCommand::new);
+        }
         return new UnknownCommand(command);
     }
 }

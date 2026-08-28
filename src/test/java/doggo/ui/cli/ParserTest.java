@@ -76,7 +76,11 @@ class ParserTest {
                 parser.parse("edit 1 2", CliMode.GALLERY_TRIP));
         assertInstanceOf(InvalidIndexCommand.class,
                 parser.parse("edit abc", CliMode.GALLERY_TRIP));
-        assertInstanceOf(UnknownCommand.class,
+        assertInstanceOf(DeletePlanCommand.class,
                 parser.parse("delete 1", CliMode.GALLERY_TRIP));
+        assertInstanceOf(InvalidIndexCommand.class,
+                parser.parse("delete abc", CliMode.GALLERY_TRIP));
+        assertInstanceOf(InvalidIndexCommand.class,
+                parser.parse("delete 0", CliMode.GALLERY_TRIP));
     }
 }

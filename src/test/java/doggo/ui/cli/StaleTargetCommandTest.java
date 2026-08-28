@@ -234,9 +234,9 @@ class StaleTargetCommandTest {
     void deletePlan_staleDisplayedTarget_doesNotPromptForConfirmation() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
         DoggoService service = new DoggoService(repository, TestClock.fixed());
-        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
-        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 1), LocalTime.of(9, 0));
-        Plan retainedPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 2), LocalTime.of(10, 0));
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+        Plan retainedPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 5), LocalTime.of(10, 0));
         CliContext context = createContext(service, "");
         context.session().enterTrip(trip.id());
         context.selectedTripView(service.getTrip(trip.id()).orElseThrow());
