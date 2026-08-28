@@ -48,6 +48,68 @@ class CliTest {
     }
 
     @Test
+    void editPlanFromDashboard_updatesOwningTripAndOrganiseView() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "edit 1", "Kyoto", "05/01/2027", "10:00", "back",
+                "organise", "view 1", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Plan updated."));
+        assertTrue(output.contains("1. 10:00 - Kyoto (Trip: Japan)"));
+        assertTrue(output.contains("Kyoto (05/01/2027 at 10:00)"));
+    }
+
+    @Test
+    void editPlanFromDashboard_reordersRefreshedItinerary() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
+                "Osaka", "05/01/2027", "10:00", "back", "back", "dashboard", "edit 1",
+                "Tokyo", "05/01/2027", "11:00", "exit") + "\n";
+        String output = runCli(input);
+        String refreshedDashboard = output.substring(output.indexOf("Plan updated."));
+
+        assertTrue(refreshedDashboard.indexOf("1. 10:00 - Osaka")
+                < refreshedDashboard.indexOf("2. 11:00 - Tokyo"));
+    }
+
+    @Test
+    void editPlanFromDashboard_movingOffTodayRemovesItFromDashboard() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "edit 1", "", "06/01/2027", "", "exit") + "\n";
+        String output = runCli(input);
+        String refreshedDashboard = output.substring(output.indexOf("Plan updated."));
+
+        assertTrue(refreshedDashboard.contains("There are no Plans scheduled for today."));
+        assertFalse(refreshedDashboard.contains("Tokyo"));
+    }
+
+    @Test
+    void editPlanFromDashboard_dateOutsideTripRepromptsBeforeSaving() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "edit 1", "", "10/01/2027", "05/01/2027", "10:00",
+                "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Plan date must fall within the Trip dates."));
+        assertTrue(output.contains("Plan updated."));
+        assertTrue(output.contains("1. 10:00 - Tokyo (Trip: Japan)"));
+    }
+
+    @Test
+    void editPlanFromDashboard_invalidIndexKeepsDashboardView() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
+                "back", "dashboard", "edit abc", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Error: Plan number should be 1."));
+        assertTrue(output.contains("[MODE: DASHBOARD]"));
+    }
+
+    @Test
     void createTripFromMain_entersOrganiseMode() {
         String input = String.join("\n", "new", "Japan trip", "01/01/2027", "09/01/2027",
                 "back", "exit") + "\n";

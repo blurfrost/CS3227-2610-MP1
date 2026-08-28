@@ -29,4 +29,19 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
                 .toList());
         return formatter.dashboardMenu(entries);
     }
+
+    String refreshCurrentView() {
+        return switch (session.mode()) {
+        case MAIN -> formatter.mainMenu();
+        case ORGANISE -> organiseMenu();
+        case DASHBOARD -> dashboardMenu();
+        case TRIP -> session.selectedTripId()
+                .flatMap(service::getTrip)
+                .map(this::selectedTripView)
+                .orElseGet(() -> {
+                    session.enterOrganise();
+                    return organiseMenu();
+                });
+        };
+    }
 }

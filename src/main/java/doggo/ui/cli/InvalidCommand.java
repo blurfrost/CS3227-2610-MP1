@@ -9,16 +9,7 @@ final class InvalidCommand implements Command {
 
     @Override
     public CommandResult execute(CliContext context) {
-        String view = context.session().mode() == CliMode.TRIP
-                ? context.session().selectedTripId()
-                        .flatMap(context.service()::getTrip)
-                        .map(context::selectedTripView)
-                        .orElseGet(() -> {
-                            context.session().enterOrganise();
-                            return context.organiseMenu();
-                        })
-                : context.organiseMenu();
         return new CommandResult(context.formatter().error(
-                usage + "\n" + view), false);
+                usage + "\n" + context.refreshCurrentView()), false);
     }
 }

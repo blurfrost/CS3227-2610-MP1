@@ -9,6 +9,10 @@ final class DashboardCommandParser implements ModeCommandParser {
         if (command.equalsIgnoreCase("new")) {
             return new NewTripCommand();
         }
+        if (command.matches("(?i)edit(?:\\s+.*)?")) {
+            return IndexedCommandParser.parse(command, "edit", IndexedEntity.PLAN,
+                    EditPlanCommand::new);
+        }
         return new UnknownCommand(command);
     }
 }

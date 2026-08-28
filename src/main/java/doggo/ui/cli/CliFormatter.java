@@ -35,6 +35,7 @@ final class CliFormatter {
                         .append(")\n");
             }
             message.append("\n");
+            message.append("Edit a Plan with \"edit NUMBER\".\n\n");
         }
         return message.append("Type \"new\" to create a new Trip.\n")
                 .append("Type \"back\" to go back to the Main Menu.").toString();

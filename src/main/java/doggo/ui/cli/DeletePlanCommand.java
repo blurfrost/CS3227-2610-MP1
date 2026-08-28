@@ -1,7 +1,6 @@
 package doggo.ui.cli;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import doggo.domain.Trip;
 

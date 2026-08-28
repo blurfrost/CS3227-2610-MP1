@@ -3,7 +3,6 @@ package doggo.ui.cli;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Optional;
-import java.util.UUID;
 
 import doggo.domain.Plan;
 import doggo.domain.Trip;
@@ -18,32 +17,32 @@ final class EditPlanCommand implements Command {
     @Override
     public CommandResult execute(CliContext context) {
         Optional<PlanTarget> planTarget = context.session().planTargetAt(index);
-        Optional<UUID> selectedTripId = context.session().selectedTripId();
-        Optional<Trip> trip = planTarget.flatMap(target -> context.service().getTrip(target.tripId()));
-        if (trip.isEmpty()) {
-            context.session().enterOrganise();
-            return new CommandResult(context.formatter().error(
-                    "Selected Trip could not be found.\n" + context.organiseMenu()), false);
-        }
         if (planTarget.isEmpty()) {
             return new CommandResult(context.formatter().error(
                     context.formatter().invalidIndex("edit", IndexedEntity.PLAN,
                             context.session().displayedPlanCount()) + "\n"
-                            + context.selectedTripView(trip.orElseThrow())), false);
+                            + context.refreshCurrentView()), false);
         }
         PlanTarget target = planTarget.orElseThrow();
-        if (selectedTripId.isEmpty() || !selectedTripId.orElseThrow().equals(target.tripId())) {
+        if (context.session().mode() == CliMode.TRIP
+                && context.session().selectedTripId().filter(target.tripId()::equals).isEmpty()) {
             return new CommandResult(context.formatter().error(
                     "The selected Plan is no longer available.\n"
-                            + context.selectedTripView(trip.orElseThrow())), false);
+                            + context.refreshCurrentView()), false);
         }
-        Optional<Plan> plan = trip.orElseThrow().plans().stream()
+        Optional<Trip> trip = context.service().getTrip(target.tripId());
+        if (trip.isEmpty()) {
+            return new CommandResult(context.formatter().error(
+                    "Selected Trip could not be found.\n" + context.refreshCurrentView()), false);
+        }
+        Trip selectedTrip = trip.orElseThrow();
+        Optional<Plan> plan = selectedTrip.plans().stream()
                 .filter(candidate -> candidate.id().equals(target.planId()))
                 .findFirst();
         if (plan.isEmpty()) {
             return new CommandResult(context.formatter().error(
                     "The selected Plan is no longer available.\n"
-                            + context.selectedTripView(trip.orElseThrow())), false);
+                            + context.refreshCurrentView()), false);
         }
 
         Plan selectedPlan = plan.orElseThrow();
@@ -59,8 +58,7 @@ final class EditPlanCommand implements Command {
         if (date == null) {
             return new CommandResult("Bye!", true);
         }
-        while (date.isBefore(trip.orElseThrow().startDate())
-                || date.isAfter(trip.orElseThrow().endDate())) {
+        while (date.isBefore(selectedTrip.startDate()) || date.isAfter(selectedTrip.endDate())) {
             context.output().println(context.formatter().error(
                     "Plan date must fall within the Trip dates."));
             date = promptDate(context, date);
@@ -74,14 +72,14 @@ final class EditPlanCommand implements Command {
         }
         if (destination.equals(selectedPlan.destination()) && date.equals(selectedPlan.date())
                 && time.equals(selectedPlan.time())) {
-            return selectedTripResult(context, "No changes made.");
+            return planResult(context, "No changes made.");
         }
         try {
             context.service().editPlan(target.tripId(), target.planId(), destination, date, time);
         } catch (IllegalArgumentException exception) {
-            return selectedTripResult(context, context.formatter().error(exception.getMessage()));
+            return planResult(context, context.formatter().error(exception.getMessage()));
         }
-        return selectedTripResult(context, "Plan updated.");
+        return planResult(context, "Plan updated.");
     }
 
     private static String promptText(CliContext context, String message) {
@@ -142,20 +140,13 @@ final class EditPlanCommand implements Command {
     }
 
     /**
-     * Refreshes the selected Trip view after a Plan operation.
+     * Refreshes the active view after a Plan operation.
      *
      * @param context CLI dependencies.
      * @param message Operation result message.
      * @return Result containing the message and refreshed view.
      */
-    private static CommandResult selectedTripResult(CliContext context, String message) {
-        return context.session().selectedTripId()
-                .flatMap(context.service()::getTrip)
-                .map(trip -> new CommandResult(message + "\n" + context.selectedTripView(trip), false))
-                .orElseGet(() -> {
-                    context.session().enterOrganise();
-                    return new CommandResult(context.formatter().error(
-                            "Selected Trip could not be found.\n" + context.organiseMenu()), false);
-                });
+    private static CommandResult planResult(CliContext context, String message) {
+        return new CommandResult(message + "\n" + context.refreshCurrentView(), false);
     }
 }

@@ -38,6 +38,16 @@ class ParserTest {
         Parser parser = new Parser();
 
         assertInstanceOf(NewTripCommand.class, parser.parse("new", CliMode.DASHBOARD));
-        assertInstanceOf(UnknownCommand.class, parser.parse("edit 1", CliMode.DASHBOARD));
+        assertInstanceOf(EditPlanCommand.class, parser.parse("edit 1", CliMode.DASHBOARD));
+    }
+
+    @Test
+    void parseDashboardMalformedEdit_returnsIndexFeedbackCommand() {
+        Parser parser = new Parser();
+
+        assertInstanceOf(InvalidCommand.class,
+                parser.parse("edit 1 2", CliMode.DASHBOARD));
+        assertInstanceOf(InvalidIndexCommand.class,
+                parser.parse("edit abc", CliMode.DASHBOARD));
     }
 }

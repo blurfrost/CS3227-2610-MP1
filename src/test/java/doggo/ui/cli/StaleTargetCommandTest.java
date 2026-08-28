@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -82,6 +83,81 @@ class StaleTargetCommandTest {
 
         assertFalse(result.shouldExit());
         assertTrue(result.message().contains("Selected Trip could not be found."));
+    }
+
+    @Test
+    void editPlan_staleDashboardTrip_doesNotPromptForFields() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+        CliContext context = createContext(service, "");
+        context.session().enterDashboard();
+        context.dashboardMenu();
+        repository.delete(trip.id());
+
+        CommandResult result = new EditPlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.DASHBOARD, context.session().mode());
+        assertTrue(result.message().contains("Selected Trip could not be found."));
+        assertTrue(result.message().contains("[MODE: DASHBOARD]"));
+    }
+
+    @Test
+    void editPlan_staleDashboardPlan_doesNotPromptForFields() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+        CliContext context = createContext(service, "");
+        context.session().enterDashboard();
+        context.dashboardMenu();
+        repository.save(new Trip(trip.id(), trip.title(), trip.startDate(), trip.endDate()));
+
+        CommandResult result = new EditPlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.DASHBOARD, context.session().mode());
+        assertTrue(result.message().contains("The selected Plan is no longer available."));
+        assertTrue(result.message().contains("[MODE: DASHBOARD]"));
+        assertTrue(service.getTrip(trip.id()).orElseThrow().plans().isEmpty());
+    }
+
+    @Test
+    void editPlan_dashboardTargetBecomesStaleAfterPrompts_doesNotMutatePlan() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+        StringWriter output = new StringWriter();
+        PrintWriter writer = new PrintWriter(output);
+        BufferedReader input = new BufferedReader(new StringReader(
+                "Kyoto\n05/01/2027\n10:00\n")) {
+            private int linesRead;
+
+            @Override
+            public String readLine() throws IOException {
+                String line = super.readLine();
+                linesRead++;
+                if (linesRead == 3) {
+                    repository.save(new Trip(trip.id(), trip.title(), trip.startDate(), trip.endDate()));
+                }
+                return line;
+            }
+        };
+        CliSession session = new CliSession();
+        CliContext context = new CliContext(service, session,
+                new CliPrompter(input, writer), new CliFormatter(), writer);
+        session.enterDashboard();
+        context.dashboardMenu();
+
+        CommandResult result = new EditPlanCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertTrue(result.message().contains("Plan not found."));
+        assertTrue(result.message().contains("[MODE: DASHBOARD]"));
+        assertTrue(service.getTrip(trip.id()).orElseThrow().plans().isEmpty());
     }
 
     @Test

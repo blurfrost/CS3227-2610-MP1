@@ -48,5 +48,6 @@ class CliFormatterTest {
 
         assertTrue(output.contains("Today's itinerary:"));
         assertTrue(output.contains("1. 09:00 - Tokyo (Trip: Japan)"));
+        assertTrue(output.contains("Edit a Plan with \"edit NUMBER\"."));
     }
 }
