@@ -61,6 +61,54 @@ class CliContextTest {
     }
 
     @Test
+    void enterTripListFor_pastTrip_entersGalleryAndRetainsDisplayedTarget() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip past = service.createTrip("Past", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        CliSession session = new CliSession();
+        CliContext context = new CliContext(service, session, null, new CliFormatter(), null);
+
+        String output = context.enterTripListFor(past);
+
+        assertEquals(CliMode.GALLERY, session.mode());
+        assertEquals(past.id(), session.tripIdAt(1).orElseThrow());
+        assertTrue(output.contains("[MODE: GALLERY]"));
+        assertTrue(output.contains("Past"));
+    }
+
+    @Test
+    void enterTripListFor_currentTrip_entersOrganiseAndRetainsDisplayedTarget() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip current = service.createTrip("Current", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
+        CliSession session = new CliSession();
+        CliContext context = new CliContext(service, session, null, new CliFormatter(), null);
+
+        String output = context.enterTripListFor(current);
+
+        assertEquals(CliMode.ORGANISE, session.mode());
+        assertEquals(current.id(), session.tripIdAt(1).orElseThrow());
+        assertTrue(output.contains("[MODE: ORGANISE]"));
+        assertTrue(output.contains("Current"));
+    }
+
+    @Test
+    void enterTripListFor_futureTrip_entersOrganiseAndRetainsDisplayedTarget() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip future = service.createTrip("Future", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 9));
+        CliSession session = new CliSession();
+        CliContext context = new CliContext(service, session, null, new CliFormatter(), null);
+
+        String output = context.enterTripListFor(future);
+
+        assertEquals(CliMode.ORGANISE, session.mode());
+        assertEquals(future.id(), session.tripIdAt(1).orElseThrow());
+        assertTrue(output.contains("[MODE: ORGANISE]"));
+        assertTrue(output.contains("Future"));
+    }
+
+    @Test
     void dashboardMenu_recordsTargetsInDisplayedOrder() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
         DoggoService service = new DoggoService(repository, TestClock.fixed());

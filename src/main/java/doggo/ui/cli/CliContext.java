@@ -7,6 +7,7 @@ import doggo.application.DashboardEntry;
 import doggo.application.DoggoService;
 import doggo.domain.Plan;
 import doggo.domain.Trip;
+import doggo.domain.TripStatus;
 
 record CliContext(DoggoService service, CliSession session, CliPrompter prompter,
                   CliFormatter formatter, PrintWriter output) {
@@ -14,6 +15,15 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
         List<Trip> trips = service.getCurrentAndFutureTrips();
         session.setDisplayedTripIds(trips.stream().map(Trip::id).toList());
         return formatter.organiseMenu(trips);
+    }
+
+    String enterTripListFor(Trip trip) {
+        if (service.getTripStatus(trip) == TripStatus.PAST) {
+            session.enterGallery();
+            return galleryMenu();
+        }
+        session.enterOrganise();
+        return organiseMenu();
     }
 
     String selectedTripView(Trip trip) {

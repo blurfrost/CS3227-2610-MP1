@@ -86,6 +86,58 @@ class DoggoServiceTest {
     }
 
     @Test
+    void getTripStatus_classifiesPastTrip() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Past", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+
+        assertEquals(TripStatus.PAST, service.getTripStatus(trip));
+    }
+
+    @Test
+    void getTripStatus_classifiesTripStartingTodayAsCurrent() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Starting today", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(TripStatus.CURRENT, service.getTripStatus(trip));
+    }
+
+    @Test
+    void getTripStatus_classifiesTripEndingTodayAsCurrent() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Ending today", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 5));
+
+        assertEquals(TripStatus.CURRENT, service.getTripStatus(trip));
+    }
+
+    @Test
+    void getTripStatus_classifiesSingleDayTripAsCurrent() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Single day", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
+
+        assertEquals(TripStatus.CURRENT, service.getTripStatus(trip));
+    }
+
+    @Test
+    void getTripStatus_classifiesFutureTrip() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Future", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(TripStatus.FUTURE, service.getTripStatus(trip));
+    }
+
+    @Test
+    void getTripStatus_nullTrip_throwsException() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+
+        assertThrows(NullPointerException.class, () -> service.getTripStatus(null));
+    }
+
+    @Test
     void dashboardEntries_emptyTripsAndTripsWithoutPlans_returnEmptyList() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
         DoggoService service = new DoggoService(repository, TestClock.fixed());

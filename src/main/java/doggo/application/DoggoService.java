@@ -66,6 +66,18 @@ public final class DoggoService {
     }
 
     /**
+     * Returns the current status of the specified Trip.
+     *
+     * @param trip Trip to classify.
+     * @return Status of the Trip relative to the current date.
+     * @throws NullPointerException If trip is null.
+     */
+    public TripStatus getTripStatus(Trip trip) {
+        Objects.requireNonNull(trip);
+        return trip.statusOn(LocalDate.now(clock));
+    }
+
+    /**
      * Returns all Plans scheduled for the current date with their owning Trip context.
      *
      * @return Dashboard entries in deterministic chronological order.
