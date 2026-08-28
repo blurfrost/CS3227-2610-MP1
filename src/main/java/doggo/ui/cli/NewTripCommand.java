@@ -2,6 +2,9 @@ package doggo.ui.cli;
 
 import java.time.LocalDate;
 
+/**
+ * Creates a Trip from values entered in the CLI.
+ */
 final class NewTripCommand implements Command {
     @Override
     public CommandResult execute(CliContext context) {
@@ -28,6 +31,7 @@ final class NewTripCommand implements Command {
         }
 
         context.service().createTrip(title, startDate, endDate);
+        context.session().enterOrganise();
         return new CommandResult("Trip successfully added!\n\n"
                 + context.organiseMenu(), false);
     }

@@ -10,6 +10,7 @@ class ModeCommandParserTest {
         ModeCommandParser parser = new MainCommandParser();
 
         assertInstanceOf(OrganiseCommand.class, parser.parse("organise"));
+        assertInstanceOf(NewTripCommand.class, parser.parse("new"));
     }
 
     @Test

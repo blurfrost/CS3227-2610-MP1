@@ -27,11 +27,13 @@ class DoggoServiceTest {
     @Test
     void createTrip_andGetTrips_returnsTripsInStartDateOrder() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
-        service.createTrip("Later", LocalDate.of(2028, 1, 1), LocalDate.of(2028, 1, 2));
-        service.createTrip("Earlier", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
+        Trip future = service.createTrip("Future", LocalDate.of(2028, 1, 1),
+                LocalDate.of(2028, 1, 2));
+        Trip past = service.createTrip("Past", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 2));
+        Trip current = service.createTrip("Current", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
 
-        assertEquals("Earlier", service.getTrips().get(0).title());
-        assertEquals("Later", service.getTrips().get(1).title());
+        assertEquals(List.of(past, current, future), service.getTrips());
     }
 
     @Test
@@ -54,6 +56,21 @@ class DoggoServiceTest {
         service.createTrip("Future", LocalDate.of(2027, 1, 6), LocalDate.of(2027, 1, 9));
 
         assertEquals(List.of(past), service.getPastTrips());
+    }
+
+    @Test
+    void statusQueries_includeTripsOnInclusiveDateBoundaries() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip endingToday = service.createTrip("Ending today", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 5));
+        Trip startingToday = service.createTrip("Starting today", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 9));
+        Trip singleDay = service.createTrip("Single day", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
+
+        assertEquals(List.of(endingToday, singleDay, startingToday),
+                service.getCurrentAndFutureTrips());
+        assertEquals(List.of(), service.getPastTrips());
     }
 
     @Test

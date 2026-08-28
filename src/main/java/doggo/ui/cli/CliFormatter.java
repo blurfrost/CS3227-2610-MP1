@@ -13,7 +13,7 @@ final class CliFormatter {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     String mainMenu() {
-        return "Welcome! Available commands are: \"organise\", \"exit\"";
+        return "Welcome! Available commands are: \"new\", \"organise\", \"exit\"";
     }
 
     /**
