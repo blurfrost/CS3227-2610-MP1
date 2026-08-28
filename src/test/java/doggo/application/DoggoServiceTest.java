@@ -86,6 +86,77 @@ class DoggoServiceTest {
     }
 
     @Test
+    void dashboardEntries_emptyTripsAndTripsWithoutPlans_returnEmptyList() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        repository.save(trip);
+
+        assertEquals(List.of(), service.getDashboardEntries());
+    }
+
+    @Test
+    void dashboardEntries_filtersPlansByCurrentDateAcrossTrips() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip firstTrip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Trip secondTrip = service.createTrip("Korea", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5));
+        Plan todayPlan = service.addPlan(firstTrip.id(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        service.addPlan(firstTrip.id(), "Yesterday", LocalDate.of(2027, 1, 4), LocalTime.of(8, 0));
+        service.addPlan(firstTrip.id(), "Tomorrow", LocalDate.of(2027, 1, 6), LocalTime.of(8, 0));
+        Plan secondTodayPlan = service.addPlan(secondTrip.id(), "Market", LocalDate.of(2027, 1, 5),
+                LocalTime.of(10, 0));
+
+        assertEquals(List.of(new DashboardEntry(firstTrip.id(), "Japan", todayPlan),
+                new DashboardEntry(secondTrip.id(), "Korea", secondTodayPlan)),
+                service.getDashboardEntries());
+    }
+
+    @Test
+    void dashboardEntries_equalTimes_useDeterministicTieBreakers() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        LocalDate today = LocalDate.of(2027, 1, 5);
+        LocalTime sameTime = LocalTime.of(9, 0);
+        Trip alphaFirst = new Trip(UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                "Alpha", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        Trip alphaSecond = new Trip(UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                "Alpha", today, today);
+        Trip beta = new Trip(UUID.fromString("00000000-0000-0000-0000-000000000003"),
+                "Beta", today, today);
+        Trip early = new Trip(UUID.fromString("00000000-0000-0000-0000-000000000004"),
+                "Zeta", today, today);
+        Plan alphaFirstZoo = new Plan(UUID.fromString("00000000-0000-0000-0000-000000000011"),
+                "Zoo", today, sameTime);
+        Plan alphaFirstZooLaterId = new Plan(
+                UUID.fromString("00000000-0000-0000-0000-000000000012"), "Zoo", today, sameTime);
+        Plan alphaFirstMuseum = new Plan(UUID.fromString("00000000-0000-0000-0000-000000000013"),
+                "Museum", today, sameTime);
+        Plan alphaSecondMuseum = new Plan(
+                UUID.fromString("00000000-0000-0000-0000-000000000021"), "Museum", today, sameTime);
+        Plan betaAirport = new Plan(UUID.fromString("00000000-0000-0000-0000-000000000031"),
+                "Airport", today, sameTime);
+        Plan earlyPlan = new Plan(UUID.fromString("00000000-0000-0000-0000-000000000041"),
+                "Park", today, LocalTime.of(8, 0));
+        repository.save(alphaFirst.withAddedPlan(alphaFirstZoo)
+                .withAddedPlan(alphaFirstZooLaterId).withAddedPlan(alphaFirstMuseum));
+        repository.save(alphaSecond.withAddedPlan(alphaSecondMuseum));
+        repository.save(beta.withAddedPlan(betaAirport));
+        repository.save(early.withAddedPlan(earlyPlan));
+
+        assertEquals(List.of(new DashboardEntry(early.id(), "Zeta", earlyPlan),
+                new DashboardEntry(alphaFirst.id(), "Alpha", alphaFirstMuseum),
+                new DashboardEntry(alphaSecond.id(), "Alpha", alphaSecondMuseum),
+                new DashboardEntry(alphaFirst.id(), "Alpha", alphaFirstZoo),
+                new DashboardEntry(alphaFirst.id(), "Alpha", alphaFirstZooLaterId),
+                new DashboardEntry(beta.id(), "Beta", betaAirport)),
+                service.getDashboardEntries());
+    }
+
+    @Test
     void addPlan_toExistingTrip_storesPlan() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));

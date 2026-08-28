@@ -17,6 +17,13 @@ import doggo.domain.TripStatus;
  * Coordinates presentation-independent doggo use cases.
  */
 public final class DoggoService {
+    private static final Comparator<DashboardEntry> DASHBOARD_ENTRY_ORDER =
+            Comparator.comparing((DashboardEntry entry) -> entry.plan().time())
+                    .thenComparing(DashboardEntry::tripTitle)
+                    .thenComparing(entry -> entry.plan().destination())
+                    .thenComparing(DashboardEntry::tripId)
+                    .thenComparing(entry -> entry.plan().id());
+
     private final TripRepository tripRepository;
     private final Clock clock;
 
@@ -55,6 +62,21 @@ public final class DoggoService {
                 .sorted(Comparator.comparing(Trip::startDate)
                         .thenComparing(Trip::title)
                         .thenComparing(Trip::id))
+                .toList();
+    }
+
+    /**
+     * Returns all Plans scheduled for the current date with their owning Trip context.
+     *
+     * @return Dashboard entries in deterministic chronological order.
+     */
+    public List<DashboardEntry> getDashboardEntries() {
+        LocalDate currentDate = LocalDate.now(clock);
+        return tripRepository.findAll().stream()
+                .flatMap(trip -> trip.plans().stream()
+                        .filter(plan -> plan.date().equals(currentDate))
+                        .map(plan -> new DashboardEntry(trip.id(), trip.title(), plan)))
+                .sorted(DASHBOARD_ENTRY_ORDER)
                 .toList();
     }
 
