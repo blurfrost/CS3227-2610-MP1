@@ -89,6 +89,7 @@ final class CliFormatter {
             appendTrips(message, trips);
             message.append("\nView a past Trip with \"view NUMBER\".\n\n");
             message.append("Edit a past Trip with \"edit NUMBER\".\n\n");
+            message.append("Delete a past Trip with \"delete NUMBER\".\n\n");
         }
         return message.append("Type \"new\" to create a new Trip.\n")
                 .append("Type \"back\" to go back to the Main Menu.").toString();

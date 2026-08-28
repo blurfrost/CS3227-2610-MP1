@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import doggo.TestClock;
 import doggo.application.DoggoService;
@@ -159,6 +160,136 @@ class GalleryMaintenanceTest {
     }
 
     @Test
+    void deleteGalleryTrip_confirmed_removesAggregateAndRefreshesGallery() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 2),
+                LocalTime.of(9, 0));
+        CliContext context = createContext(service, "yes\n");
+        context.session().enterGallery();
+        context.galleryMenu();
+
+        CommandResult result = new DeleteTripCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY, context.session().mode());
+        assertTrue(result.message().contains("Trip deleted."));
+        assertTrue(result.message().contains("There are no past Trips."));
+        assertTrue(service.getTrip(trip.id()).isEmpty());
+    }
+
+    @Test
+    void deleteGalleryTrip_cancelled_preservesTripAndRefreshesGallery() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        CliContext context = createContext(service, "no\n");
+        context.session().enterGallery();
+        context.galleryMenu();
+
+        CommandResult result = new DeleteTripCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY, context.session().mode());
+        assertTrue(result.message().contains("Trip deletion cancelled."));
+        assertTrue(result.message().contains("Japan (from 01/01/2027 to 04/01/2027)"));
+        assertEquals(trip, service.getTrip(trip.id()).orElseThrow());
+    }
+
+    @Test
+    void deleteGalleryTrip_invalidConfirmation_repromptsUntilCancellation() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        StringWriter output = new StringWriter();
+        PrintWriter writer = new PrintWriter(output);
+        CliContext context = new CliContext(service, new CliSession(),
+                new CliPrompter(new BufferedReader(new StringReader("maybe\nYes\nno\n")), writer),
+                new CliFormatter(), writer);
+        context.session().enterGallery();
+        context.galleryMenu();
+
+        CommandResult result = new DeleteTripCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY, context.session().mode());
+        assertTrue(output.toString().contains("Please enter exactly yes or no."));
+        assertTrue(result.message().contains("Trip deletion cancelled."));
+        assertEquals(trip, service.getTrip(trip.id()).orElseThrow());
+    }
+
+    @Test
+    void deleteGalleryTrip_deletedTarget_doesNotPromptOrMutate() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        CliContext context = createNoPromptContext(service);
+        context.session().enterGallery();
+        context.galleryMenu();
+        repository.delete(trip.id());
+
+        CommandResult result = new DeleteTripCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY, context.session().mode());
+        assertTrue(result.message().contains("The selected Trip is no longer available."));
+    }
+
+    @Test
+    void deleteGalleryTrip_reclassifiedTarget_doesNotPromptOrMutate() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        CliContext context = createNoPromptContext(service);
+        context.session().enterGallery();
+        context.galleryMenu();
+        repository.save(new Trip(trip.id(), trip.title(), LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 5)));
+
+        CommandResult result = new DeleteTripCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY, context.session().mode());
+        assertTrue(result.message().contains("The selected Trip is no longer available."));
+        assertTrue(service.getTrip(trip.id()).isPresent());
+    }
+
+    @Test
+    void deleteGalleryTrip_deletedAfterConfirmation_failsSafelyAndRefreshesGallery() {
+        InMemoryTripRepository repository = new InMemoryTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        StringWriter output = new StringWriter();
+        PrintWriter writer = new PrintWriter(output);
+        BufferedReader input = new BufferedReader(new StringReader("yes\n")) {
+            @Override
+            public String readLine() throws IOException {
+                String confirmation = super.readLine();
+                repository.delete(trip.id());
+                return confirmation;
+            }
+        };
+        CliContext context = new CliContext(service, new CliSession(),
+                new CliPrompter(input, writer), new CliFormatter(), writer);
+        context.session().enterGallery();
+        context.galleryMenu();
+
+        CommandResult result = new DeleteTripCommand(1).execute(context);
+
+        assertFalse(result.shouldExit());
+        assertEquals(CliMode.GALLERY, context.session().mode());
+        assertTrue(result.message().contains("Error: Trip not found."));
+        assertTrue(result.message().contains("There are no past Trips."));
+    }
+
+    @Test
     void editTrip_reclassifiedTarget_doesNotPromptInEitherList() {
         InMemoryTripRepository repository = new InMemoryTripRepository();
         DoggoService service = new DoggoService(repository, TestClock.fixed());
@@ -200,7 +331,7 @@ class GalleryMaintenanceTest {
         BufferedReader input = new BufferedReader(new StringReader("")) {
             @Override
             public String readLine() {
-                throw new AssertionError("A stale Trip must not prompt for edit fields.");
+                throw new AssertionError("A stale target must not prompt for input.");
             }
         };
         return new CliContext(service, new CliSession(), new CliPrompter(input, writer),

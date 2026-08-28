@@ -64,6 +64,14 @@ class CliFormatterTest {
         assertTrue(output.contains("View a past Trip with \"view NUMBER\"."));
         assertTrue(output.contains("Type \"new\" to create a new Trip."));
         assertTrue(output.contains("Edit a past Trip with \"edit NUMBER\"."));
+        assertTrue(output.contains("Delete a past Trip with \"delete NUMBER\"."));
+    }
+
+    @Test
+    void galleryMenu_emptyTrips_doesNotAdvertiseDeletion() {
+        String output = new CliFormatter().galleryMenu(List.of());
+
+        assertTrue(output.contains("There are no past Trips."));
         assertFalse(output.contains("delete NUMBER"));
     }
 

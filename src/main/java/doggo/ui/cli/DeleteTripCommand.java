@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Deletes a Trip selected from the displayed Organise list.
+ * Deletes a Trip selected from an active Trip list.
  */
 final class DeleteTripCommand implements Command {
     private final int index;
@@ -15,17 +15,16 @@ final class DeleteTripCommand implements Command {
 
     @Override
     public CommandResult execute(CliContext context) {
+        CliMode initiatingMode = context.session().mode();
         Optional<UUID> tripId = context.session().tripIdAt(index);
         if (tripId.isEmpty()) {
-            return new CommandResult(context.formatter().error(
+            return tripResult(context, context.formatter().error(
                     context.formatter().invalidIndex("delete", IndexedEntity.TRIP,
-                            context.session().displayedTripCount()) + "\n"
-                            + context.organiseMenu()), false);
+                            context.session().displayedTripCount())), initiatingMode);
         }
-        if (context.service().getTrip(tripId.orElseThrow()).isEmpty()) {
-            return new CommandResult(context.formatter().error(
-                    "The selected Trip is no longer available.\n"
-                            + context.organiseMenu()), false);
+        if (context.displayedTripAt(index, initiatingMode).isEmpty()) {
+            return tripResult(context, context.formatter().error(
+                    "The selected Trip is no longer available."), initiatingMode);
         }
 
         String confirmation = context.prompter().prompt(
@@ -42,15 +41,27 @@ final class DeleteTripCommand implements Command {
             }
         }
         if (confirmation.trim().equals("no")) {
-            return new CommandResult("Trip deletion cancelled.\n" + context.organiseMenu(), false);
+            return tripResult(context, "Trip deletion cancelled.", initiatingMode);
         }
 
         try {
             context.service().deleteTrip(tripId.orElseThrow());
         } catch (IllegalArgumentException exception) {
-            return new CommandResult(context.formatter().error(
-                    exception.getMessage() + "\n" + context.organiseMenu()), false);
+            return tripResult(context, context.formatter().error(exception.getMessage()), initiatingMode);
         }
-        return new CommandResult("Trip deleted.\n" + context.organiseMenu(), false);
+        return tripResult(context, "Trip deleted.", initiatingMode);
+    }
+
+    /**
+     * Returns a Trip command result with the initiating Trip list refreshed.
+     *
+     * @param context CLI dependencies.
+     * @param message Operation result message.
+     * @param initiatingMode Trip list mode from which the command started.
+     * @return Result containing the message and refreshed Trip list.
+     */
+    private static CommandResult tripResult(CliContext context, String message,
+                                             CliMode initiatingMode) {
+        return new CommandResult(message + "\n" + context.refreshTripList(initiatingMode), false);
     }
 }
