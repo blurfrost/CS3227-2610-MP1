@@ -20,7 +20,9 @@ final class DeletePlanCommand implements Command {
         Optional<UUID> planId = context.session().planIdAt(index);
         if (planId.isEmpty()) {
             return new CommandResult(context.formatter().error(
-                    "Plan index must refer to a listed Plan.\n" + refreshSelectedTrip(context)), false);
+                    context.formatter().invalidIndex("delete", IndexedEntity.PLAN,
+                            context.session().displayedPlanCount()) + "\n"
+                            + refreshSelectedTrip(context)), false);
         }
         Optional<Trip> selectedTrip = context.session().selectedTripId().flatMap(context.service()::getTrip);
         if (selectedTrip.isEmpty()) {

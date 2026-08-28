@@ -76,7 +76,7 @@ class CliTest {
         String input = String.join("\n", "organise", "view 2", "exit") + "\n";
         String output = runCli(input);
 
-        assertTrue(output.contains("Trip index must refer to a listed Trip."));
+        assertTrue(output.contains("There are no trips to view."));
     }
 
     @Test
@@ -255,8 +255,48 @@ class CliTest {
         String output = runCli(input);
 
         assertTrue(output.contains("Usage: edit NUMBER"));
-        assertTrue(output.contains("Usage: delete NUMBER"));
+        assertTrue(output.contains("There are no trips to delete."));
         assertTrue(output.contains("[MODE: ORGANISE]"));
+    }
+
+    @Test
+    void malformedTripIndexes_showDisplayedRange() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "02/01/2027", "new", "Korea", "03/01/2027", "04/01/2027", "view abc",
+                "edit -1", "delete 0", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Trip number should be from 1 to 2."));
+    }
+
+    @Test
+    void malformedTripIndexes_withNoTrips_showActionSpecificMessages() {
+        String input = String.join("\n", "organise", "view abc", "edit -1", "delete 0",
+                "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("There are no trips to view."));
+        assertTrue(output.contains("There are no trips to edit."));
+        assertTrue(output.contains("There are no trips to delete."));
+    }
+
+    @Test
+    void malformedPlanIndexes_showDisplayedRange() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
+                "Osaka", "06/01/2027", "10:00", "edit abc", "delete -1", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Plan number should be from 1 to 2."));
+    }
+
+    @Test
+    void malformedTripIndex_withOneTrip_usesExactNumber() {
+        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
+                "02/01/2027", "edit abc", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Trip number should be 1."));
     }
 
     @Test

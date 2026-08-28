@@ -17,7 +17,8 @@ final class ViewTripCommand implements Command {
         Optional<UUID> tripId = context.session().tripIdAt(index);
         if (tripId.isEmpty()) {
             return new CommandResult(context.formatter().error(
-                    "Trip index must refer to a listed Trip.\n"
+                    context.formatter().invalidIndex("view", IndexedEntity.TRIP,
+                            context.session().displayedTripCount()) + "\n"
                             + context.organiseMenu()), false);
         }
         Optional<Trip> trip = context.service().getTrip(tripId.orElseThrow());

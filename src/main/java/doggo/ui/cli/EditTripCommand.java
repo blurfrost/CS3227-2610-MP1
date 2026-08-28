@@ -18,7 +18,9 @@ final class EditTripCommand implements Command {
         Optional<UUID> tripId = context.session().tripIdAt(index);
         if (tripId.isEmpty()) {
             return new CommandResult(context.formatter().error(
-                    "Trip index must refer to a listed Trip.\n" + context.organiseMenu()), false);
+                    context.formatter().invalidIndex("edit", IndexedEntity.TRIP,
+                            context.session().displayedTripCount())
+                            + "\n" + context.organiseMenu()), false);
         }
         Optional<Trip> storedTrip = context.service().getTrip(tripId.orElseThrow());
         if (storedTrip.isEmpty()) {

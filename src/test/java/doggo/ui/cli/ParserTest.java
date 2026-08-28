@@ -18,9 +18,18 @@ class ParserTest {
         Parser parser = new Parser();
 
         assertInstanceOf(InvalidCommand.class, parser.parse("edit 1 2", CliMode.ORGANISE));
-        assertInstanceOf(InvalidCommand.class, parser.parse("delete 0", CliMode.ORGANISE));
-        assertInstanceOf(InvalidCommand.class, parser.parse("delete -1", CliMode.TRIP));
-        assertInstanceOf(InvalidCommand.class,
+        assertInstanceOf(InvalidIndexCommand.class, parser.parse("delete 0", CliMode.ORGANISE));
+        assertInstanceOf(InvalidIndexCommand.class, parser.parse("delete -1", CliMode.TRIP));
+        assertInstanceOf(InvalidIndexCommand.class,
                 parser.parse("edit 999999999999999999999", CliMode.TRIP));
+    }
+
+    @Test
+    void parseMalformedView_returnsIndexFeedbackCommand() {
+        Parser parser = new Parser();
+
+        assertInstanceOf(InvalidCommand.class, parser.parse("view 1 2", CliMode.ORGANISE));
+        assertInstanceOf(InvalidIndexCommand.class, parser.parse("view abc", CliMode.ORGANISE));
+        assertInstanceOf(InvalidIndexCommand.class, parser.parse("view 0", CliMode.ORGANISE));
     }
 }

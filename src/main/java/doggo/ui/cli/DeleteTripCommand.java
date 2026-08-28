@@ -18,7 +18,8 @@ final class DeleteTripCommand implements Command {
         Optional<UUID> tripId = context.session().tripIdAt(index);
         if (tripId.isEmpty()) {
             return new CommandResult(context.formatter().error(
-                    "Trip index must refer to a listed Trip.\n"
+                    context.formatter().invalidIndex("delete", IndexedEntity.TRIP,
+                            context.session().displayedTripCount()) + "\n"
                             + context.organiseMenu()), false);
         }
         if (context.service().getTrip(tripId.orElseThrow()).isEmpty()) {

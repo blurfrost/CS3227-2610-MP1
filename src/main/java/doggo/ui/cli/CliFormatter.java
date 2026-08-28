@@ -98,4 +98,16 @@ final class CliFormatter {
     String error(String message) {
         return "Error: " + message;
     }
+
+    String invalidIndex(String action, IndexedEntity entity, int displayedCount) {
+        String itemName = entity == IndexedEntity.TRIP ? "Trip" : "Plan";
+        String itemNamePlural = entity == IndexedEntity.TRIP ? "trips" : "plans";
+        if (displayedCount == 0) {
+            return "There are no " + itemNamePlural + " to " + action + ".";
+        }
+        if (displayedCount == 1) {
+            return itemName + " number should be 1.";
+        }
+        return itemName + " number should be from 1 to " + displayedCount + ".";
+    }
 }

@@ -27,7 +27,9 @@ final class EditPlanCommand implements Command {
         }
         if (planId.isEmpty()) {
             return new CommandResult(context.formatter().error(
-                    "Plan index must refer to a listed Plan.\n" + context.selectedTripView(trip.orElseThrow())), false);
+                    context.formatter().invalidIndex("edit", IndexedEntity.PLAN,
+                            context.session().displayedPlanCount()) + "\n"
+                            + context.selectedTripView(trip.orElseThrow())), false);
         }
         Optional<Plan> plan = trip.orElseThrow().plans().stream()
                 .filter(candidate -> candidate.id().equals(planId.orElseThrow()))

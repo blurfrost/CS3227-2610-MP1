@@ -51,6 +51,10 @@ final class CliSession {
         return Optional.of(displayedTripIds.get(oneBasedIndex - 1));
     }
 
+    int displayedTripCount() {
+        return displayedTripIds.size();
+    }
+
     void setDisplayedPlanIds(List<UUID> displayedPlanIds) {
         this.displayedPlanIds = List.copyOf(displayedPlanIds);
     }
@@ -60,5 +64,9 @@ final class CliSession {
             return Optional.empty();
         }
         return Optional.of(displayedPlanIds.get(oneBasedIndex - 1));
+    }
+
+    int displayedPlanCount() {
+        return displayedPlanIds.size();
     }
 }
