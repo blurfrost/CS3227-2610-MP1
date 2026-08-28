@@ -53,7 +53,7 @@ class CliFormatterTest {
     }
 
     @Test
-    void galleryMenu_pastTrips_displaysTripCreationAndReadOnlyNavigation() {
+    void galleryMenu_pastTrips_displaysTripCreationNavigationAndEditing() {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 4));
 
@@ -63,7 +63,7 @@ class CliFormatterTest {
         assertTrue(output.contains("1. Japan (from 01/01/2027 to 04/01/2027)"));
         assertTrue(output.contains("View a past Trip with \"view NUMBER\"."));
         assertTrue(output.contains("Type \"new\" to create a new Trip."));
-        assertFalse(output.contains("edit NUMBER"));
+        assertTrue(output.contains("Edit a past Trip with \"edit NUMBER\"."));
         assertFalse(output.contains("delete NUMBER"));
     }
 

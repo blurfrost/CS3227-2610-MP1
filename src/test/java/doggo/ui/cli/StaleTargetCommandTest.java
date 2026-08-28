@@ -28,6 +28,7 @@ class StaleTargetCommandTest {
         DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 6));
         CliContext context = createContext(service, "");
+        context.session().enterOrganise();
         context.organiseMenu();
         repository.delete(trip.id());
 
@@ -59,6 +60,7 @@ class StaleTargetCommandTest {
         DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 6));
         CliContext context = createContext(service, "");
+        context.session().enterOrganise();
         context.organiseMenu();
         repository.delete(trip.id());
 
@@ -257,6 +259,7 @@ class StaleTargetCommandTest {
         String input = String.join("\n", "Japan moved", "10/01/2027", "",
                 "Korea moved", "", "") + "\n";
         CliContext context = createContext(service, input);
+        context.session().enterOrganise();
         context.organiseMenu();
 
         new EditTripCommand(1).execute(context);

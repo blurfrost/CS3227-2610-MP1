@@ -15,17 +15,19 @@ final class EditTripCommand implements Command {
 
     @Override
     public CommandResult execute(CliContext context) {
+        CliMode initiatingMode = context.session().mode();
         Optional<UUID> tripId = context.session().tripIdAt(index);
         if (tripId.isEmpty()) {
             return new CommandResult(context.formatter().error(
                     context.formatter().invalidIndex("edit", IndexedEntity.TRIP,
                             context.session().displayedTripCount())
-                            + "\n" + context.organiseMenu()), false);
+                            + "\n" + context.refreshTripList(initiatingMode)), false);
         }
-        Optional<Trip> storedTrip = context.service().getTrip(tripId.orElseThrow());
+        Optional<Trip> storedTrip = context.displayedTripAt(index, initiatingMode);
         if (storedTrip.isEmpty()) {
             return new CommandResult(context.formatter().error(
-                    "The selected Trip is no longer available.\n" + context.organiseMenu()), false);
+                    "The selected Trip is no longer available.\n"
+                            + context.refreshTripList(initiatingMode)), false);
         }
 
         Trip trip = storedTrip.orElseThrow();
@@ -44,16 +46,18 @@ final class EditTripCommand implements Command {
         LocalDate endDate = dates[1];
         if (title.equals(trip.title()) && startDate.equals(trip.startDate())
                 && endDate.equals(trip.endDate())) {
-            return new CommandResult("No changes made.\n" + context.organiseMenu(), false);
+            return new CommandResult("No changes made.\n"
+                    + context.refreshTripList(initiatingMode), false);
         }
 
+        Trip updatedTrip;
         try {
-            context.service().editTrip(trip.id(), title, startDate, endDate);
+            updatedTrip = context.service().editTrip(trip.id(), title, startDate, endDate);
         } catch (IllegalArgumentException exception) {
             context.output().println(context.formatter().error(exception.getMessage()));
-            return new CommandResult(context.organiseMenu(), false);
+            return new CommandResult(context.refreshTripList(initiatingMode), false);
         }
-        return new CommandResult("Trip updated.\n" + context.organiseMenu(), false);
+        return new CommandResult("Trip updated.\n" + context.enterTripListFor(updatedTrip), false);
     }
 
     private static String promptText(CliContext context, String message) {

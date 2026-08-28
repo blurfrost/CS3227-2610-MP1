@@ -2,6 +2,8 @@ package doggo.ui.cli;
 
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import doggo.application.DashboardEntry;
 import doggo.application.DoggoService;
@@ -26,6 +28,24 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
         return organiseMenu();
     }
 
+    Optional<Trip> displayedTripAt(int index, CliMode initiatingMode) {
+        Optional<UUID> tripId = session.tripIdAt(index);
+        if (tripId.isEmpty()) {
+            return Optional.empty();
+        }
+        return tripsFor(initiatingMode).stream()
+                .filter(trip -> trip.id().equals(tripId.orElseThrow()))
+                .findFirst();
+    }
+
+    String refreshTripList(CliMode mode) {
+        return switch (mode) {
+        case ORGANISE -> organiseMenu();
+        case GALLERY -> galleryMenu();
+        default -> throw new IllegalArgumentException("Mode must be a Trip list mode.");
+        };
+    }
+
     String selectedTripView(Trip trip) {
         List<Plan> plans = service.getPlans(trip);
         session.setDisplayedPlanTargets(trip.id(), plans.stream().map(Plan::id).toList());
@@ -44,6 +64,21 @@ record CliContext(DoggoService service, CliSession session, CliPrompter prompter
         List<Trip> trips = service.getPastTrips();
         session.setDisplayedTripIds(trips.stream().map(Trip::id).toList());
         return formatter.galleryMenu(trips);
+    }
+
+    /**
+     * Returns Trips belonging to the specified Trip list mode.
+     *
+     * @param mode Mode whose Trip list is requested.
+     * @return Trips visible in the specified mode.
+     * @throws IllegalArgumentException If mode is not a Trip list mode.
+     */
+    private List<Trip> tripsFor(CliMode mode) {
+        return switch (mode) {
+        case ORGANISE -> service.getCurrentAndFutureTrips();
+        case GALLERY -> service.getPastTrips();
+        default -> throw new IllegalArgumentException("Mode must be a Trip list mode.");
+        };
     }
 
     String selectedGalleryTripView(Trip trip) {
