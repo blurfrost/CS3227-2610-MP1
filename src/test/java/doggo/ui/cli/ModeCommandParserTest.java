@@ -45,11 +45,13 @@ class ModeCommandParserTest {
     }
 
     @Test
-    void galleryCommandParsers_exposeOnlyReadOnlyNavigation() {
+    void galleryCommandParsers_routeTripCreationAndReadOnlyNavigation() {
         ModeCommandParser galleryParser = new GalleryCommandParser();
         ModeCommandParser galleryTripParser = new GalleryTripCommandParser();
 
+        assertInstanceOf(NewTripCommand.class, galleryParser.parse("NeW"));
         assertInstanceOf(ViewGalleryTripCommand.class, galleryParser.parse("ViEw 1"));
+        assertInstanceOf(UnknownCommand.class, galleryParser.parse("new 1"));
         assertInstanceOf(UnknownCommand.class, galleryParser.parse("edit 1"));
         assertInstanceOf(UnknownCommand.class, galleryTripParser.parse("new"));
         assertInstanceOf(UnknownCommand.class, galleryTripParser.parse("delete 1"));

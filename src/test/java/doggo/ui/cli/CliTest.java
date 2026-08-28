@@ -249,6 +249,63 @@ class CliTest {
     }
 
     @Test
+    void createPastTripFromMain_entersGalleryModeAndShowsListFirst() {
+        String input = String.join("\n", "new", "Past trip", "01/01/2027", "04/01/2027",
+                "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Trip successfully added!"));
+        assertTrue(output.contains("[MODE: GALLERY]"));
+        assertTrue(output.contains("Past trip (from 01/01/2027 to 04/01/2027)"));
+        assertFalse(output.contains("Viewing past Trip: Past trip"));
+    }
+
+    @Test
+    void createPastTripFromDashboard_entersGalleryModeAndShowsListFirst() {
+        String input = String.join("\n", "dashboard", "new", "Past trip", "01/01/2027",
+                "04/01/2027", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("[MODE: GALLERY]"));
+        assertTrue(output.contains("Past trip (from 01/01/2027 to 04/01/2027)"));
+        assertFalse(output.contains("Viewing past Trip: Past trip"));
+    }
+
+    @Test
+    void createPastTripFromOrganise_entersGalleryModeAndShowsListFirst() {
+        String input = String.join("\n", "organise", "new", "Past trip", "01/01/2027",
+                "04/01/2027", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("[MODE: GALLERY]"));
+        assertTrue(output.contains("Past trip (from 01/01/2027 to 04/01/2027)"));
+        assertFalse(output.contains("Viewing past Trip: Past trip"));
+    }
+
+    @Test
+    void createPastTripFromGallery_entersGalleryModeAndShowsListFirst() {
+        String input = String.join("\n", "new", "First past trip", "01/01/2027", "04/01/2027",
+                "new", "Second past trip", "02/01/2027", "03/01/2027", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("[MODE: GALLERY]"));
+        assertTrue(output.contains("First past trip (from 01/01/2027 to 04/01/2027)"));
+        assertTrue(output.contains("Second past trip (from 02/01/2027 to 03/01/2027)"));
+        assertFalse(output.contains("Viewing past Trip: Second past trip"));
+    }
+
+    @Test
+    void createFutureTripFromGallery_entersOrganiseModeAndShowsListFirst() {
+        String input = String.join("\n", "new", "Past trip", "01/01/2027", "04/01/2027",
+                "new", "Future trip", "06/01/2027", "09/01/2027", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("[MODE: ORGANISE]"));
+        assertTrue(output.contains("Future trip (from 06/01/2027 to 09/01/2027)"));
+        assertFalse(output.contains("Viewing: Future trip"));
+    }
+
+    @Test
     void createTripFlow_displaysTripAndExits() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
                 "09/01/2027", "back", "exit") + "\n";

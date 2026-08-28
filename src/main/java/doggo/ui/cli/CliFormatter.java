@@ -89,7 +89,8 @@ final class CliFormatter {
             appendTrips(message, trips);
             message.append("\nView a past Trip with \"view NUMBER\".\n\n");
         }
-        return message.append("Type \"back\" to go back to the Main Menu.").toString();
+        return message.append("Type \"new\" to create a new Trip.\n")
+                .append("Type \"back\" to go back to the Main Menu.").toString();
     }
 
     String galleryTripView(Trip trip, List<Plan> plans) {
