@@ -1,295 +1,296 @@
-# Organise CLI CRUD Implementation Plan
+# Organise CLI CRUD and Dashboard Implementation Plan
 
 ## Status
 
-- [x] Step 1: Replace bare Trip-index selection with `view NUMBER`.
-- [x] Step 2: Add safe Trip and Plan CRUD foundations.
-- [x] Step 3: Add stable displayed Plan mappings.
-- [x] Step 4: Implement the remaining Organise commands.
-- [x] Step 5: Stabilize the completed Organise slice, synchronize documentation, and complete verification.
-- [x] Step 6: Decompose the CLI parser before adding future CLI modes.
+- [x] Steps 1–7: Organise CRUD, parser decomposition, and Trip status foundation
+- [x] Step 8: Add Dashboard queries and its CLI mode
 
-Update this checklist after each iterative implementation. Keep prompt history in
-`logs/05 - Transition to adding Dashboard Mode.md` rather than duplicating it here.
+Keep completed implementation detail in the prompt logs and Git history. Keep
+this file focused on durable decisions and future milestones.
 
-## Locked Decisions
+## Completed Milestones
 
-- The Trip list accepts `new`, `edit NUMBER`, `view NUMBER`, `delete NUMBER`, and `back`.
-- A viewed Trip accepts `new`, `edit NUMBER`, `delete NUMBER`, and `back` for its Plans.
-- `NUMBER` is a required positive one-based index from the currently displayed list.
-- Blank input during editing preserves the current field value.
-- A Trip date edit is rejected if it would exclude any existing Plan.
-- Deletion requires an exact `yes` or `no`; other input causes a reprompt.
-- Deleting a Trip removes the complete aggregate, including its Plans.
+### Steps 1–5 — Organise CRUD and Stabilization
+
+- Trip and Plan creation, editing, deletion, confirmation, validation, and
+  copy-on-write aggregate updates are implemented.
+- Trip and Plan indexes resolve through retained UUID snapshots, including
+  stale-target handling and refreshed ordering after mutations.
+- Main, Organise, and selected-Trip CLI flows have parser, command, help, and
+  acceptance coverage.
+- Failed edits preserve the stored aggregate; Trip deletion removes its Plans.
+- Documentation, Java-standard review, full tests, diff checks, and visual
+  review were completed for the milestone.
+
+### Step 6 — Decompose the CLI Parser
+
+- `Parser` retains input normalization and global `exit`/`back` handling while
+  delegating mode-specific commands through `ModeCommandParser`.
+- Main, Organise, and selected-Trip parsing are separated into package-private
+  parsers; indexed parsing and invalid-index feedback are shared.
+- Existing valid behavior and malformed, empty, out-of-range, and stale-index
+  behavior are covered by the full test suite.
+
+### Step 7 — Trip Status and Injected Clock
+
+- Public `TripStatus` has `PAST`, `CURRENT`, and `FUTURE` values.
+- `Trip.statusOn(LocalDate)` applies inclusive date boundaries without
+  persisting derived status.
+- `DoggoService` receives an injected `Clock`; date-sensitive queries use it.
+- All-Trips, current-and-future, and past queries have deterministic ordering.
+- Main `new` creates a Trip and enters Organise; Organise and selected-Trip
+  `new` behavior remains unchanged.
+- Organise still shows all Trips until Gallery is available.
+
+## Durable Decisions
+
+- A Trip is the aggregate root and owns zero or more Plans.
+- Dashboard is Plan-centric: it shows one flat chronological list of today's
+  Plans, with the owning Trip title on each row. It is not grouped by Trip.
+- `NUMBER` is a positive one-based index into the currently displayed snapshot.
 - Displayed Trip and Plan numbers resolve through retained UUID mappings.
-- The centralized repository error boundary remains deferred until persistent storage is introduced.
+- Blank edit input preserves the current field value; invalid replacements
+  reprompt.
+- Trip dates are inclusive. A Trip edit cannot exclude an existing Plan.
+- Deletion confirmation accepts only exact `yes` or `no`; other input reprompts.
+- Application operations remain repository-backed. SQLite persistence and a
+  centralized repository error boundary are deferred until the persistence
+  milestone.
 
-## Step 2 — Safe CRUD Foundations
+## Step 8 — Add Dashboard Queries and CLI Mode — Complete
 
-### Repository and Application
-
-- [x] Add `TripRepository.delete(UUID tripId)` to remove a complete Trip aggregate.
-- [x] Add the Organise `delete NUMBER` Trip flow with exact confirmation.
-- [x] Add presentation-independent Plan deletion by UUID.
-- [x] Report missing Trip and Plan identities as invalid user operations without changing stored data.
-- [x] Continue saving a Trip and its Plans as one aggregate operation.
-
-### Domain
-
-- [x] Add the copy-on-write operation that returns a Trip without a selected Plan.
-- [x] Preserve Trip and Plan UUIDs during edits.
-- [x] Validate edited Trip titles and inclusive date ranges using the existing domain rules.
-- [x] Validate every existing Plan against edited Trip dates and reject the complete edit if any Plan falls outside them.
-- [x] Validate an edited Plan's destination, date, and time, including the selected Trip's inclusive date range.
-- [x] Ensure a failed repository save leaves the previously stored aggregate unchanged.
-
-### Acceptance Tests
-
-- [x] Cover successful Trip and Plan edits and deletions at the domain and service layers.
-- [x] Cover blank or invalid values, missing UUIDs, excluded Plans, and Plan dates outside the Trip range.
-- [x] Cover copy-on-write behavior and preservation of stored data after a failed save.
-- [x] Cover repository deletion of a Trip and all of its Plans.
-
-## Step 3 — Stable Displayed Plan Mappings
-
-- [x] Extend `CliSession` with an immutable snapshot of displayed Plan UUIDs and one-based lookup.
-- [x] Clear displayed Plan mappings whenever navigation leaves or enters a Trip context.
-- [x] Centralize selected-Trip rendering in `CliContext`, recording the sorted Plan UUIDs from the same collection passed to `CliFormatter`.
-- [x] Resolve future Plan edit and delete targets from that snapshot rather than a freshly sorted list.
-- [x] Add tests proving later repository or ordering changes do not alter which displayed Plan an index identifies.
-
-## Step 4 — Remaining Organise Commands
-
-### Parsing
-
-- [x] Parse `edit NUMBER` and `delete NUMBER` according to the active CLI mode.
-- [x] Require exactly one positive integer argument and reject missing, extra, zero, negative, or non-numeric arguments with actionable help.
-- [x] Keep `new`, `view NUMBER`, `back`, and `exit` behavior unchanged.
-
-### Trip Commands
-
-- [x] `edit NUMBER` resolves a displayed Trip UUID, prompts for title, start date, and end date, and refreshes the Trip list after success.
-- [x] Each edit prompt shows the current value; blank input keeps it, while invalid replacement input causes a reprompt.
-- [x] `delete NUMBER` resolves a displayed Trip UUID and asks for exact `yes` or `no` confirmation.
-- [x] `yes` deletes and refreshes the Trip list; `no` reports cancellation and leaves the Trip unchanged.
-
-### Plan Commands
-
-- [x] `edit NUMBER` in a viewed Trip resolves a displayed Plan UUID, prompts for destination, date, and time, and refreshes the viewed Trip after success.
-- [x] Blank input preserves current Plan fields; invalid replacements and out-of-range dates cause a reprompt.
-- [x] `delete NUMBER` resolves a displayed Plan UUID and uses the same exact `yes` or `no` confirmation behavior.
-- [x] Missing or stale displayed targets produce an actionable error and refresh the appropriate view without prompting for fields or confirmation.
-
-### Acceptance Tests
-
-- [x] Cover parser routing and invalid argument shapes in both Organise contexts.
-- [x] Cover successful edits, deletions, cancellation, and invalid confirmation input through the CLI.
-- [x] Cover invalid and stale indices without modifying another Trip or Plan.
-- [x] Cover refreshed ordering when an edit changes Trip or Plan sort order.
-
-## Near-term execution checklist
-
-Execute these tasks in order. Do not mark Step 5 complete until every item and
-its acceptance coverage is complete.
-
-### 1. Unblock verification with the stale assertion
-
-- [x] Update the failing `CliTest` end-date assertion to expect the already-
-  implemented precise message: `Trip end date cannot be before an existing Plan date.`
-- [x] Do not change production validation behavior for this task.
-
-### 2. Harden stale-target and refresh behavior
-
-- [x] Verify that a mapped Trip still exists before requesting Trip deletion
-  confirmation; stale targets must report an actionable error without prompting.
-- [x] Check that the selected Trip still exists before prompting for a new Plan.
-- [x] After a late Plan edit or delete failure, refresh the selected-Trip view and
-  its displayed Plan mappings; return to Organise if the Trip disappeared.
-- [x] Keep stale or missing targets from modifying another Trip or Plan.
-
-### 3. Complete CLI acceptance coverage
-
-- [x] Cover invalid confirmation input followed by a valid `yes` or `no` answer.
-- [x] Cover cancelled Plan deletion.
-- [x] Cover invalid and stale edit/delete targets without changing another record.
-- [x] Assert Trip and Plan reordering after edits, including subsequent displayed
-  index resolution.
-- [x] Cover missing Trip and Plan identities for service deletion operations.
-- [x] Keep parser-routing and malformed-argument assertions in both Organise
-  contexts.
-
-### 4. Synchronize documentation and verify the milestone
-
-- [x] Update CLI help text so each context lists all supported commands and syntax;
-  current Organise and viewed-Trip help already satisfies this requirement.
-- [x] Update `DeveloperGuide.md` implemented-feature notes: Trip and Plan edit/delete
-  are implemented; `TripStatus`, reviews, `Clock`, Dashboard, Gallery, and SQLite
-  remain planned.
-- [x] Summarize each completed prompt in `logs/03 - Bare CLI Implementation.md`.
-- [x] Review all changed Java production and test code against the SE-EDU Java
-  coding standard.
-- [x] Run `git diff --check` and `./gradlew clean test` under Java 25.0.3.
-- [x] Generate `_temp/visual-diff.html` from `HEAD` to `WORKTREE`; leave changes
-  uncommitted.
-- [x] Mark Step 5 complete only after the full suite is green and the acceptance
-  checklist above is satisfied.
-
-## Later architectural roadmap
-
-These items follow the near-term Organise stabilization and are deliberately
-separate from Step 5.
-
-1. [x] Migrate the default-package code into `doggo.domain`,
-   `doggo.application`, `doggo.storage`, and `doggo.ui.cli` before adding more
-   feature classes. Adjust cross-package visibility and Javadoc as needed.
-2. [x] When adding the next CLI mode, decompose `Parser` into mode-specific
-   parsers so mode/command conditionals do not accumulate prematurely.
-3. [ ] Add `TripStatus` with an injected `Clock`, then implement future/current/
-   past application queries and Organise grouping when Gallery is available.
-4. [ ] Add Dashboard queries and its CLI mode over the application services.
-5. [ ] Add reviews and Gallery, including completed-Trip filtering and rating/
-   review rules.
-6. [ ] Add SQLite persistence after the aggregate schema is stable. At that
-   point implement the centralized `RepositoryException` boundary before wiring
-   the fallible repository into the application, with transactional aggregate
-   saves and failing-repository tests.
-7. [ ] Build the JavaFX presentation over the established application services.
-
-## Future Addition — Finding 2: Application Error Boundary
-
-- [ ] Implement before connecting `SqliteTripRepository` or another fallible external repository.
-- Add a small centralized boundary at the CLI/application edge that catches `RepositoryException`.
-- Convert repository failures into actionable CLI errors while keeping the application running in the current mode.
-- Refresh the relevant menu or selected-Trip view after a failed operation without discarding valid in-memory data.
-- Add failing-repository tests for reads, saves, and deletes at the CLI boundary.
-- Preserve the wrapped infrastructure cause for diagnostics.
-- Do not add retries, a broad exception hierarchy, or logging infrastructure unless concrete persistence requirements justify them.
-
-## Deferred Work
-
-- Dashboard, Gallery, reviews, and SQLite persistence are separate feature work.
-- A separate Plan `view NUMBER` command is unnecessary while the selected-Trip view displays every current Plan field.
-
-## Step 6 — Decompose the CLI Parser
-
-This step prepares the CLI for additional modes without allowing the central
-parser's mode and command conditionals to grow. It is intentionally separate
-from implementing Dashboard behavior.
+Dashboard presents today's Plans from every Trip and permits Plan mutations
+that update the owning Trip aggregate. The query, CLI integration, and
+acceptance coverage are complete.
 
 ### Requirements
 
-- Preserve the existing `Parser.parse(String, CliMode)` entry point used by
-  `Cli`.
-- Keep exact global `exit` and `back` handling in `Parser` so every mode shares
-  the same navigation behavior.
-- Delegate mode-specific commands through a `ModeCommandParser` contract.
-- Provide separate mode parsers for `MAIN`, `ORGANISE`, and `TRIP`; adding a
-  future `DASHBOARD` mode must require an explicit coordinator branch.
-- Keep parser and command classes package-private in `doggo.ui.cli`.
-- Preserve case-insensitive commands and surrounding-whitespace handling.
-- Treat zero or multiple arguments for indexed commands as usage errors:
-  `Usage: <command> NUMBER`.
-- Treat exactly one non-numeric, non-positive, or overflowing index as an
-  index-feedback error based on the active displayed Trip or Plan snapshot.
-- Use `There are no <items> to <action>.` when the displayed snapshot is empty.
-- Use `<Item> number should be 1.` for a one-item snapshot and
-  `<Item> number should be from 1 to N.` for larger snapshots.
-- Keep an in-range UUID whose record disappeared on the existing stale-target
-  error path, without prompting or modifying another record.
+- `DashboardEntry` is a public immutable result containing `UUID tripId`,
+  `String tripTitle`, and the complete `Plan`.
+- `DoggoService.getDashboardEntries()` derives today's date once from the
+  injected Clock, filters all Trip Plans, and returns deterministic ordering:
+  Plan time, Trip title, destination, Trip UUID, then Plan UUID.
+- Render a flat numbered list showing each Plan's time, destination, and Trip
+  title, with an explicit empty state.
+- Add `DASHBOARD`, `DashboardCommandParser`, parser delegation, Main
+  `dashboard` routing, and help text. Dashboard `back` returns to Main and
+  global `exit` remains available.
+- Top-level `new` in Dashboard creates a Trip through `NewTripCommand` and
+  enters Organise. Dashboard does not create a Plan without a selected Trip.
+- Dashboard `edit NUMBER` and `delete NUMBER` operate on the selected Plan's
+  owning Trip aggregate through existing service APIs.
+- Dashboard Plan edits may use any valid date inside the owning Trip. If the
+  new date is not today, the Plan disappears after refresh.
+- Use one immutable composite Trip UUID/Plan UUID target snapshot for selected
+  Trip and Dashboard Plan indexes.
+- Missing Trip or Plan identities are stale targets: give actionable feedback,
+  do not prompt or mutate another record, and refresh the Dashboard.
+- Re-render after successful, cancelled, invalid, or late-failing mutations so
+  numbering matches the latest snapshot.
+- Defer Dashboard `view`, Dashboard Plan creation, grouping, reviews, and
+  JavaFX presentation.
 
 ### Ordered Subtasks
 
-- [x] Introduce the package-private `ModeCommandParser` interface with the
-  shared `Command parse(String command)` contract.
-- [x] Add `MainCommandParser`, `OrganiseCommandParser`, and
-  `TripCommandParser`, moving the existing mode-specific routing without
-  changing behavior beyond the specified indexed-command feedback.
-- [x] Reduce `Parser` to input normalization, global command handling, and
-  exhaustive mode delegation.
-- [x] Add `IndexedCommandParser` and `IndexedEntity` for shared indexed-command
-  construction and Trip/Plan target selection.
-- [x] Add `InvalidIndexCommand`, displayed-item count accessors, and centralized
-  formatter messages for empty, one-item, and multi-item snapshots.
-- [x] Update all five existing indexed commands to use the centralized
-  out-of-range feedback while retaining stale-target checks.
-- [x] Add focused mode-parser, shared-index-parser, and CLI integration tests.
-- [x] Update the Developer Guide, `MEMORY.md`, and this plan after the full
-  decomposition is complete.
+1. [x] Add `DashboardEntry` and the Clock-backed today's-Plans query with
+   filtering and deterministic-order tests across multiple Trips.
+2. [x] Introduce a shared composite Plan target snapshot and migrate existing
+   selected-Trip Plan index resolution without changing Organise behavior.
+3. [x] Add Dashboard session state, navigation, parser delegation, Main
+   `dashboard` routing, and help text.
+4. [x] Add centralized Dashboard rendering in `CliContext` and `CliFormatter`,
+   recording targets from the same ordered entries that are displayed.
+5. [x] Route Dashboard `new` to `NewTripCommand` and test the transition to
+   Organise after successful Trip creation.
+6. [x] Add Dashboard Plan editing with shared validation, stale-target and
+   refresh behavior, reordering, and removal when moved off today.
+7. [x] Add Dashboard Plan deletion with exact confirmation, cancellation,
+   stale-target handling, and refreshed numbering.
+8. [x] Add parser, session, formatter, command, cross-mode, and end-to-end CLI
+   tests, including empty and equal-time ordering cases.
+9. [x] Update `DeveloperGuide.md`, `MEMORY.md`, and the active prompt log after
+   Dashboard behavior is complete.
+10. [x] Review changed Java against the SE-EDU standard, run
+    `./gradlew clean test` and `git diff --check`, and regenerate the visual
+    diff.
+
+### Completed Subtask 7 — Dashboard Plan Deletion
+
+#### Design
+
+- Route Dashboard `delete NUMBER` through `IndexedCommandParser` to the
+  existing `DeletePlanCommand`; do not add a Dashboard-specific command
+  or another application service operation.
+- Make `DeletePlanCommand` mode-aware using the same composite target
+  rules as editing. Dashboard resolves the owning Trip from `PlanTarget`;
+  selected-Trip mode additionally requires `selectedTripId` to match.
+- Verify the target Trip and Plan still exist before prompting. Keep the
+  existing trimmed, case-sensitive confirmation contract: only lowercase
+  `yes` deletes, lowercase `no` cancels, and every other value reprompts.
+- Preserve end-of-input behavior during confirmation: return `Bye!` and exit
+  without deleting.
+- Refresh the initiating mode through `CliContext.refreshCurrentView()` after
+  deletion, cancellation, invalid indexes, stale targets, and late service
+  rejection. Dashboard stays active; selected-Trip mode retains its
+  Organise fallback if the selected Trip disappears.
+- Advertise `delete NUMBER` only when Dashboard contains Plans. Keep
+  Dashboard Plan creation, view, grouping, and reviews deferred.
+
+#### Target and Refresh Behavior
+
+- Resolve the displayed number once through the retained Trip/Plan UUID pair;
+  never re-resolve against repository order before deletion.
+- On confirmed deletion, call `DoggoService.deletePlan(tripId, planId)`.
+  Refresh from the repository so the removed row disappears and all remaining
+  rows and target numbers are rebuilt in deterministic Dashboard order.
+- If the Trip or Plan is stale before confirmation, do not prompt or mutate.
+  If it disappears after confirmation, show the service error and refresh
+  Dashboard without deleting another record.
+- Cancellation must retain the selected Plan and still refresh numbering from
+  the latest repository state.
+
+#### Tests
+
+- Cover valid and mixed-case command keywords plus malformed, non-numeric,
+  zero, negative, overflow, out-of-range, and empty-Dashboard indexes.
+- Cover exact `yes` deletion, exact `no` cancellation, invalid and
+  mixed-case confirmations that reprompt, and end-of-input exit behavior.
+- Delete one Plan from a multi-Trip Dashboard and verify the owning Trip alone
+  changes, the row disappears, and Organise observes the same aggregate.
+- Perform sequential indexed deletions after a refresh to prove renumbered
+  rows retain the correct composite targets.
+- Cover missing Trip and missing Plan targets before prompting, plus a target
+  that becomes stale after confirmation but before the service operation.
+- Preserve existing selected-Trip deletion and confirmation behavior.
+- Run focused CLI tests followed by `./gradlew clean test` and
+  `git diff --check` during implementation.
+
+#### Completion Criteria
+
+- Dashboard deletion reuses the existing command and service API.
+- Every non-exit outcome refreshes the initiating view and target snapshot.
+- Confirmation, stale-target, and sequential-numbering behavior cannot delete
+  a different Plan or Trip.
+- Existing Main, Organise, and selected-Trip behavior remains unchanged.
+
+### Completed Subtask 6 — Dashboard Plan Editing
+
+#### Design
+
+- Route Dashboard `edit NUMBER` through `IndexedCommandParser` to the existing
+  `EditPlanCommand`; do not introduce a Dashboard-specific edit command.
+- Add one `CliContext.refreshCurrentView()` helper that renders Main, Organise,
+  Dashboard, or the selected Trip and refreshes the corresponding UUID
+  snapshot. Migrate unknown, malformed, and invalid-index feedback to this
+  helper so Dashboard errors cannot render Organise or retain stale numbering.
+- Make `EditPlanCommand` mode-aware. Both Trip and Dashboard modes resolve the
+  displayed `PlanTarget` to its owning Trip and Plan before prompting; only
+  Trip mode additionally requires the target Trip to match `selectedTripId`.
+- Keep the shared destination, date, and time prompts and
+  `DoggoService.editPlan(...)`. Dashboard dates are validated against the
+  owning Trip's inclusive dates, not restricted to today.
+- Refresh the initiating view after no changes, success, validation failure,
+  stale targets, and late service rejection. Dashboard remains active; Trip
+  mode retains its existing fallback to Organise if its selected Trip vanishes.
+- Advertise `edit NUMBER` in populated Dashboard output. Keep Dashboard
+  deletion deferred to subtask 7.
+
+#### Target and Refresh Behavior
+
+- Resolve the one-based number only through the retained composite target; do
+  not re-resolve it against a newly sorted Dashboard list before mutation.
+- If the target Trip or Plan is missing before prompting, report an actionable
+  stale-target error, perform no prompts or mutation, and refresh Dashboard.
+- If the Trip or Plan disappears after prompting, surface the service error and
+  refresh Dashboard without mutating another aggregate.
+- If an edit changes ordering fields, rebuild the Dashboard snapshot from the
+  newly sorted query. If its date moves off today, omit it from the refreshed
+  Dashboard while retaining the update in its owning Trip.
+
+#### Tests
+
+- Cover valid, mixed-case, malformed, non-numeric, zero, negative, overflow,
+  and out-of-range Dashboard edit input, including Dashboard-preserving error
+  rendering.
+- Cover destination/date/time updates, blank no-op input, syntactically invalid
+  values, and dates outside the owning Trip that reprompt before saving.
+- Cover cross-Trip targeting, chronological reordering with refreshed indexes,
+  and removal from Dashboard when a Plan moves off today.
+- Verify the owning Trip aggregate is updated and that the same change is
+  visible after navigating to Organise and opening that Trip.
+- Cover missing Trip and missing Plan targets without prompts, plus a target
+  that becomes stale after prompts but before the service update.
+- Preserve existing selected-Trip edit behavior and its stale-target tests.
+- Run focused CLI tests followed by `./gradlew clean test` and
+  `git diff --check` during implementation.
+
+#### Completion Criteria
+
+- Dashboard editing reuses the existing command, validation, and service API.
+- Every outcome refreshes the initiating view and its target snapshot.
+- Reordering or removal never causes a subsequent number to target the wrong
+  Plan or Trip.
+- Existing Main, Organise, and selected-Trip behavior remains unchanged.
+
+### Completed Subtask 1 — Application Query
+
+- Added `DashboardEntry` with null checks, trimmed non-blank Trip titles, and
+  immutable record semantics.
+- Added `DoggoService.getDashboardEntries()` using the injected Clock and a
+  deterministic cross-Trip comparator.
+- Covered empty repositories, Trips without Plans, date filtering, ordering,
+  owning context, identity retention, and non-mutation behavior.
+
+### Completed Subtask 5 — Dashboard Trip Creation
+
+- Dashboard `new` delegates to the existing `NewTripCommand`, preserving the
+  shared validation and repository-backed Trip creation flow.
+- Successful creation enters Organise and refreshes its Trip list; Dashboard
+  advertises the command in its footer.
+- Parser, formatter, and end-to-end CLI transition tests pass.
 
 ### Acceptance Criteria
 
-- [x] Existing valid Main, Organise, Trip, navigation, CRUD, and stale-target
-  behavior remains green.
-- [x] Indexed commands distinguish missing/multiple arguments, malformed or
-  non-positive indexes, empty snapshots, valid out-of-range indexes, and stale
-  mapped records according to the requirements above.
-- [x] `Parser` contains no mode-specific command conditionals after delegation
-  is complete.
-- [x] `./gradlew clean test` and `git diff --check` pass under Java 25.0.3.
+- [x] Dashboard displays only today's Plans in deterministic chronological
+  order and identifies each owning Trip.
+- [x] Main enters Dashboard, Dashboard `back` returns to Main, and global
+  `exit` remains available.
+- [x] Dashboard `new` creates a Trip and enters Organise.
+- [x] Dashboard `edit NUMBER` updates the owning aggregate and refreshes or
+  removes the row according to its edited date.
+- [x] Dashboard `delete NUMBER` changes only the selected Plan after exact
+  confirmation and refreshes the list.
+- [x] Organise observes Dashboard edits and deletions through the shared
+  repository without synchronization code between modes.
+- [x] Empty, malformed, out-of-range, stale, cancelled, and reordered cases
+  retain actionable feedback and stable UUID targeting.
+- [x] Existing Main, Organise, Trip, CRUD, parser, and navigation behavior
+  remains green.
+- [x] The complete test suite and diff checks pass under Java 25.0.3.
 
-## Step 7 — Add Trip Status and an Injected Clock
+## Future Architectural Roadmap
 
-This step establishes deterministic date-sensitive behavior for Organise,
-Dashboard, and Gallery. It does not add Dashboard or Gallery yet. Organise
-continues showing all stored Trips until Gallery is available, so past Trips
-do not become inaccessible through the current CLI.
+1. [x] Complete Dashboard queries and CLI mode (Step 8).
+2. [ ] Add reviews and Gallery, including completed-Trip filtering and rating
+   and review rules.
+3. [ ] Add SQLite persistence after the aggregate schema is stable. Before
+   wiring a fallible repository, add a centralized `RepositoryException`
+   boundary with CLI error handling and failing-repository tests.
+4. [ ] Build the JavaFX presentation over the established application services.
 
-### Requirements
+## Deferred Work — Application Error Boundary
 
-- Add a public `TripStatus` enum with `PAST`, `CURRENT`, and `FUTURE` values.
-- Derive a Trip's status from its inclusive date range and a supplied current
-  date; do not persist status.
-- Classify a Trip as `PAST` when its end date is before the current date.
-- Classify a Trip as `FUTURE` when its start date is after the current date.
-- Classify all other valid date ranges as `CURRENT`, including Trips starting
-  or ending on the current date and single-day Trips on the current date.
-- Add `Trip.statusOn(LocalDate currentDate)` as the domain classification API.
-- Require `DoggoService` to receive a `Clock`, and use `LocalDate.now(clock)`
-  for date-sensitive application behavior.
-- Supply `Clock.systemDefaultZone()` from the composition root and fixed Clocks
-  in tests.
-- Preserve `DoggoService.getTrips()` as the sorted query for every Trip.
-- Add sorted application queries for current-and-future Trips and past Trips so
-  future Organise and Gallery implementations share the same classification.
-- Preserve the existing deterministic start-date, title, and UUID ordering for
-  every status query.
-- Make `new` available from Main; it creates a Trip and enters Organise after
-  successful creation. Organise and selected-Trip `new` behavior remains
-  unchanged.
-- Keep the eventual mode invariant explicit: top-level modes create Trips with
-  `new`, while a selected Trip creates a Plan with `new`.
-- Defer switching Organise to the current-and-future query until Gallery can
-  display and manage past Trips. Organise will then use one combined list with
-  current and future Trips.
+- Implement before connecting `SqliteTripRepository` or another fallible
+  external repository.
+- Catch `RepositoryException` at the CLI/application edge, preserve its cause
+  for diagnostics, and refresh the current mode or selected-Trip view.
+- Add failing-repository tests for reads, saves, and deletes.
+- Do not add retries, a broad exception hierarchy, or logging infrastructure
+  without concrete persistence requirements.
 
-### Ordered Subtasks
+## Deferred Work — Product Features
 
-- [x] Specify the status boundary rules in `DeveloperGuide.md` and update the
-  roadmap and active prompt log.
-- [x] Add the public `TripStatus` enum with `PAST`, `CURRENT`, and `FUTURE`.
-- [x] Add `Trip.statusOn(LocalDate)` with null and boundary behavior covered by
-  domain tests.
-- [x] Add the injected `Clock` to `DoggoService` and update the composition
-  root and existing callers.
-- [x] Add current-and-future and past Trip queries while retaining the existing
-  all-Trips query and deterministic ordering.
-- [x] Add fixed-Clock application tests for every status boundary and query.
-- [x] Add Main `new` parsing, help text, and CLI coverage for entering Organise.
-- [x] Review changed Java against the SE-EDU Java coding standard.
-- [x] Run `./gradlew clean test` and `git diff --check` under Java 25.0.3.
-- [x] Generate `_temp/visual-diff.html` from `HEAD` to `WORKTREE`; leave the
-  implementation changes uncommitted unless explicitly instructed otherwise.
-
-### Acceptance Criteria
-
-- [x] Every valid Trip date range has exactly one status, with inclusive
-  current-date boundaries.
-- [x] Status and application query tests are deterministic with a fixed Clock.
-- [x] `getTrips()` still returns past, current, and future Trips in its existing
-  deterministic order.
-- [x] Current-and-future and past queries return only their specified statuses
-  in deterministic order.
-- [x] Main accepts `new`, creates a Trip, and enters Organise successfully.
-- [x] Existing CRUD, navigation, parser, and stale-index behavior remains
-  green.
-- [x] The full test suite and diff checks pass.
+- Gallery is responsible for completed Trips and their reviews.
+- A separate Plan `view NUMBER` command is unnecessary while the selected-Trip
+  view displays all current Plan fields.
+- Dashboard Plan creation is deferred because Dashboard has no selected Trip.

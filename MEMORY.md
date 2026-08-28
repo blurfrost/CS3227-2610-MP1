@@ -39,4 +39,6 @@
 - CLI parsing uses a package-private `ModeCommandParser` contract with separate
   Main, Organise, and Trip parsers; shared indexed parsing uses retained display
   snapshots for Trip/Plan feedback.
+- Dashboard CLI mode is implemented with a Clock-backed current-day Plan query,
+  composite Trip/Plan targets, and repository-backed Plan editing and deletion.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.

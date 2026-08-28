@@ -12,7 +12,7 @@ Development begins with a tested command-line interface (CLI). The application w
 - **Plan:** One scheduled itinerary item belonging to a Trip, such as visiting a restaurant or landmark.
 - **Review:** A required whole-number rating from 1 to 5 and optional written text associated with a completed Trip or Plan.
 - **TripStatus:** A value derived from a Trip's inclusive start and end dates: future, current, or past.
-- **Dashboard:** Displays Plans scheduled for the current day and allows users to inspect an individual Plan.
+- **Dashboard:** Displays a flat chronological list of Plans scheduled for the current day, with each Plan's owning Trip title.
 - **Organise:** Displays Trips and allows users to select a Trip to view and manage its itinerary.
 - **Gallery:** Displays every Trip whose end date has passed, regardless of whether reviews are present.
 
@@ -28,7 +28,7 @@ Development begins with a tested command-line interface (CLI). The application w
 6. As a user, I can edit an existing Plan so that I can adjust my itinerary.
 7. As a user, I can delete an existing Plan after confirming the action so that I can remove unwanted itinerary items.
 8. As a user, I can select a Trip and view its Plans in chronological order so that I can understand its itinerary.
-9. As a daily user, I can view all Plans scheduled for today in chronological order and grouped by Trip so that I can follow my daily itinerary.
+9. As a daily user, I can view all Plans scheduled for today in chronological order with their owning Trip titles so that I can follow my daily itinerary.
 10. As a user, I can view Trips grouped as future, current, or past so that I can find the relevant journey quickly.
 11. As a frequent user, I can give a completed Trip or Plan a required whole-number rating from 1 to 5 and an optional written review so that I can record my experience.
 12. As a frequent user, I can edit or remove a review so that my recorded experience remains accurate.
@@ -138,13 +138,13 @@ Domain: Trip -> Plan
 
 - `Doggo` is the composition root and application entry point.
 - `Cli` owns the read-evaluate-print loop and injected input and output streams.
-- `CliMode` identifies the currently implemented `MAIN`, `ORGANISE`, and `TRIP`
-  modes; Dashboard and Gallery modes remain planned.
+- `CliMode` identifies the implemented `MAIN`, `ORGANISE`, `TRIP`, and
+  `DASHBOARD` modes; Gallery remains planned.
 - `CliSession` tracks the current mode, selected Trip, and mappings from displayed list numbers to UUIDs.
 - `Parser` normalizes input, handles global `exit` and `back` commands, and
   delegates mode-specific parsing through `ModeCommandParser` implementations.
-- `MainCommandParser`, `OrganiseCommandParser`, and `TripCommandParser` own
-  the command grammar for their respective modes.
+- `MainCommandParser`, `OrganiseCommandParser`, `TripCommandParser`, and
+  `DashboardCommandParser` own the command grammar for their respective modes.
 - `IndexedCommandParser` shares indexed-command construction, while
   `InvalidIndexCommand` reports errors using the active displayed snapshot.
 - `Command` executes an action through `DoggoService` and `CliSession`.
@@ -154,19 +154,25 @@ Domain: Trip -> Plan
 
 Use separate command classes for navigation and user actions:
 
-- Navigation and global commands open Dashboard, Organise, or Gallery; return to the previous menu; display help; or exit the application.
-- Dashboard commands list today's Plans and display a selected Plan.
+- Navigation and global commands open Dashboard or Organise, return to the
+  previous menu, display help, or exit the application. Gallery navigation is
+  planned.
+- Dashboard commands list today's Plans, create a Trip, edit a Plan by number,
+  and delete a Plan by number. Dashboard Plan creation and detailed Plan
+  viewing remain deferred.
 - Organise commands support creating a Trip, viewing a Trip and its Plans, editing or deleting a Trip by index, and managing Plans within a viewed Trip.
 - Gallery commands list and select past Trips and add, edit, or delete Trip and Plan reviews.
 
 ### CLI Behaviour
 
-- Main mode currently accepts `new`, `organise`, and `exit`; Dashboard, Gallery,
-  and their navigation commands remain planned.
+- Main mode accepts `new`, `organise`, `dashboard`, and `exit`.
+- Dashboard mode accepts `new`, `edit NUMBER`, `delete NUMBER`, and `back`;
+  global `exit` remains available. Creating a Trip from Dashboard enters
+  Organise, while Plan edits and deletions keep Dashboard active.
 - Organise currently lists Trips and accepts `new`, `edit NUMBER`,
   `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, it accepts
   `new`, `edit NUMBER`, `delete NUMBER`, and `back` for its Plans.
-- Trip status grouping, Dashboard, and Gallery behavior are later roadmap work.
+- Trip status grouping and Gallery behavior remain later roadmap work.
 - The CLI displays short one-based list numbers while retaining stable UUIDs internally.
 - Creation and editing commands prompt for individual fields instead of requiring long command lines.
 - Trip and Plan dates use the strict `DD/MM/YYYY` format.
@@ -186,7 +192,10 @@ Use separate command classes for navigation and user actions:
 - Displayed Trip and Plan indices use retained UUID mappings, and stale targets are reported without prompting for destructive or edit actions.
 - Mode-specific parsing is delegated through separate Main, Organise, and Trip
   parsers, with shared indexed-command validation and snapshot-aware feedback.
-- Feature Sets 1–3 use the in-memory repository; persistence and the remaining product features are later work.
+- Dashboard lists today's Plans in deterministic order and supports
+  repository-backed Plan editing and deletion through composite UUID targets.
+- Feature Sets 1–3 and Dashboard use the in-memory repository; persistence and
+  the remaining product features are later work.
 
 ## Acceptance and Test Coverage
 
