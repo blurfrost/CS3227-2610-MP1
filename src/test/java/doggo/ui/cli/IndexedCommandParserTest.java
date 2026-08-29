@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 class IndexedCommandParserTest {
     @Test
-    void parseValidIndex_createsCommand() {
+    void parse_validIndex_createsCommand() {
         Command command = IndexedCommandParser.parse("edit 1", "edit", IndexedEntity.TRIP,
                 EditTripCommand::new);
 
@@ -14,7 +14,7 @@ class IndexedCommandParserTest {
     }
 
     @Test
-    void parseMissingOrExtraArguments_returnsUsageCommand() {
+    void parse_missingOrExtraArguments_returnsUsageCommand() {
         assertInstanceOf(InvalidCommand.class, IndexedCommandParser.parse(
                 "edit", "edit", IndexedEntity.TRIP, EditTripCommand::new));
         assertInstanceOf(InvalidCommand.class, IndexedCommandParser.parse(
@@ -22,7 +22,7 @@ class IndexedCommandParserTest {
     }
 
     @Test
-    void parseInvalidIndex_returnsIndexFeedbackCommand() {
+    void parse_invalidIndex_returnsIndexFeedbackCommand() {
         assertInstanceOf(InvalidIndexCommand.class, IndexedCommandParser.parse(
                 "edit abc", "edit", IndexedEntity.TRIP, EditTripCommand::new));
         assertInstanceOf(InvalidIndexCommand.class, IndexedCommandParser.parse(
