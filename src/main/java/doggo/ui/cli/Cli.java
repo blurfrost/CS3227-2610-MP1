@@ -5,11 +5,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import doggo.application.DoggoService;
+import doggo.application.RepositoryException;
 
 /**
  * Runs the command-line presentation loop.
  */
 public final class Cli {
+    private static final String REPOSITORY_ERROR_MESSAGE =
+            "Error: Stored data could not be accessed. Existing data was not changed.";
+
     private final BufferedReader input;
     private final PrintWriter output;
     private final DoggoService service;
@@ -54,7 +58,12 @@ public final class Cli {
                 return;
             }
 
-            CommandResult result = parser.parse(inputLine, session.mode()).execute(context);
+            CommandResult result;
+            try {
+                result = parser.parse(inputLine, session.mode()).execute(context);
+            } catch (RepositoryException exception) {
+                result = new CommandResult(REPOSITORY_ERROR_MESSAGE, false);
+            }
             output.println("\n---");
             output.println(result.message());
             shouldExit = result.shouldExit();
