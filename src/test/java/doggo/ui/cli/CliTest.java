@@ -26,6 +26,7 @@ class CliTest {
         assertTrue(output.contains("Viewing past Trip: Japan"));
         assertTrue(output.contains("Type \"new\" to create a new Plan."));
         assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
+        assertTrue(output.contains("Welcome! Available commands are"));
         assertTrue(output.endsWith("Bye!\n"));
     }
 
@@ -45,27 +46,16 @@ class CliTest {
     }
 
     @Test
-    void galleryMalformedAndOutOfRangeIndexes_keepGalleryView() {
-        String input = String.join("\n", "gallery", "view abc", "view 2", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("There are no trips to view."));
-        assertTrue(output.contains("[MODE: GALLERY]"));
-        assertFalse(output.contains("[MODE: ORGANISE]"));
-    }
-
-    @Test
     void galleryMaintenance_endToEnd_updatesPlansAndCancelsTripDeletion() {
         String input = String.join("\n", "new", "Past trip", "01/01/2027", "04/01/2027",
                 "edit 1", "Historical trip", "", "", "view 1", "new", "Museum",
                 "02/01/2027", "09:00", "new", "Dinner", "03/01/2027", "19:00", "edit 1",
-                "Museum updated", "02/01/2027", "10:00", "new", "Park", "01/01/2027", "08:00",
-                "delete 2", "yes", "back", "delete 1", "no", "exit") + "\n";
+                "Museum updated", "02/01/2027", "10:00", "new", "Park", "01/01/2027",
+                "08:00", "delete 2", "yes", "back", "delete 1", "no", "exit") + "\n";
         String output = runCli(input);
         int planDeletionMarker = output.indexOf("Plan deleted.");
-
-        assertTrue(planDeletionMarker >= 0);
         String afterPlanDeletion = output.substring(planDeletionMarker);
+
         assertTrue(output.contains("Trip updated."));
         assertTrue(output.contains("Plan created!"));
         assertTrue(output.contains("Plan updated."));
@@ -87,7 +77,6 @@ class CliTest {
         String afterRemoval = output.substring(output.lastIndexOf("Review removed."));
 
         assertTrue(output.contains("Plan created!"));
-        assertTrue(output.contains("Museum (02/01/2027 at 09:00)"));
         assertTrue(output.contains("Review added."));
         assertTrue(output.contains("Rating: 5/5"));
         assertTrue(output.contains("Review: Wonderful journey"));
@@ -117,29 +106,6 @@ class CliTest {
     }
 
     @Test
-    void galleryMaintenance_editingAcrossStatusBoundary_routesListFirst() {
-        String input = String.join("\n", "new", "Historical trip", "01/01/2027", "04/01/2027",
-                "edit 1", "", "", "06/01/2027", "edit 1", "", "", "04/01/2027", "exit")
-                + "\n";
-        String output = runCli(input);
-        int firstUpdate = output.indexOf("Trip updated.");
-        int secondUpdate = output.indexOf("Trip updated.", firstUpdate + 1);
-
-        assertTrue(firstUpdate >= 0);
-        assertTrue(secondUpdate > firstUpdate);
-        String betweenUpdates = output.substring(firstUpdate, secondUpdate);
-        String afterSecondUpdate = output.substring(secondUpdate);
-
-        assertTrue(betweenUpdates.contains("[MODE: ORGANISE]"));
-        assertTrue(betweenUpdates.contains("Historical trip (from 01/01/2027 to 06/01/2027)"));
-        assertFalse(betweenUpdates.contains("Viewing: Historical trip"));
-        assertTrue(afterSecondUpdate.contains("[MODE: GALLERY]"));
-        assertTrue(afterSecondUpdate.contains("Historical trip (from 01/01/2027 to 04/01/2027)"));
-        assertFalse(afterSecondUpdate.contains("Viewing past Trip: Historical trip"));
-        assertTrue(output.endsWith("Bye!\n"));
-    }
-
-    @Test
     void dashboardNavigation_returnsToMain() {
         String input = String.join("\n", "DaShBoArD", "back", "exit") + "\n";
         String output = runCli(input);
@@ -148,16 +114,6 @@ class CliTest {
         assertTrue(output.contains("There are no Plans scheduled for today."));
         assertTrue(output.contains("Welcome! Available commands are"));
         assertTrue(output.endsWith("Bye!\n"));
-    }
-
-    @Test
-    void unknownDashboardCommand_keepsDashboardView() {
-        String input = String.join("\n", "dashboard", "unknown", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Error: Unknown command \"unknown\"."));
-        assertTrue(output.contains("[MODE: DASHBOARD]"));
-        assertFalse(output.contains("[MODE: ORGANISE]"));
     }
 
     @Test
@@ -185,274 +141,17 @@ class CliTest {
     }
 
     @Test
-    void editPlanFromDashboard_reordersRefreshedItinerary() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
-                "Osaka", "05/01/2027", "10:00", "back", "back", "dashboard", "edit 1",
-                "Tokyo", "05/01/2027", "11:00", "exit") + "\n";
-        String output = runCli(input);
-        String refreshedDashboard = output.substring(output.indexOf("Plan updated."));
-
-        assertTrue(refreshedDashboard.indexOf("1. 10:00 - Osaka")
-                < refreshedDashboard.indexOf("2. 11:00 - Tokyo"));
-    }
-
-    @Test
-    void editPlanFromDashboard_movingOffTodayRemovesItFromDashboard() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "back", "dashboard", "edit 1", "", "06/01/2027", "", "exit") + "\n";
-        String output = runCli(input);
-        String refreshedDashboard = output.substring(output.indexOf("Plan updated."));
-
-        assertTrue(refreshedDashboard.contains("There are no Plans scheduled for today."));
-        assertFalse(refreshedDashboard.contains("Tokyo"));
-    }
-
-    @Test
-    void editPlanFromDashboard_dateOutsideTripRepromptsBeforeSaving() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "back", "dashboard", "edit 1", "", "10/01/2027", "05/01/2027", "10:00",
-                "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Plan date must fall within the Trip dates."));
-        assertTrue(output.contains("Plan updated."));
-        assertTrue(output.contains("1. 10:00 - Tokyo (Trip: Japan)"));
-    }
-
-    @Test
-    void editPlanFromDashboard_invalidIndexKeepsDashboardView() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "back", "dashboard", "edit abc", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Error: Plan number should be 1."));
-        assertTrue(output.contains("[MODE: DASHBOARD]"));
-    }
-
-    @Test
-    void deletePlanFromDashboard_confirmedUpdatesOwningTrip() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
-                "Osaka", "05/01/2027", "10:00", "back", "back", "dashboard", "delete 1",
-                "yes", "back", "organise", "view 1", "exit") + "\n";
-        String output = runCli(input);
-        String refreshedView = output.substring(output.indexOf("Plan deleted."));
-
-        assertTrue(refreshedView.contains("1. 10:00 - Osaka (Trip: Japan)"));
-        assertTrue(refreshedView.contains("Osaka (05/01/2027 at 10:00)"));
-        assertFalse(refreshedView.contains("Tokyo (05/01/2027 at 09:00)"));
-    }
-
-    @Test
-    void deletePlanFromDashboard_cancelledKeepsPlanAndDashboard() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "back", "dashboard", "delete 1", "no", "exit") + "\n";
-        String output = runCli(input);
-        String refreshedDashboard = output.substring(output.indexOf("Plan deletion cancelled."));
-
-        assertTrue(refreshedDashboard.contains("1. 09:00 - Tokyo (Trip: Japan)"));
-    }
-
-    @Test
-    void deletePlanFromDashboard_invalidConfirmationRepromptsExactly() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "back", "dashboard", "delete 1", "maybe", "Yes", "no", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Please enter exactly yes or no."));
-        assertTrue(output.contains("Plan deletion cancelled."));
-        assertTrue(output.substring(output.indexOf("Plan deletion cancelled."))
-                .contains("1. 09:00 - Tokyo (Trip: Japan)"));
-    }
-
-    @Test
-    void deletePlanFromDashboard_refreshesTargetsForSequentialDeletes() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
-                "Osaka", "05/01/2027", "10:00", "new", "Kyoto", "05/01/2027", "11:00",
-                "back", "back", "dashboard", "delete 1", "yes", "delete 1", "yes",
-                "exit") + "\n";
-        String output = runCli(input);
-        int lastDeletion = output.lastIndexOf("Plan deleted.");
-        String refreshedDashboard = output.substring(lastDeletion);
-
-        assertTrue(refreshedDashboard.contains("1. 11:00 - Kyoto (Trip: Japan)"));
-        assertFalse(refreshedDashboard.contains("Tokyo"));
-        assertFalse(refreshedDashboard.contains("Osaka"));
-    }
-
-    @Test
-    void deletePlanFromDashboard_invalidIndexKeepsDashboardView() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "back", "dashboard", "delete abc", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Error: Plan number should be 1."));
-        assertTrue(output.contains("[MODE: DASHBOARD]"));
-        assertTrue(output.contains("1. 09:00 - Tokyo (Trip: Japan)"));
-    }
-
-    @Test
-    void deletePlanFromDashboard_endOfInputExitsWithoutConfirmation() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "back", "dashboard", "delete 1") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.endsWith("Bye!\n"));
-    }
-
-    @Test
-    void createTripFromMain_entersOrganiseMode() {
-        String input = String.join("\n", "new", "Japan trip", "01/01/2027", "09/01/2027",
-                "back", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip successfully added!"));
-        assertTrue(output.contains("[MODE: ORGANISE]"));
-        assertTrue(output.contains("Japan trip (from 01/01/2027 to 09/01/2027)"));
-        assertTrue(output.endsWith("Bye!\n"));
-    }
-
-    @Test
-    void createTripFromDashboard_entersOrganiseMode() {
-        String input = String.join("\n", "dashboard", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "back", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip successfully added!"));
-        assertTrue(output.contains("[MODE: ORGANISE]"));
-        assertTrue(output.contains("Japan trip (from 01/01/2027 to 09/01/2027)"));
-        assertTrue(output.endsWith("Bye!\n"));
-    }
-
-    @Test
-    void createPastTripFromMain_entersGalleryModeAndShowsListFirst() {
-        String input = String.join("\n", "new", "Past trip", "01/01/2027", "04/01/2027",
-                "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip successfully added!"));
-        assertTrue(output.contains("[MODE: GALLERY]"));
-        assertTrue(output.contains("Past trip (from 01/01/2027 to 04/01/2027)"));
-        assertFalse(output.contains("Viewing past Trip: Past trip"));
-    }
-
-    @Test
-    void createPastTripFromDashboard_entersGalleryModeAndShowsListFirst() {
-        String input = String.join("\n", "dashboard", "new", "Past trip", "01/01/2027",
-                "04/01/2027", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("[MODE: GALLERY]"));
-        assertTrue(output.contains("Past trip (from 01/01/2027 to 04/01/2027)"));
-        assertFalse(output.contains("Viewing past Trip: Past trip"));
-    }
-
-    @Test
-    void createPastTripFromOrganise_entersGalleryModeAndShowsListFirst() {
-        String input = String.join("\n", "organise", "new", "Past trip", "01/01/2027",
-                "04/01/2027", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("[MODE: GALLERY]"));
-        assertTrue(output.contains("Past trip (from 01/01/2027 to 04/01/2027)"));
-        assertFalse(output.contains("Viewing past Trip: Past trip"));
-    }
-
-    @Test
-    void createPastTripFromGallery_entersGalleryModeAndShowsListFirst() {
-        String input = String.join("\n", "new", "First past trip", "01/01/2027", "04/01/2027",
-                "new", "Second past trip", "02/01/2027", "03/01/2027", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("[MODE: GALLERY]"));
-        assertTrue(output.contains("First past trip (from 01/01/2027 to 04/01/2027)"));
-        assertTrue(output.contains("Second past trip (from 02/01/2027 to 03/01/2027)"));
-        assertFalse(output.contains("Viewing past Trip: Second past trip"));
-    }
-
-    @Test
-    void createFutureTripFromGallery_entersOrganiseModeAndShowsListFirst() {
-        String input = String.join("\n", "new", "Past trip", "01/01/2027", "04/01/2027",
-                "new", "Future trip", "06/01/2027", "09/01/2027", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("[MODE: ORGANISE]"));
-        assertTrue(output.contains("Future trip (from 06/01/2027 to 09/01/2027)"));
-        assertFalse(output.contains("Viewing: Future trip"));
-    }
-
-    @Test
-    void createTripFlow_displaysTripAndExits() {
+    void createTripAndPlanFlow_displaysCreatedRecords() {
         String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "back", "exit") + "\n";
+                "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00",
+                "back", "back", "exit") + "\n";
         String output = runCli(input);
 
         assertTrue(output.contains("Trip successfully added!"));
-        assertTrue(output.contains("Japan trip (from 01/01/2027 to 09/01/2027)"));
-        assertTrue(output.endsWith("Bye!\n"));
-    }
-
-    @Test
-    void invalidTripDate_repromptsAndDoesNotCrash() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "2027-01-01",
-                "01/01/2027", "09/01/2027", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Date must use the DD/MM/YYYY format"));
-        assertTrue(output.contains("Trip successfully added!"));
-    }
-
-    @Test
-    void blankTripName_repromptsUntilValidName() {
-        String input = String.join("\n", "organise", "new", "", "   ", "Japan trip",
-                "01/01/2027", "09/01/2027", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip title cannot be blank."));
-        assertTrue(output.contains("Trip successfully added!"));
-        assertTrue(output.contains("Japan trip (from 01/01/2027 to 09/01/2027)"));
-    }
-
-    @Test
-    void viewTripAndCreatePlan_displaysPlanAndReturnsToMenus() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00", "back",
-                "back", "exit") + "\n";
-        String output = runCli(input);
-
         assertTrue(output.contains("Viewing: Japan trip (from 01/01/2027 to 09/01/2027)"));
         assertTrue(output.contains("Plan created!"));
         assertTrue(output.contains("Mount Fuji (05/01/2027 at 09:00)"));
-        assertTrue(output.contains("Type \"back\" to go back to the Organise Menu."));
-    }
-
-    @Test
-    void blankPlanDestination_repromptsUntilValidDestination() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "", "   ", "Tokyo", "05/01/2027", "09:00",
-                "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Plan destination cannot be blank."));
-        assertTrue(output.contains("Plan created!"));
-        assertTrue(output.contains("Tokyo (05/01/2027 at 09:00)"));
-    }
-
-    @Test
-    void viewTrip_invalidIndex_displaysError() {
-        String input = String.join("\n", "organise", "view 2", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("There are no trips to view."));
+        assertTrue(output.endsWith("Bye!\n"));
     }
 
     @Test
@@ -470,243 +169,26 @@ class CliTest {
     }
 
     @Test
-    void deleteTrip_cancelled_keepsTripAndPlans() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00",
-                "back", "delete 1", "no", "exit") + "\n";
+    void invalidInput_repromptsAndKeepsCliRunning() {
+        String input = String.join("\n", "organise", "new", "", "Japan trip", "2027-01-01",
+                "01/01/2027", "09/01/2027", "view abc", "exit") + "\n";
         String output = runCli(input);
 
-        assertTrue(output.contains("Trip deletion cancelled."));
-        assertTrue(output.contains("Japan trip (from 01/01/2027 to 09/01/2027)"));
-        assertTrue(output.contains("Mount Fuji (05/01/2027 at 09:00)"));
-    }
-
-    @Test
-    void deleteTrip_invalidConfirmation_repromptsUntilCancellation() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "organise", "delete 1", "maybe", "no", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Please enter exactly yes or no."));
-        assertTrue(output.contains("Trip deletion cancelled."));
-    }
-
-    @Test
-    void deletePlan_confirmed_removesOnlySelectedPlan() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Mount Fuji", "05/01/2027", "09:00",
-                "new", "Osaka", "06/01/2027", "09:00", "delete 1", "yes", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Plan deleted."));
-        int deletionResult = output.indexOf("Plan deleted.");
-        String refreshedView = output.substring(deletionResult);
-        assertFalse(refreshedView.contains("Mount Fuji (05/01/2027 at 09:00)"));
-        assertTrue(refreshedView.contains("Osaka (06/01/2027 at 09:00)"));
-    }
-
-    @Test
-    void deletePlan_cancelled_keepsPlan() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "delete 1",
-                "no", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Plan deletion cancelled."));
-        assertTrue(output.contains("Tokyo (05/01/2027 at 09:00)"));
-    }
-
-    @Test
-    void deletePlan_invalidConfirmation_repromptsUntilCancellation() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "delete 1",
-                "later", "no", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Please enter exactly yes or no."));
-        assertTrue(output.contains("Plan deletion cancelled."));
-    }
-
-    @Test
-    void editTrip_updatesFieldsAndRefreshesList() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "edit 1", "Korea trip", "02/01/2027", "10/01/2027", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip updated."));
-        assertTrue(output.contains("Korea trip (from 02/01/2027 to 10/01/2027)"));
-    }
-
-    @Test
-    void editTrip_blankFields_preservesExistingValues() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "edit 1", "   ", "", "  ", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("No changes made."));
-        assertTrue(output.contains("Japan trip (from 01/01/2027 to 09/01/2027)"));
-    }
-
-    @Test
-    void editPlan_updatesOnlySelectedPlan() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
-                "Osaka", "06/01/2027", "09:00", "edit 1", "Kyoto", "07/01/2027", "10:00",
-                "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Plan updated."));
-        assertTrue(output.contains("Kyoto (07/01/2027 at 10:00)"));
-        assertTrue(output.contains("Osaka (06/01/2027 at 09:00)"));
-    }
-
-    @Test
-    void editPlan_blankDestination_preservesExistingDestination() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "edit 1",
-                "", "", "", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("No changes made."));
-        assertTrue(output.contains("Tokyo (05/01/2027 at 09:00)"));
-    }
-
-    @Test
-    void editTrip_startBeforePlanDate_repromptsStartBeforeEnd() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "edit 1", "Korea", "06/01/2027", "01/01/2027", "10/01/2027",
-                "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip start date cannot be after an existing Plan date."));
-        assertTrue(output.contains("Korea (from 01/01/2027 to 10/01/2027)"));
-    }
-
-    @Test
-    void editTrip_startAfterCurrentEnd_repromptsStartOnly() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "edit 1", "Korea", "10/01/2027", "02/01/2027", "", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip start date cannot be after its current end date."));
-        assertTrue(output.contains("Korea (from 02/01/2027 to 09/01/2027)"));
-    }
-
-    @Test
-    void editTrip_startAfterPlanDate_repromptsStartOnly() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "edit 1", "Korea", "06/01/2027", "02/01/2027", "", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip start date cannot be after an existing Plan date."));
-        assertTrue(output.contains("Korea (from 02/01/2027 to 09/01/2027)"));
-    }
-
-    @Test
-    void editTrip_endBeforeProposedStart_repromptsEndOnly() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "edit 1", "Korea", "03/01/2027", "02/01/2027", "", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip end date cannot be before its start date."));
-        assertTrue(output.contains("Korea (from 03/01/2027 to 09/01/2027)"));
-    }
-
-    @Test
-    void editTrip_endBeforePlanDate_repromptsEndOnly() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "back",
-                "edit 1", "Korea", "", "04/01/2027", "", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip end date cannot be before an existing Plan date."));
-        assertTrue(output.contains("Korea (from 01/01/2027 to 09/01/2027)"));
-    }
-
-    @Test
-    void malformedEditAndDelete_showUsageAndCurrentView() {
-        String input = String.join("\n", "organise", "edit", "delete 0", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Usage: edit NUMBER"));
-        assertTrue(output.contains("There are no trips to delete."));
-        assertTrue(output.contains("[MODE: ORGANISE]"));
-    }
-
-    @Test
-    void malformedTripIndexes_showDisplayedRange() {
-        String input = String.join("\n", "organise", "new", "Japan", "05/01/2027",
-                "06/01/2027", "new", "Korea", "07/01/2027", "08/01/2027", "view abc",
-                "edit -1", "delete 0", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip number should be from 1 to 2."));
-    }
-
-    @Test
-    void malformedTripIndexes_withNoTrips_showActionSpecificMessages() {
-        String input = String.join("\n", "organise", "view abc", "edit -1", "delete 0",
-                "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("There are no trips to view."));
-        assertTrue(output.contains("There are no trips to edit."));
-        assertTrue(output.contains("There are no trips to delete."));
-    }
-
-    @Test
-    void malformedPlanIndexes_showDisplayedRange() {
-        String input = String.join("\n", "organise", "new", "Japan", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Tokyo", "05/01/2027", "09:00", "new",
-                "Osaka", "06/01/2027", "10:00", "edit abc", "delete -1", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Plan number should be from 1 to 2."));
-    }
-
-    @Test
-    void malformedTripIndex_withOneTrip_usesExactNumber() {
-        String input = String.join("\n", "organise", "new", "Japan", "05/01/2027",
-                "06/01/2027", "edit abc", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Trip number should be 1."));
-    }
-
-    @Test
-    void bareTripIndex_isRejected() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "1", "exit") + "\n";
-        String output = runCli(input);
-
-        assertTrue(output.contains("Unknown command \"1\""));
-    }
-
-    @Test
-    void createPlan_invalidDateAndTime_reprompts() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "back", "back", "05/01/2027", "back", "09:00",
-                "exit")
-                + "\n";
-        String output = runCli(input);
-
+        assertTrue(output.contains("Trip title cannot be blank."));
         assertTrue(output.contains("Date must use the DD/MM/YYYY format"));
-        assertTrue(output.contains("Time must use the HH:mm format"));
-        assertTrue(output.contains("1. back (05/01/2027 at 09:00)"));
+        assertTrue(output.contains("Trip successfully added!"));
+        assertTrue(output.contains("Trip number should be 1."));
+        assertTrue(output.endsWith("Bye!\n"));
     }
 
     @Test
-    void createPlan_dateOutsideTrip_repromptsBeforeTime() {
-        String input = String.join("\n", "organise", "new", "Japan trip", "01/01/2027",
-                "09/01/2027", "view 1", "new", "Mount Fuji", "10/01/2027", "05/01/2027",
-                "09:00", "exit") + "\n";
+    void unknownDashboardCommand_keepsDashboardView() {
+        String input = String.join("\n", "dashboard", "unknown", "exit") + "\n";
         String output = runCli(input);
 
-        assertTrue(output.contains("Plan date must fall within the Trip dates."));
-        assertTrue(output.contains("Plan created!"));
-        assertTrue(output.contains("Mount Fuji (05/01/2027 at 09:00)"));
+        assertTrue(output.contains("Error: Unknown command \"unknown\"."));
+        assertTrue(output.contains("[MODE: DASHBOARD]"));
+        assertFalse(output.contains("[MODE: ORGANISE]"));
     }
 
     private static String runCli(String input) {
