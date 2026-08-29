@@ -17,6 +17,7 @@ java {
 }
 
 dependencies {
+    implementation 'org.xerial:sqlite-jdbc:3.53.4.0'
     testImplementation platform('org.junit:junit-bom:6.1.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -24,15 +25,18 @@ dependencies {
 
 application {
     mainClass = 'doggo.Doggo'
+    applicationDefaultJvmArgs = ['--enable-native-access=ALL-UNNAMED']
 }
 
 test {
     useJUnitPlatform()
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
 }
 
 shadowJar {
     archiveClassifier = ''
     manifest {
-        attributes 'Main-Class': application.mainClass.get()
+        attributes 'Main-Class': application.mainClass.get(),
+                'Enable-Native-Access': 'ALL-UNNAMED'
     }
 }
