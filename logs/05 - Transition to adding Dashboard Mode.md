@@ -43,6 +43,21 @@ changed; shared indexed parsing remains the next subtask.
 Focused routing tests and the complete `./gradlew clean test` suite passed under
 Java 25.0.3, and `git diff --check` passed.
 
+## Prompt 3 — Share Indexed Parsing and Feedback
+
+The user asked to proceed with the shared indexed-parser subtask. The
+implementation added `IndexedEntity`, `IndexedCommandParser`, and
+`InvalidIndexCommand`; added displayed Trip/Plan count accessors and
+centralized formatter messages; and updated the Organise and Trip parsers to
+use the shared helper. Missing or extra arguments still produce usage errors,
+while one malformed, non-positive, overflowing, or malformed `view` index now
+uses snapshot-aware feedback. Positive but out-of-range command handling and
+stale-target branches remain separate follow-up work.
+
+Focused helper and CLI tests cover valid construction, argument shape errors,
+empty snapshots, one-item wording, and multi-item Trip/Plan ranges. The clean
+Java 25.0.3 test suite and `git diff --check` passed.
+
 ## Prompt 4 — Centralize Positive Out-of-Range Feedback
 
 The user asked to proceed with the next parser subtask. The five indexed
@@ -64,21 +79,6 @@ mode-parser architecture while keeping Dashboard and Gallery planned;
 `MEMORY.md` records the durable parser design. No further Java behavior was
 changed. The full test suite and diff checks passed, and the visual diff was
 regenerated.
-
-## Prompt 3 — Share Indexed Parsing and Feedback
-
-The user asked to proceed with the shared indexed-parser subtask. The
-implementation added `IndexedEntity`, `IndexedCommandParser`, and
-`InvalidIndexCommand`; added displayed Trip/Plan count accessors and
-centralized formatter messages; and updated the Organise and Trip parsers to
-use the shared helper. Missing or extra arguments still produce usage errors,
-while one malformed, non-positive, overflowing, or malformed `view` index now
-uses snapshot-aware feedback. Positive but out-of-range command handling and
-stale-target branches remain separate follow-up work.
-
-Focused helper and CLI tests cover valid construction, argument shape errors,
-empty snapshots, one-item wording, and multi-item Trip/Plan ranges. The clean
-Java 25.0.3 test suite and `git diff --check` passed.
 
 ## Prompt 6 — Expand the TripStatus and Clock Plan
 
