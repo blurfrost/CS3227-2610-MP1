@@ -4,7 +4,9 @@
 
 doggo is a local-first travel planning and journalling application. It allows users to track current trips, organise future trips, and revisit past trips through ratings, reviews, and, in a future extension, photos.
 
-Development begins with a tested command-line interface (CLI). The application will later use JavaFX for its desktop graphical user interface while retaining the same domain, application, and persistence logic.
+Development began with a tested command-line interface (CLI). The desktop
+entry point now uses JavaFX while retaining the same domain, application, and
+persistence logic; the CLI remains available through `./gradlew runCli`.
 
 ## Product Terminology
 
@@ -103,10 +105,12 @@ Java source files use packages that follow the architectural boundaries:
 - `doggo.application` contains presentation-independent services and repository contracts.
 - `doggo.storage` contains repository implementations.
 - `doggo.ui.cli` contains the CLI and its commands, parsing, formatting, and session state.
-- `doggo.Doggo` is the composition root and application entry point.
+- `doggo.Doggo` is the CLI entry point and CLI composition root.
+- `doggo.ui.javafx.DoggoApplication` and `doggo.ui.javafx.DoggoLauncher` are
+  the JavaFX composition root and classpath-safe desktop entry point.
 
-Future JavaFX presentation code will use a separate `doggo.ui.javafx` package and
-call the application services without depending on CLI commands.
+JavaFX presentation code uses the separate `doggo.ui.javafx` package and calls
+the application services without depending on CLI commands.
 
 The CLI is divided into Main navigation and Dashboard, Organise, selected-Trip,
 Gallery, and selected-Gallery-Trip modes:
@@ -152,11 +156,24 @@ Domain: Trip -> Plan
   failed save is rolled back. Deleting a Trip uses the database foreign-key cascade to remove
   its Plans and reviews.
 
+### JavaFX Presentation
+
+- `doggo.ui.javafx.DoggoLauncher` starts `DoggoApplication` from the classpath.
+- `DoggoApplication` initializes the production repository, Clock, and
+  `DoggoService`, then loads the FXML shell.
+- `AppShellController` owns persistent Dashboard, Organise, and Gallery
+  navigation; the latter two currently display styled placeholders.
+- `AppShell.fxml` and `doggo.css` define the warm travel-journal shell while
+  keeping views independent from CLI commands.
+
 ### Build and Run
 
-- `./gradlew run` starts the CLI using `data/doggo.db`.
+- `./gradlew run` starts the JavaFX application using `data/doggo.db`.
+- `./gradlew runCli` starts the CLI using `data/doggo.db`.
 - `./gradlew test` runs the JUnit suite.
 - `./gradlew shadowJar` creates the executable JAR in `build/libs`.
+- JavaFX `26.0.1` dependencies are included for the Windows, macOS, and Linux
+  classifiers.
 - Java 25 native access is enabled for Gradle-launched tests and runs and is recorded in the
   executable JAR manifest for the SQLite JDBC driver.
 
@@ -241,7 +258,8 @@ Use separate command classes for navigation and user actions:
   validation, and rendering in every relevant Trip or Plan view. Review input
   preserves fields on blank input and clears fields on exact `-` input.
 - Feature Sets 1–3, Dashboard, and Gallery maintenance use the SQLite repository in production;
-  the in-memory repository remains available for isolated tests. JavaFX remains later work.
+  the in-memory repository remains available for isolated tests. The JavaFX
+  shell foundation is implemented; functional GUI views remain in progress.
 
 ## Acceptance and Test Coverage
 

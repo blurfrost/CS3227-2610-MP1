@@ -1,0 +1,118 @@
+.root {
+    -fx-font-family: "System";
+    -fx-background-color: #f7f2e8;
+}
+
+.app-shell {
+    -fx-background-color: #f7f2e8;
+}
+
+.sidebar {
+    -fx-background-color: #26383b;
+}
+
+.brand-block {
+    -fx-padding: 0 0 18 0;
+}
+
+.brand-title {
+    -fx-text-fill: #f6eee0;
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+}
+
+.brand-subtitle {
+    -fx-text-fill: #b5c4b3;
+    -fx-font-size: 12px;
+}
+
+.navigation {
+    -fx-padding: 14 0 0 0;
+}
+
+.navigation-label {
+    -fx-text-fill: #9eafa5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.2px;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 9px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 9px;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-graphic-text-gap: 12px;
+    -fx-padding: 12px 14px;
+    -fx-text-fill: #d5dfd1;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.nav-button:hover {
+    -fx-background-color: #334b4b;
+}
+
+.nav-button:focused {
+    -fx-border-color: #d78a64;
+}
+
+.nav-button.active {
+    -fx-background-color: #d07855;
+    -fx-text-fill: #fff9ef;
+}
+
+.sidebar-footer {
+    -fx-text-fill: #9eafa5;
+    -fx-font-size: 12px;
+    -fx-padding: 18 0 0 0;
+}
+
+.content-area {
+    -fx-padding: 54px 70px 60px 70px;
+}
+
+.page {
+    -fx-alignment: TOP_LEFT;
+}
+
+.eyebrow {
+    -fx-text-fill: #b46549;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.5px;
+}
+
+.page-title {
+    -fx-text-fill: #26383b;
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+}
+
+.page-subtitle {
+    -fx-text-fill: #66736f;
+    -fx-font-size: 15px;
+    -fx-padding: 0 0 22px 0;
+}
+
+.placeholder-card {
+    -fx-background-color: #fffaf1;
+    -fx-background-radius: 14px;
+    -fx-border-color: #e8ddca;
+    -fx-border-radius: 14px;
+    -fx-border-width: 1px;
+    -fx-padding: 28px;
+}
+
+.placeholder-title {
+    -fx-text-fill: #26383b;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.placeholder-body {
+    -fx-text-fill: #66736f;
+    -fx-font-size: 14px;
+}

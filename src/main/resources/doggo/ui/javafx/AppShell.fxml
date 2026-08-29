@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="root" styleClass="app-shell" stylesheets="@doggo.css"
+            xmlns="http://javafx.com/javafx/26.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="doggo.ui.javafx.AppShellController">
+    <left>
+        <VBox prefWidth="238.0" spacing="20.0" styleClass="sidebar">
+            <padding>
+                <Insets bottom="28.0" left="22.0" right="22.0" top="28.0" />
+            </padding>
+            <VBox spacing="3.0" styleClass="brand-block">
+                <Label styleClass="brand-title" text="doggo" />
+                <Label styleClass="brand-subtitle" text="travel, thoughtfully planned" />
+            </VBox>
+            <VBox spacing="8.0" styleClass="navigation">
+                <Label styleClass="navigation-label" text="EXPLORE" />
+                <Button fx:id="dashboardButton" maxWidth="Infinity" mnemonicParsing="false"
+                        onAction="#handleDashboard" styleClass="nav-button" text="Dashboard" />
+                <Button fx:id="organiseButton" maxWidth="Infinity" mnemonicParsing="false"
+                        onAction="#handleOrganise" styleClass="nav-button" text="Organise" />
+                <Button fx:id="galleryButton" maxWidth="Infinity" mnemonicParsing="false"
+                        onAction="#handleGallery" styleClass="nav-button" text="Gallery" />
+            </VBox>
+            <Region VBox.vgrow="ALWAYS" />
+            <Label styleClass="sidebar-footer" text="A local-first travel journal" wrapText="true" />
+        </VBox>
+    </left>
+    <center>
+        <StackPane styleClass="content-area">
+            <VBox fx:id="dashboardPage" maxWidth="920.0" spacing="10.0" styleClass="page">
+                <Label styleClass="eyebrow" text="YOUR DAY" />
+                <Label styleClass="page-title" text="Dashboard" />
+                <Label styleClass="page-subtitle" text="Keep today's itinerary close at hand." wrapText="true" />
+                <VBox spacing="10.0" styleClass="placeholder-card">
+                    <Label styleClass="placeholder-title" text="Your plans will appear here" />
+                    <Label styleClass="placeholder-body"
+                          text="The Dashboard itinerary is the next step in the JavaFX build."
+                          wrapText="true" />
+                </VBox>
+            </VBox>
+            <VBox fx:id="organisePage" managed="false" maxWidth="920.0" spacing="10.0"
+                  styleClass="page" visible="false">
+                <Label styleClass="eyebrow" text="PLAN AHEAD" />
+                <Label styleClass="page-title" text="Organise" />
+                <Label styleClass="page-subtitle" text="Shape your upcoming journeys and itineraries."
+                       wrapText="true" />
+                <VBox spacing="10.0" styleClass="placeholder-card">
+                    <Label styleClass="placeholder-title" text="Organise is coming next" />
+                    <Label styleClass="placeholder-body"
+                          text="Trip and Plan management will live in this workspace."
+                          wrapText="true" />
+                </VBox>
+            </VBox>
+            <VBox fx:id="galleryPage" managed="false" maxWidth="920.0" spacing="10.0"
+                  styleClass="page" visible="false">
+                <Label styleClass="eyebrow" text="LOOK BACK" />
+                <Label styleClass="page-title" text="Gallery" />
+                <Label styleClass="page-subtitle" text="Revisit the places and moments behind each trip."
+                       wrapText="true" />
+                <VBox spacing="10.0" styleClass="placeholder-card">
+                    <Label styleClass="placeholder-title" text="Gallery is coming next" />
+                    <Label styleClass="placeholder-body"
+                          text="Past Trips, ratings, and reviews will be shown here."
+                          wrapText="true" />
+                </VBox>
+            </VBox>
+        </StackPane>
+    </center>
+</BorderPane>

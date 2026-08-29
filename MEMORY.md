@@ -6,7 +6,7 @@
 - The application uses JavaFX for its graphical user interface.
 - Production CLI data is persisted in `data/doggo.db` through the versioned SQLite repository.
 - The project is packaged as a JAR with `./gradlew clean shadowJar`.
-- Development begins with a tested CLI before moving to the JavaFX desktop interface.
+- JavaFX is the default desktop entry point through `doggo.ui.javafx.DoggoLauncher`; the tested CLI remains available through `./gradlew runCli`.
 
 ## Product Model
 
@@ -55,4 +55,7 @@
   status-aware Trip creation/edit routing; Plan mutations remain in the
   selected context, while retained UUID/composite targets protect stale or
   reclassified records.
+- JavaFX composition and shell classes live under `doggo.ui.javafx`; the FXML
+  shell currently provides persistent navigation and styled Dashboard,
+  Organise, and Gallery placeholders.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.
