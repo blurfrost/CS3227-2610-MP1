@@ -1,5 +1,6 @@
 package doggo.domain;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -15,6 +16,44 @@ import org.junit.jupiter.api.Test;
 class TripTest {
     private static final LocalDate CURRENT_DATE = LocalDate.of(2027, 1, 5);
     private static final Review REVIEW = new Review(OptionalInt.of(4), Optional.of("Great trip"));
+
+    @Test
+    void createTrip_validValues_storesValues() {
+        UUID tripId = UUID.randomUUID();
+        LocalDate startDate = LocalDate.of(2027, 1, 1);
+        LocalDate endDate = LocalDate.of(2027, 1, 9);
+
+        Trip trip = new Trip(tripId, "  Japan  ", startDate, endDate);
+
+        assertEquals(tripId, trip.id());
+        assertEquals("Japan", trip.title());
+        assertEquals(startDate, trip.startDate());
+        assertEquals(endDate, trip.endDate());
+        assertEquals(List.of(), trip.plans());
+    }
+
+    @Test
+    void createTrip_blankTitle_throwsException() {
+        assertThrows(IllegalArgumentException.class, () -> new Trip(
+                UUID.randomUUID(), "  ", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9)));
+    }
+
+    @Test
+    void createTrip_nullArgument_throwsException() {
+        UUID tripId = UUID.randomUUID();
+        LocalDate startDate = LocalDate.of(2027, 1, 1);
+        LocalDate endDate = LocalDate.of(2027, 1, 9);
+
+        assertAll(
+                () -> assertThrows(NullPointerException.class,
+                        () -> new Trip(null, "Japan", startDate, endDate)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> new Trip(tripId, null, startDate, endDate)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> new Trip(tripId, "Japan", null, endDate)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> new Trip(tripId, "Japan", startDate, null)));
+    }
 
     @Test
     void createTrip_endBeforeStart_throwsException() {
@@ -87,6 +126,24 @@ class TripTest {
     }
 
     @Test
+    void addPlan_nullPlan_throwsException() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertThrows(NullPointerException.class, () -> trip.withAddedPlan(null));
+    }
+
+    @Test
+    void plans_returnsUnmodifiableList() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertThrows(UnsupportedOperationException.class, () -> trip.plans().add(
+                new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 5),
+                        LocalTime.of(9, 0))));
+    }
+
+    @Test
     void addPlan_outsideDates_throwsException() {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
@@ -110,6 +167,17 @@ class TripTest {
     }
 
     @Test
+    void removePlan_missingPlan_throwsException() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> trip.withRemovedPlan(UUID.randomUUID())),
+                () -> assertThrows(NullPointerException.class, () -> trip.withRemovedPlan(null)));
+    }
+
+    @Test
     void updateDetails_excludingPlan_throwsException() {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
@@ -119,6 +187,23 @@ class TripTest {
 
         assertThrows(IllegalArgumentException.class, () -> tripWithPlan.withUpdatedDetails(
                 "Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 4)));
+    }
+
+    @Test
+    void updateDetails_validValues_preservesIdentityAndPlans() {
+        UUID tripId = UUID.randomUUID();
+        Plan plan = new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        Trip trip = new Trip(tripId, "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9)).withAddedPlan(plan);
+
+        Trip updatedTrip = trip.withUpdatedDetails("Kyoto", LocalDate.of(2027, 1, 2),
+                LocalDate.of(2027, 1, 8));
+
+        assertEquals(tripId, updatedTrip.id());
+        assertEquals("Kyoto", updatedTrip.title());
+        assertEquals(List.of(plan), updatedTrip.plans());
+        assertEquals("Japan", trip.title());
     }
 
     @Test
@@ -140,6 +225,28 @@ class TripTest {
     }
 
     @Test
+    void replacePlan_missingOrInvalidPlan_throwsException() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan replacement = new Plan(UUID.randomUUID(), "Osaka", LocalDate.of(2027, 1, 6),
+                LocalTime.of(10, 0));
+
+        assertAll(
+                () -> assertThrows(NullPointerException.class,
+                        () -> trip.withReplacedPlan(null)),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> trip.withReplacedPlan(replacement)));
+
+        Plan originalPlan = new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        Plan outsidePlan = new Plan(originalPlan.id(), "Osaka", LocalDate.of(2027, 1, 10),
+                LocalTime.of(10, 0));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> trip.withAddedPlan(originalPlan).withReplacedPlan(outsidePlan));
+    }
+
+    @Test
     void review_defaultsToEmpty() {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
@@ -156,6 +263,14 @@ class TripTest {
 
         assertEquals(Optional.empty(), trip.review());
         assertEquals(Optional.of(REVIEW), reviewedTrip.review());
+    }
+
+    @Test
+    void withReview_nullReview_throwsException() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertThrows(NullPointerException.class, () -> trip.withReview(null));
     }
 
     @Test

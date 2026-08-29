@@ -80,6 +80,14 @@ class PlanTest {
     }
 
     @Test
+    void withReview_nullReview_throwsException() {
+        Plan plan = new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        assertThrows(NullPointerException.class, () -> plan.withReview(null));
+    }
+
+    @Test
     void withoutReview_returnsUnreviewedCopyWithoutChangingOriginal() {
         Plan reviewedPlan = new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
                 LocalTime.of(9, 0)).withReview(REVIEW);
@@ -92,12 +100,15 @@ class PlanTest {
 
     @Test
     void withUpdatedDetails_preservesReviewWithoutChangingOriginal() {
-        Plan plan = new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+        UUID planId = UUID.randomUUID();
+        Plan plan = new Plan(planId, "Mount Fuji", LocalDate.of(2027, 1, 5),
                 LocalTime.of(9, 0)).withReview(REVIEW);
 
         Plan updatedPlan = plan.withUpdatedDetails("Osaka Castle", LocalDate.of(2027, 1, 6),
                 LocalTime.of(10, 30));
 
+        assertEquals(planId, updatedPlan.id());
+        assertEquals(planId, plan.id());
         assertEquals("Mount Fuji", plan.destination());
         assertEquals(LocalDate.of(2027, 1, 5), plan.date());
         assertEquals(LocalTime.of(9, 0), plan.time());
@@ -106,5 +117,19 @@ class PlanTest {
         assertEquals(LocalDate.of(2027, 1, 6), updatedPlan.date());
         assertEquals(LocalTime.of(10, 30), updatedPlan.time());
         assertEquals(Optional.of(REVIEW), updatedPlan.review());
+    }
+
+    @Test
+    void withUpdatedDetails_nullArgument_throwsException() {
+        Plan plan = new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        assertAll(
+                () -> assertThrows(NullPointerException.class,
+                        () -> plan.withUpdatedDetails(null, plan.date(), plan.time())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> plan.withUpdatedDetails(plan.destination(), null, plan.time())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> plan.withUpdatedDetails(plan.destination(), plan.date(), null)));
     }
 }
