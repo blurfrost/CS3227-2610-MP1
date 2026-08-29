@@ -43,7 +43,8 @@
 - Prompt summaries are maintained in Markdown files under `logs/`.
 - Active multi-step implementation work is tracked in `IMPLEMENTATION_PLAN.md`; read it before resuming that work.
 - Project-local Codex skills are stored under `.codex/skills/`.
-- The project includes local copies of `present-changes-visually`, `seedu-git-standard`, and `seedu-java-coding-standard`.
+- The project includes local copies of `present-changes-visually`,
+  `seedu-git-standard`, `seedu-java-coding-standard`, and `seedu-junit-test`.
 - CLI parsing uses a package-private `ModeCommandParser` contract with
   mode-specific parsers for all implemented CLI modes; shared indexed parsing
   uses retained display snapshots for Trip/Plan feedback.

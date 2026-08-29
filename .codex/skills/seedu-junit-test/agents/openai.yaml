@@ -1,0 +1,4 @@
+interface:
+  display_name: "SE-EDU JUnit Test Standard"
+  short_description: "Curate consistent Java test suites"
+  default_prompt: "Use $seedu-junit-test to design or review JUnit tests for this project."
