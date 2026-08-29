@@ -540,8 +540,7 @@ class GalleryMaintenanceTest {
         DoggoService service = new DoggoService(repository, TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 4));
-        Plan selectedPlan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 2),
-                LocalTime.of(9, 0));
+        service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 2), LocalTime.of(9, 0));
         Plan retainedPlan = service.addPlan(trip.id(), "Osaka", LocalDate.of(2027, 1, 3),
                 LocalTime.of(9, 0));
         StringWriter output = new StringWriter();
