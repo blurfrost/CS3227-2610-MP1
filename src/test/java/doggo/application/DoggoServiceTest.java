@@ -26,6 +26,12 @@ import org.junit.jupiter.api.Test;
 
 class DoggoServiceTest {
     @Test
+    void createService_nullRepository_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> new DoggoService(null, TestClock.fixed()));
+    }
+
+    @Test
     void createService_nullClock_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> new DoggoService(new InMemoryTripRepository(), null));
@@ -41,6 +47,45 @@ class DoggoServiceTest {
                 LocalDate.of(2027, 1, 5));
 
         assertEquals(List.of(past, current, future), service.getTrips());
+    }
+
+    @Test
+    void createTrip_failedSave_propagatesRepositoryException() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class, () -> service.createTrip(
+                "Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9)));
+        assertEquals(List.of(), repository.findAll());
+    }
+
+    @Test
+    void getTrip_existingAndMissingIds_returnsExpectedResults() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(Optional.of(trip), service.getTrip(trip.id()));
+        assertEquals(Optional.empty(), service.getTrip(UUID.randomUUID()));
+    }
+
+    @Test
+    void getTrip_readFailure_propagatesRepositoryException() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        repository.setFailReads(true);
+
+        assertThrows(RepositoryException.class, () -> service.getTrip(UUID.randomUUID()));
+    }
+
+    @Test
+    void getTrips_readFailure_propagatesRepositoryException() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        repository.setFailReads(true);
+
+        assertThrows(RepositoryException.class, service::getTrips);
     }
 
     @Test
@@ -185,6 +230,16 @@ class DoggoServiceTest {
         assertEquals(Optional.of(textReview), replacedTrip.review());
         assertEquals(Optional.empty(), removedTrip.review());
         assertEquals(removedTrip, service.getTrip(trip.id()).orElseThrow());
+    }
+
+    @Test
+    void setReview_nullReview_throwsException() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+
+        assertThrows(NullPointerException.class,
+                () -> service.setTripReview(UUID.randomUUID(), null));
+        assertThrows(NullPointerException.class,
+                () -> service.setPlanReview(UUID.randomUUID(), UUID.randomUUID(), null));
     }
 
     @Test
@@ -487,6 +542,14 @@ class DoggoServiceTest {
     }
 
     @Test
+    void addPlan_missingTrip_rejectsAddition() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+
+        assertThrows(IllegalArgumentException.class, () -> service.addPlan(UUID.randomUUID(),
+                "Mount Fuji", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0)));
+    }
+
+    @Test
     void getPlans_unsortedPlans_returnsChronologicalOrder() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
@@ -501,6 +564,13 @@ class DoggoServiceTest {
         trip = trip.withAddedPlan(earlierId);
 
         assertEquals(List.of(earlierId, laterTime, laterDate), service.getPlans(trip));
+    }
+
+    @Test
+    void getPlans_nullTrip_throwsException() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+
+        assertThrows(NullPointerException.class, () -> service.getPlans(null));
     }
 
     @Test
@@ -698,14 +768,21 @@ class DoggoServiceTest {
     private static final class FailingTripRepository implements TripRepository {
         private final InMemoryTripRepository delegate = new InMemoryTripRepository();
         private boolean shouldFail;
+        private boolean failReads;
 
         @Override
         public List<Trip> findAll() {
+            if (failReads) {
+                throw new RepositoryException("Simulated repository failure.");
+            }
             return delegate.findAll();
         }
 
         @Override
         public Optional<Trip> findById(UUID id) {
+            if (failReads) {
+                throw new RepositoryException("Simulated repository failure.");
+            }
             return delegate.findById(id);
         }
 
@@ -727,6 +804,10 @@ class DoggoServiceTest {
 
         void setShouldFail(boolean shouldFail) {
             this.shouldFail = shouldFail;
+        }
+
+        void setFailReads(boolean failReads) {
+            this.failReads = failReads;
         }
     }
 }
