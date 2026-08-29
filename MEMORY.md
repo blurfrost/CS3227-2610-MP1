@@ -4,6 +4,7 @@
 
 - This repository contains doggo, a local-first Java desktop application for planning and journalling travels.
 - The application uses JavaFX for its graphical user interface.
+- Production CLI data is persisted in `data/doggo.db` through the versioned SQLite repository.
 - The project is packaged as a JAR with `./gradlew clean shadowJar`.
 - Development begins with a tested CLI before moving to the JavaFX desktop interface.
 

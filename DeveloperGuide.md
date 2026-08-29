@@ -144,11 +144,21 @@ Domain: Trip -> Plan
   setting, replacing, and removing Trip and Plan reviews.
 - `TripRepository` defines `findAll`, `findById`, `save`, and `delete` operations for Trip aggregates.
 - `InMemoryTripRepository` supports early development and isolated application tests.
-- `SqliteTripRepository` provides durable storage and is required before the CLI MVP is complete.
+- `SqliteTripRepository` provides durable storage in `data/doggo.db`, which is created on startup.
+- SQLite schema version 1 is recorded with `PRAGMA user_version`; unsupported newer versions are
+  rejected without modifying the database.
 - `DoggoService` receives a `java.time.Clock` so date-sensitive behaviour can be tested deterministically.
-- Saving or deleting a Trip includes its Plans and reviews in the same
-  persistence operation. The current CLI uses the in-memory repository;
-  SQLite persistence remains future work.
+- Saving a Trip replaces its root and Plans in one transaction, including optional reviews; a
+  failed save is rolled back. Deleting a Trip uses the database foreign-key cascade to remove
+  its Plans and reviews.
+
+### Build and Run
+
+- `./gradlew run` starts the CLI using `data/doggo.db`.
+- `./gradlew test` runs the JUnit suite.
+- `./gradlew shadowJar` creates the executable JAR in `build/libs`.
+- Java 25 native access is enabled for Gradle-launched tests and runs and is recorded in the
+  executable JAR manifest for the SQLite JDBC driver.
 
 ### CLI
 
@@ -230,8 +240,8 @@ Use separate command classes for navigation and user actions:
   contextual Trip and Plan commands, replacement and removal, retained target
   validation, and rendering in every relevant Trip or Plan view. Review input
   preserves fields on blank input and clears fields on exact `-` input.
-- Feature Sets 1–3, Dashboard, and Gallery maintenance use the in-memory
-  repository. SQLite persistence and JavaFX remain later work.
+- Feature Sets 1–3, Dashboard, and Gallery maintenance use the SQLite repository in production;
+  the in-memory repository remains available for isolated tests. JavaFX remains later work.
 
 ## Acceptance and Test Coverage
 
