@@ -10,7 +10,7 @@ Development begins with a tested command-line interface (CLI). The application w
 
 - **Trip:** An overall journey, such as a trip to Japan. A Trip contains zero or more Plans.
 - **Plan:** One scheduled itinerary item belonging to a Trip, such as visiting a restaurant or landmark.
-- **Review:** A required whole-number rating from 1 to 5 and optional written text associated with a completed Trip or Plan.
+- **Review:** An optional whole-number rating from 1 to 5 and optional written text associated with a completed Trip or Plan; at least one field must be present.
 - **TripStatus:** A value derived from a Trip's inclusive start and end dates: future, current, or past.
 - **Dashboard:** Displays a flat chronological list of Plans scheduled for the current day, with each Plan's owning Trip title.
 - **Organise:** Displays Trips and allows users to select a Trip to view and manage its itinerary.
@@ -30,7 +30,7 @@ Development begins with a tested command-line interface (CLI). The application w
 8. As a user, I can select a Trip and view its Plans in chronological order so that I can understand its itinerary.
 9. As a daily user, I can view all Plans scheduled for today in chronological order with their owning Trip titles so that I can follow my daily itinerary.
 10. As a user, I can view Trips grouped as future, current, or past so that I can find the relevant journey quickly.
-11. As a frequent user, I can give a completed Trip or Plan a required whole-number rating from 1 to 5 and an optional written review so that I can record my experience.
+11. As a frequent user, I can give a completed Trip or Plan an optional whole-number rating from 1 to 5 and optional written review text so that I can record my experience.
 12. As a frequent user, I can edit or remove a review so that my recorded experience remains accurate.
 13. As a returning user, I can find my Trips, Plans, and reviews after restarting doggo so that my travel data is retained.
 
@@ -70,7 +70,7 @@ Development begins with a tested command-line interface (CLI). The application w
   - Every other valid range is current, including either boundary date and a
     single-day Trip on the current date.
 - Gallery includes every past Trip. Reviews are optional and are displayed only when present.
-- A Review requires a whole-number rating from 1 to 5 and may contain written text.
+- A Review may contain a whole-number rating from 1 to 5 and may contain written text, but at least one field must be present. Review text is trimmed and blank text is treated as absent.
 - Reviews can be added only after the associated Trip or Plan has been completed.
 - Deleting a Trip requires explicit confirmation and removes its Plans and associated reviews.
 - Deleting a Plan requires explicit confirmation and removes its associated review.
@@ -124,8 +124,8 @@ Domain: Trip -> Plan
   start and end dates, and Plans. An optional Review is planned.
 - `Plan` currently contains a UUID, destination, scheduled date, and time. An
   optional Review is planned.
-- The planned `Review` is an immutable value containing a required whole-number
-  rating from 1 to 5 and optional text.
+- `Review` is an immutable value containing an optional whole-number rating from
+  1 to 5 and optional text; at least one field must be present.
 - `TripStatus` contains `FUTURE`, `CURRENT`, and `PAST`. Status is derived from Trip dates and the supplied current date rather than persisted.
 
 ### Application and Persistence

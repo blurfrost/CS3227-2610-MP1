@@ -15,7 +15,7 @@
 - Dashboard shows Plans scheduled for the current day.
 - Organise allows users to select Trips and manage their itineraries.
 - Gallery contains every Trip whose end date has passed, whether or not it has reviews.
-- Completed Trips and Plans can have a whole-number rating from 1 to 5 and optional written review text.
+- Completed Trips and Plans can have an optional whole-number rating from 1 to 5 and optional written review text; each Review must contain at least one field.
 - Attaching photos to Plan reviews is a future extension.
 - `DeveloperGuide.md` is the canonical reference for requirements and domain rules.
 
