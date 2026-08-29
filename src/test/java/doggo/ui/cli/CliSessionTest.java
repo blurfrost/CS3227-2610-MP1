@@ -133,4 +133,27 @@ class CliSessionTest {
 
         assertEquals(new PlanTarget(tripId, planId), session.planTargetAt(1).orElseThrow());
     }
+
+    @Test
+    void tripIdAt_invalidIndex_returnsEmptyOptional() {
+        CliSession session = new CliSession();
+        session.setDisplayedTripIds(List.of(UUID.randomUUID()));
+
+        assertFalse(session.tripIdAt(0).isPresent());
+        assertFalse(session.tripIdAt(2).isPresent());
+        assertFalse(session.tripIdAt(-1).isPresent());
+    }
+
+    @Test
+    void setDisplayedTripIds_copiesInputList() {
+        CliSession session = new CliSession();
+        ArrayList<UUID> tripIds = new ArrayList<>();
+        UUID tripId = UUID.randomUUID();
+        tripIds.add(tripId);
+
+        session.setDisplayedTripIds(tripIds);
+        tripIds.clear();
+
+        assertEquals(tripId, session.tripIdAt(1).orElseThrow());
+    }
 }

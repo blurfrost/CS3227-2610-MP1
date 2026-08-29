@@ -1,5 +1,6 @@
 package doggo.ui.cli;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,6 +19,12 @@ import doggo.domain.Trip;
 import org.junit.jupiter.api.Test;
 
 class CliFormatterTest {
+    @Test
+    void formatDateAndTime_validValues_returnsExpectedText() {
+        assertEquals("05/01/2027", CliFormatter.formatDate(LocalDate.of(2027, 1, 5)));
+        assertEquals("09:07", CliFormatter.formatTime(LocalTime.of(9, 7)));
+    }
+
     @Test
     void tripView_planTimeIncludesSeconds_displaysHoursAndMinutesOnly() {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),

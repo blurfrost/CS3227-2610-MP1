@@ -15,6 +15,11 @@ class InputParserTest {
     }
 
     @Test
+    void parseDate_surroundingWhitespace_returnsDate() {
+        assertEquals(LocalDate.of(2027, 1, 1), InputParser.parseDate(" 01/01/2027 "));
+    }
+
+    @Test
     void parseDate_wrongFormat_throwsException() {
         assertThrows(IllegalArgumentException.class, () -> InputParser.parseDate("2027-01-01"));
     }
@@ -47,6 +52,12 @@ class InputParserTest {
     @Test
     void parseTime_validTime_returnsTime() {
         assertEquals(LocalTime.of(9, 0), InputParser.parseTime("09:00"));
+    }
+
+    @Test
+    void parseDateAndTime_nullValue_throwsException() {
+        assertThrows(IllegalArgumentException.class, () -> InputParser.parseDate(null));
+        assertThrows(IllegalArgumentException.class, () -> InputParser.parseTime(null));
     }
 
     @Test
