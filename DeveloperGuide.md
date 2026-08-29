@@ -10,7 +10,9 @@ Development begins with a tested command-line interface (CLI). The application w
 
 - **Trip:** An overall journey, such as a trip to Japan. A Trip contains zero or more Plans.
 - **Plan:** One scheduled itinerary item belonging to a Trip, such as visiting a restaurant or landmark.
-- **Review:** An optional whole-number rating from 1 to 5 and optional written text associated with a completed Trip or Plan; at least one field must be present.
+- **Review:** An immutable value with an optional whole-number rating from 1 to 5
+  and optional written text associated with a completed Trip or Plan; at least
+  one field must be present.
 - **TripStatus:** A value derived from a Trip's inclusive start and end dates: future, current, or past.
 - **Dashboard:** Displays a flat chronological list of Plans scheduled for the current day, with each Plan's owning Trip title.
 - **Organise:** Displays Trips and allows users to select a Trip to view and manage its itinerary.
@@ -71,7 +73,14 @@ Development begins with a tested command-line interface (CLI). The application w
     single-day Trip on the current date.
 - Gallery includes every past Trip. Reviews are optional and are displayed only when present.
 - A Review may contain a whole-number rating from 1 to 5 and may contain written text, but at least one field must be present. Review text is trimmed and blank text is treated as absent.
-- Reviews can be added only after the associated Trip or Plan has been completed.
+- Trip reviews are available after the Trip's end date has passed according to
+  the service Clock. Plan reviews are available at or after the Plan's
+  scheduled local date and time.
+- Repeating `review NUMBER` edits an existing review. During an edit, blank
+  input preserves the existing field and an exact `-` clears it. Clearing both
+  fields removes the review. On a new review, blank fields are absent.
+- A reviewed Trip must remain past when its dates are edited. A reviewed Plan
+  cannot be moved later than the current Clock-derived date and time.
 - Deleting a Trip requires explicit confirmation and removes its Plans and associated reviews.
 - Deleting a Plan requires explicit confirmation and removes its associated review.
 - Dashboard includes Plans whose scheduled local date is the current date.
@@ -120,10 +129,10 @@ Domain: Trip -> Plan
 
 ### Domain
 
-- `Trip` is the aggregate root and currently contains a UUID, title, inclusive
-  start and end dates, and Plans. An optional Review is planned.
-- `Plan` currently contains a UUID, destination, scheduled date, and time. An
-  optional Review is planned.
+- `Trip` is the aggregate root and contains a UUID, title, inclusive start and
+  end dates, Plans, and an optional Review.
+- `Plan` contains a UUID, destination, scheduled date and time, and an optional
+  Review.
 - `Review` is an immutable value containing an optional whole-number rating from
   1 to 5 and optional text; at least one field must be present.
 - `TripStatus` contains `FUTURE`, `CURRENT`, and `PAST`. Status is derived from Trip dates and the supplied current date rather than persisted.
@@ -131,12 +140,15 @@ Domain: Trip -> Plan
 ### Application and Persistence
 
 - `DoggoService` provides presentation-independent Trip and Plan CRUD, Dashboard
-  queries, and Gallery queries. Review operations remain future work.
+  and Gallery queries, Clock-backed completion checks, and review operations for
+  setting, replacing, and removing Trip and Plan reviews.
 - `TripRepository` defines `findAll`, `findById`, `save`, and `delete` operations for Trip aggregates.
 - `InMemoryTripRepository` supports early development and isolated application tests.
 - `SqliteTripRepository` provides durable storage and is required before the CLI MVP is complete.
 - `DoggoService` receives a `java.time.Clock` so date-sensitive behaviour can be tested deterministically.
-- Saving or deleting a Trip includes its Plans and reviews in the same persistence operation.
+- Saving or deleting a Trip includes its Plans and reviews in the same
+  persistence operation. The current CLI uses the in-memory repository;
+  SQLite persistence remains future work.
 
 ### CLI
 
@@ -161,31 +173,32 @@ Use separate command classes for navigation and user actions:
 
 - Navigation and global commands open Dashboard, Organise, or Gallery, return
   to the previous menu, display help, or exit the application.
-- Dashboard commands list today's Plans, create a Trip, edit a Plan by number,
-  and delete a Plan by number. Dashboard Plan creation and detailed Plan
-  viewing remain deferred.
+- Dashboard commands list today's Plans, create a Trip, edit or delete a Plan by
+  number, and review a completed Plan by number. Dashboard Plan creation and
+  detailed Plan viewing remain deferred.
 - Organise commands support creating a Trip, viewing a Trip and its Plans, editing or deleting a Trip by index, and managing Plans within a viewed Trip.
-- Gallery lists past Trips and supports Trip `new`, `edit`, and `delete`.
-  Selected Gallery Trips support Plan `new`, `edit`, and `delete`. Trip and
-  Plan review commands are planned.
+- Gallery lists past Trips and supports Trip `new`, `edit`, `delete`, and
+  `review NUMBER`. Selected Gallery Trips support Plan `new`, `edit`, `delete`,
+  and `review NUMBER`.
 
 ### CLI Behaviour
 
 - Main mode accepts `new`, `organise`, `dashboard`, `gallery`, and `exit`.
-- Dashboard mode accepts `new`, `edit NUMBER`, `delete NUMBER`, and `back`;
-  global `exit` remains available. Plan edits and deletions keep Dashboard
-  active.
+- Dashboard mode accepts `new`, `edit NUMBER`, `delete NUMBER`,
+  `review NUMBER`, and `back`; global `exit` remains available. Plan edits,
+  deletions, and reviews keep Dashboard active.
 - Trip creation can originate in Main, Dashboard, Organise, or Gallery and
   enters the resulting status list with list-first behavior. Trip editing
   originates in Organise or Gallery and also routes by the resulting status.
   Plan mutations remain in the selected Trip mode.
 - Organise lists current and future Trips and accepts `new`, `edit NUMBER`,
   `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, it accepts
-  `new`, `edit NUMBER`, `delete NUMBER`, and `back` for its Plans.
+  `new`, `edit NUMBER`, `delete NUMBER`, `review NUMBER`, and `back` for its
+  Plans.
 - Gallery lists past Trips and accepts `new`, `view NUMBER`, `edit NUMBER`,
-  `delete NUMBER`, and `back`. A selected Gallery Trip accepts Plan `new`,
-  `edit NUMBER`, `delete NUMBER`, and `back`; global `exit` remains available
-  in both Gallery modes.
+  `delete NUMBER`, `review NUMBER`, and `back`. A selected Gallery Trip accepts
+  Plan `new`, `edit NUMBER`, `delete NUMBER`, `review NUMBER`, and `back`;
+  global `exit` remains available in both Gallery modes.
 - The CLI displays short one-based list numbers while retaining stable UUIDs internally.
 - Creation and editing commands prompt for individual fields instead of requiring long command lines.
 - Trip and Plan dates use the strict `DD/MM/YYYY` format.
@@ -213,8 +226,12 @@ Use separate command classes for navigation and user actions:
 - Gallery lists every past Trip and provides retained UUID-targeted Trip and
   Plan maintenance. Trip mutations route by resulting status and Plan
   mutations stay in the selected Trip view.
+- Reviews support immutable rating/text values, Clock-backed eligibility,
+  contextual Trip and Plan commands, replacement and removal, retained target
+  validation, and rendering in every relevant Trip or Plan view. Review input
+  preserves fields on blank input and clears fields on exact `-` input.
 - Feature Sets 1–3, Dashboard, and Gallery maintenance use the in-memory
-  repository; reviews, persistence, and JavaFX remain later work.
+  repository. SQLite persistence and JavaFX remain later work.
 
 ## Acceptance and Test Coverage
 
@@ -223,7 +240,9 @@ Use separate command classes for navigation and user actions:
 - Verify Dashboard includes only today's Plans and orders them deterministically.
 - Verify Gallery excludes current and future Trips, includes past Trips without
   reviews, and supports safe Trip and Plan maintenance.
-- Verify Trip and Plan review eligibility and rating validation.
+- Verify Trip and Plan review eligibility, rating/text validation, contextual
+  CLI review flows, replacement/removal semantics, rendering, and reviewed-date
+  edit restrictions.
 - Verify failed writes do not damage previously persisted data.
 - Verify domain and application tests run without JavaFX or the production database.
 - Verify the CLI exposes help for all supported commands and handles invalid input without crashing.

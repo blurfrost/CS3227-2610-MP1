@@ -78,6 +78,45 @@ class CliTest {
     }
 
     @Test
+    void galleryReview_endToEnd_addsEditsRemovesTripReviewAndKeepsPlan() {
+        String input = String.join("\n", "new", "Past trip", "01/01/2027", "04/01/2027",
+                "view 1", "new", "Museum", "02/01/2027", "09:00", "back", "review 1",
+                "5", "Wonderful journey", "review 1", "", "Updated journey", "review 1",
+                "-", "-", "view 1", "exit") + "\n";
+        String output = runCli(input);
+        String afterRemoval = output.substring(output.lastIndexOf("Review removed."));
+
+        assertTrue(output.contains("Plan created!"));
+        assertTrue(output.contains("Museum (02/01/2027 at 09:00)"));
+        assertTrue(output.contains("Review added."));
+        assertTrue(output.contains("Rating: 5/5"));
+        assertTrue(output.contains("Review: Wonderful journey"));
+        assertTrue(output.contains("Review updated."));
+        assertTrue(output.contains("Review: Updated journey"));
+        assertTrue(output.contains("Review removed."));
+        assertTrue(afterRemoval.contains("Museum (02/01/2027 at 09:00)"));
+        assertFalse(afterRemoval.contains("Rating: 5/5"));
+        assertFalse(afterRemoval.contains("Review: Updated journey"));
+    }
+
+    @Test
+    void dashboardReview_endToEnd_rendersInSelectedTripView() {
+        String input = String.join("\n", "organise", "new", "Current trip", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Early plan", "05/01/2027", "00:00", "back",
+                "back", "dashboard", "review 1", "4", "Excellent plan", "back", "organise",
+                "view 1", "exit") + "\n";
+        String output = runCli(input);
+        int selectedTripView = output.lastIndexOf("Viewing: Current trip");
+        String selectedTripOutput = output.substring(selectedTripView);
+
+        assertTrue(output.contains("Review added."));
+        assertTrue(output.contains("1. 00:00 - Early plan (Trip: Current trip)"));
+        assertTrue(selectedTripOutput.contains("Early plan (05/01/2027 at 00:00)"));
+        assertTrue(selectedTripOutput.contains("Rating: 4/5"));
+        assertTrue(selectedTripOutput.contains("Review: Excellent plan"));
+    }
+
+    @Test
     void galleryMaintenance_editingAcrossStatusBoundary_routesListFirst() {
         String input = String.join("\n", "new", "Historical trip", "01/01/2027", "04/01/2027",
                 "edit 1", "", "", "06/01/2027", "edit 1", "", "", "04/01/2027", "exit")

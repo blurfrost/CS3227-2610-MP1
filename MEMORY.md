@@ -16,6 +16,14 @@
 - Organise allows users to select Trips and manage their itineraries.
 - Gallery contains every Trip whose end date has passed, whether or not it has reviews.
 - Completed Trips and Plans can have an optional whole-number rating from 1 to 5 and optional written review text; each Review must contain at least one field.
+- Reviews are implemented as immutable values. `review NUMBER` targets Trips
+  from Gallery and Plans from Dashboard or selected Trip views; blank fields
+  preserve existing values, `-` clears a field, and clearing both removes the
+  review.
+- `DoggoService` uses its injected Clock for review eligibility: Trips after
+  their end date and Plans at or after their scheduled local date-time. A
+  reviewed Trip must remain past and a reviewed Plan cannot be moved later than
+  the Clock-derived current date-time, back to an incomplete state.
 - Attaching photos to Plan reviews is a future extension.
 - `DeveloperGuide.md` is the canonical reference for requirements and domain rules.
 
