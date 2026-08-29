@@ -53,6 +53,7 @@ class CliFormatterTest {
         assertTrue(output.contains("1. 09:00 - Tokyo (Trip: Japan)"));
         assertTrue(output.contains("Edit a Plan with \"edit NUMBER\"."));
         assertTrue(output.contains("Delete a Plan with \"delete NUMBER\"."));
+        assertTrue(output.contains("Review a completed Plan with \"review NUMBER\"."));
     }
 
     @Test
@@ -94,6 +95,7 @@ class CliFormatterTest {
         assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
         assertTrue(output.contains("Type \"edit NUMBER\" to edit a Plan."));
         assertTrue(output.contains("Type \"delete NUMBER\" to delete a Plan."));
+        assertTrue(output.contains("Type \"review NUMBER\" to review a completed Plan."));
     }
 
     @Test
@@ -133,6 +135,47 @@ class CliFormatterTest {
 
         String ratingOutput = new CliFormatter().galleryMenu(List.of(ratingOnlyTrip));
         String textOutput = new CliFormatter().galleryMenu(List.of(textOnlyTrip));
+
+        assertTrue(ratingOutput.contains("   Rating: 4/5\n"));
+        assertFalse(ratingOutput.contains("   Review:"));
+        assertTrue(textOutput.contains("   Review: Good food.\n"));
+        assertFalse(textOutput.contains("   Rating:"));
+    }
+
+    @Test
+    void planViews_presentPlanReviewFieldsOnIndentedLines() {
+        Plan reviewedPlan = new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0)).withReview(
+                        new Review(OptionalInt.of(5), Optional.of("Great activity.")));
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        String dashboardOutput = new CliFormatter().dashboardMenu(
+                List.of(new DashboardEntry(trip.id(), trip.title(), reviewedPlan)));
+        String tripOutput = new CliFormatter().tripView(trip, List.of(reviewedPlan));
+        String galleryTripOutput = new CliFormatter().galleryTripView(trip, List.of(reviewedPlan));
+
+        assertTrue(dashboardOutput.contains("   Rating: 5/5\n"));
+        assertTrue(dashboardOutput.contains("   Review: Great activity.\n"));
+        assertTrue(tripOutput.contains("   Rating: 5/5\n"));
+        assertTrue(tripOutput.contains("   Review: Great activity.\n"));
+        assertTrue(galleryTripOutput.contains("   Rating: 5/5\n"));
+        assertTrue(galleryTripOutput.contains("   Review: Great activity.\n"));
+    }
+
+    @Test
+    void planViews_omitAbsentPlanReviewFields() {
+        Plan ratingOnlyPlan = new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0)).withReview(
+                        new Review(OptionalInt.of(4), Optional.empty()));
+        Plan textOnlyPlan = new Plan(UUID.randomUUID(), "Osaka", LocalDate.of(2027, 1, 5),
+                LocalTime.of(10, 0)).withReview(
+                        new Review(OptionalInt.empty(), Optional.of("Good food.")));
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        String ratingOutput = new CliFormatter().tripView(trip, List.of(ratingOnlyPlan));
+        String textOutput = new CliFormatter().tripView(trip, List.of(textOnlyPlan));
 
         assertTrue(ratingOutput.contains("   Rating: 4/5\n"));
         assertFalse(ratingOutput.contains("   Review:"));

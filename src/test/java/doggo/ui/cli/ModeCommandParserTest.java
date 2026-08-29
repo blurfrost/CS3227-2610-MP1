@@ -32,6 +32,7 @@ class ModeCommandParserTest {
         assertInstanceOf(NewPlanCommand.class, parser.parse("new"));
         assertInstanceOf(EditPlanCommand.class, parser.parse("edit 1"));
         assertInstanceOf(DeletePlanCommand.class, parser.parse("delete 1"));
+        assertInstanceOf(ReviewPlanCommand.class, parser.parse("review 1"));
     }
 
     @Test
@@ -41,6 +42,7 @@ class ModeCommandParserTest {
         assertInstanceOf(NewTripCommand.class, parser.parse("NeW"));
         assertInstanceOf(EditPlanCommand.class, parser.parse("EdIt 1"));
         assertInstanceOf(DeletePlanCommand.class, parser.parse("DeLeTe 1"));
+        assertInstanceOf(ReviewPlanCommand.class, parser.parse("ReViEw 1"));
         assertInstanceOf(UnknownCommand.class, parser.parse("new 1"));
     }
 
@@ -59,6 +61,7 @@ class ModeCommandParserTest {
         assertInstanceOf(NewPlanCommand.class, galleryTripParser.parse("NeW"));
         assertInstanceOf(EditPlanCommand.class, galleryTripParser.parse("EdIt 1"));
         assertInstanceOf(DeletePlanCommand.class, galleryTripParser.parse("DeLeTe 1"));
+        assertInstanceOf(ReviewPlanCommand.class, galleryTripParser.parse("ReViEw 1"));
         assertInstanceOf(UnknownCommand.class, galleryTripParser.parse("new 1"));
         assertInstanceOf(InvalidCommand.class, galleryTripParser.parse("delete"));
     }

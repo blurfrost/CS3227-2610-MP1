@@ -35,10 +35,12 @@ final class CliFormatter {
                         .append(" (Trip: ")
                         .append(entry.tripTitle())
                         .append(")\n");
+                entry.plan().review().ifPresent(review -> appendReview(message, review));
             }
             message.append("\n");
             message.append("Edit a Plan with \"edit NUMBER\".\n\n");
             message.append("Delete a Plan with \"delete NUMBER\".\n\n");
+            message.append("Review a completed Plan with \"review NUMBER\".\n\n");
         }
         return message.append("Type \"new\" to create a new Trip.\n")
                 .append("Type \"back\" to go back to the Main Menu.").toString();
@@ -111,6 +113,7 @@ final class CliFormatter {
         if (!plans.isEmpty()) {
             message.append("Type \"edit NUMBER\" to edit a Plan.\n");
             message.append("Type \"delete NUMBER\" to delete a Plan.\n");
+            message.append("Type \"review NUMBER\" to review a completed Plan.\n");
         }
         return message
                 .append("Type \"back\" to go back to the Gallery.").toString();
@@ -128,6 +131,7 @@ final class CliFormatter {
         return message.append("Type \"new\" to create a new Plan.\n")
                 .append("Type \"edit NUMBER\" to edit a Plan.\n")
                 .append("Type \"delete NUMBER\" to delete a Plan.\n")
+                .append("Type \"review NUMBER\" to review a completed Plan.\n")
                 .append("Type \"back\" to go back to the Organise Menu.")
                 .toString();
     }
@@ -190,6 +194,7 @@ final class CliFormatter {
                     .append(" at ")
                     .append(TIME_FORMATTER.format(plan.time()))
                     .append(")\n");
+            plan.review().ifPresent(review -> appendReview(message, review));
         }
         message.append("\n");
     }
