@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -15,6 +16,7 @@ public final class Trip {
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final List<Plan> plans;
+    private final Optional<Review> review;
 
     /**
      * Creates a Trip with the specified title and inclusive date range.
@@ -25,15 +27,17 @@ public final class Trip {
      * @param endDate Trip end date.
      */
     public Trip(UUID id, String title, LocalDate startDate, LocalDate endDate) {
-        this(id, title, startDate, endDate, List.of());
+        this(id, title, startDate, endDate, List.of(), Optional.empty());
     }
 
-    private Trip(UUID id, String title, LocalDate startDate, LocalDate endDate, List<Plan> plans) {
+    private Trip(UUID id, String title, LocalDate startDate, LocalDate endDate, List<Plan> plans,
+                 Optional<Review> review) {
         this.id = Objects.requireNonNull(id);
         this.title = requireText(title, "Trip title");
         this.startDate = Objects.requireNonNull(startDate);
         this.endDate = Objects.requireNonNull(endDate);
         this.plans = List.copyOf(plans);
+        this.review = Objects.requireNonNull(review);
         if (endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("Trip end date cannot be before its start date.");
         }
@@ -61,6 +65,10 @@ public final class Trip {
 
     public List<Plan> plans() {
         return plans;
+    }
+
+    public Optional<Review> review() {
+        return review;
     }
 
     /**
@@ -94,7 +102,7 @@ public final class Trip {
         }
         List<Plan> updatedPlans = new ArrayList<>(plans);
         updatedPlans.add(plan);
-        return new Trip(id, title, startDate, endDate, updatedPlans);
+        return new Trip(id, title, startDate, endDate, updatedPlans, review);
     }
 
     /**
@@ -112,7 +120,7 @@ public final class Trip {
         if (updatedPlans.size() == plans.size()) {
             throw new IllegalArgumentException("Plan not found.");
         }
-        return new Trip(id, title, startDate, endDate, updatedPlans);
+        return new Trip(id, title, startDate, endDate, updatedPlans, review);
     }
 
     /**
@@ -125,7 +133,26 @@ public final class Trip {
      */
     public Trip withUpdatedDetails(String updatedTitle, LocalDate updatedStartDate,
                                    LocalDate updatedEndDate) {
-        return new Trip(id, updatedTitle, updatedStartDate, updatedEndDate, plans);
+        return new Trip(id, updatedTitle, updatedStartDate, updatedEndDate, plans, review);
+    }
+
+    /**
+     * Returns a copy with the specified review attached.
+     *
+     * @param review Review to attach.
+     * @return Copy of this Trip with the review attached.
+     */
+    public Trip withReview(Review review) {
+        return new Trip(id, title, startDate, endDate, plans, Optional.of(Objects.requireNonNull(review)));
+    }
+
+    /**
+     * Returns a copy without this Trip's review.
+     *
+     * @return Copy of this Trip without a review.
+     */
+    public Trip withoutReview() {
+        return new Trip(id, title, startDate, endDate, plans, Optional.empty());
     }
 
     /**
@@ -145,7 +172,7 @@ public final class Trip {
                     throw new IllegalArgumentException("Plan date must fall within the Trip dates.");
                 }
                 updatedPlans.set(index, replacement);
-                return new Trip(id, title, startDate, endDate, updatedPlans);
+                return new Trip(id, title, startDate, endDate, updatedPlans, review);
             }
         }
         throw new IllegalArgumentException("Plan not found.");

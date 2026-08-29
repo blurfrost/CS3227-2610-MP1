@@ -6,12 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
 class TripTest {
     private static final LocalDate CURRENT_DATE = LocalDate.of(2027, 1, 5);
+    private static final Review REVIEW = new Review(OptionalInt.of(4), Optional.of("Great trip"));
 
     @Test
     void createTrip_endBeforeStart_throwsException() {
@@ -134,5 +137,56 @@ class TripTest {
         assertEquals(tripId, updatedTrip.id());
         assertEquals(List.of(replacement), updatedTrip.plans());
         assertEquals(List.of(originalPlan), trip.withAddedPlan(originalPlan).plans());
+    }
+
+    @Test
+    void review_defaultsToEmpty() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(Optional.empty(), trip.review());
+    }
+
+    @Test
+    void withReview_returnsReviewedCopyWithoutChangingOriginal() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        Trip reviewedTrip = trip.withReview(REVIEW);
+
+        assertEquals(Optional.empty(), trip.review());
+        assertEquals(Optional.of(REVIEW), reviewedTrip.review());
+    }
+
+    @Test
+    void withoutReview_returnsUnreviewedCopyWithoutChangingOriginal() {
+        Trip reviewedTrip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9)).withReview(REVIEW);
+
+        Trip unreviewedTrip = reviewedTrip.withoutReview();
+
+        assertEquals(Optional.of(REVIEW), reviewedTrip.review());
+        assertEquals(Optional.empty(), unreviewedTrip.review());
+    }
+
+    @Test
+    void copyOperations_preserveTripReview() {
+        UUID planId = UUID.randomUUID();
+        Plan plan = new Plan(planId, "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
+        Trip reviewedTrip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9)).withReview(REVIEW);
+
+        Trip withPlan = reviewedTrip.withAddedPlan(plan);
+        Trip withReplacement = withPlan.withReplacedPlan(
+                new Plan(planId, "Osaka", LocalDate.of(2027, 1, 6), LocalTime.of(10, 0)));
+        Trip withoutPlan = withReplacement.withRemovedPlan(planId);
+        Trip withUpdatedDetails = withoutPlan.withUpdatedDetails("Kyoto", LocalDate.of(2027, 1, 2),
+                LocalDate.of(2027, 1, 8));
+
+        assertEquals(Optional.of(REVIEW), withPlan.review());
+        assertEquals(Optional.of(REVIEW), withReplacement.review());
+        assertEquals(Optional.of(REVIEW), withoutPlan.review());
+        assertEquals(Optional.of(REVIEW), withUpdatedDetails.review());
+        assertEquals(Optional.of(REVIEW), reviewedTrip.review());
     }
 }
