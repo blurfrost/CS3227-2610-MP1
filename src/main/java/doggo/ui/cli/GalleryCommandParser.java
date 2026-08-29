@@ -21,6 +21,10 @@ final class GalleryCommandParser implements ModeCommandParser {
             return IndexedCommandParser.parse(command, "view", IndexedEntity.TRIP,
                     ViewGalleryTripCommand::new);
         }
+        if (command.matches("(?i)review(?:\\s+.*)?")) {
+            return IndexedCommandParser.parse(command, "review", IndexedEntity.TRIP,
+                    ReviewTripCommand::new);
+        }
         return new UnknownCommand(command);
     }
 }

@@ -7,6 +7,7 @@ import java.util.List;
 
 import doggo.application.DashboardEntry;
 import doggo.domain.Plan;
+import doggo.domain.Review;
 import doggo.domain.Trip;
 
 final class CliFormatter {
@@ -88,6 +89,7 @@ final class CliFormatter {
             message.append("Past trips:\n");
             appendTrips(message, trips);
             message.append("\nView a past Trip with \"view NUMBER\".\n\n");
+            message.append("Review a past Trip with \"review NUMBER\".\n\n");
             message.append("Edit a past Trip with \"edit NUMBER\".\n\n");
             message.append("Delete a past Trip with \"delete NUMBER\".\n\n");
         }
@@ -103,6 +105,7 @@ final class CliFormatter {
                 .append(" to ")
                 .append(DATE_FORMATTER.format(trip.endDate()))
                 .append(")\n");
+        trip.review().ifPresent(review -> appendReview(message, review));
         appendPlans(message, plans);
         message.append("Type \"new\" to create a new Plan.\n");
         if (!plans.isEmpty()) {
@@ -146,7 +149,23 @@ final class CliFormatter {
                     .append(" to ")
                     .append(DATE_FORMATTER.format(trip.endDate()))
                     .append(")\n");
+            trip.review().ifPresent(review -> appendReview(message, review));
         }
+    }
+
+    /**
+     * Appends present Review fields on indented lines.
+     *
+     * @param message Message receiving the Review fields.
+     * @param review Review to append.
+     */
+    private static void appendReview(StringBuilder message, Review review) {
+        review.rating().ifPresent(rating -> message.append("   Rating: ")
+                .append(rating)
+                .append("/5\n"));
+        review.text().ifPresent(text -> message.append("   Review: ")
+                .append(text)
+                .append("\n"));
     }
 
     /**

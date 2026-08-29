@@ -6,10 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 import doggo.application.DashboardEntry;
 import doggo.domain.Plan;
+import doggo.domain.Review;
 import doggo.domain.Trip;
 
 import org.junit.jupiter.api.Test;
@@ -65,6 +68,7 @@ class CliFormatterTest {
         assertTrue(output.contains("Type \"new\" to create a new Trip."));
         assertTrue(output.contains("Edit a past Trip with \"edit NUMBER\"."));
         assertTrue(output.contains("Delete a past Trip with \"delete NUMBER\"."));
+        assertTrue(output.contains("Review a past Trip with \"review NUMBER\"."));
     }
 
     @Test
@@ -101,5 +105,38 @@ class CliFormatterTest {
 
         assertFalse(output.contains("edit NUMBER"));
         assertFalse(output.contains("delete NUMBER"));
+    }
+
+    @Test
+    void galleryViews_presentReviewFieldsOnIndentedLines() {
+        Trip reviewedTrip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4)).withReview(
+                        new Review(OptionalInt.of(5), Optional.of("Wonderful trip.")));
+
+        String galleryOutput = new CliFormatter().galleryMenu(List.of(reviewedTrip));
+        String detailOutput = new CliFormatter().galleryTripView(reviewedTrip, List.of());
+
+        assertTrue(galleryOutput.contains("   Rating: 5/5\n"));
+        assertTrue(galleryOutput.contains("   Review: Wonderful trip.\n"));
+        assertTrue(detailOutput.contains("   Rating: 5/5\n"));
+        assertTrue(detailOutput.contains("   Review: Wonderful trip.\n"));
+    }
+
+    @Test
+    void galleryViews_omitAbsentReviewFields() {
+        Trip ratingOnlyTrip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4)).withReview(
+                        new Review(OptionalInt.of(4), Optional.empty()));
+        Trip textOnlyTrip = new Trip(UUID.randomUUID(), "Korea", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4)).withReview(
+                        new Review(OptionalInt.empty(), Optional.of("Good food.")));
+
+        String ratingOutput = new CliFormatter().galleryMenu(List.of(ratingOnlyTrip));
+        String textOutput = new CliFormatter().galleryMenu(List.of(textOnlyTrip));
+
+        assertTrue(ratingOutput.contains("   Rating: 4/5\n"));
+        assertFalse(ratingOutput.contains("   Review:"));
+        assertTrue(textOutput.contains("   Review: Good food.\n"));
+        assertFalse(textOutput.contains("   Rating:"));
     }
 }
