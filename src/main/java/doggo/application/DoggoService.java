@@ -2,6 +2,7 @@ package doggo.application;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import doggo.domain.Plan;
+import doggo.domain.Review;
 import doggo.domain.Trip;
 import doggo.domain.TripStatus;
 
@@ -75,6 +77,29 @@ public final class DoggoService {
     public TripStatus getTripStatus(Trip trip) {
         Objects.requireNonNull(trip);
         return trip.statusOn(LocalDate.now(clock));
+    }
+
+    /**
+     * Returns whether the specified Trip can receive a review.
+     *
+     * @param trip Trip to check.
+     * @return True if the Trip is past relative to the service Clock.
+     */
+    public boolean isTripReviewable(Trip trip) {
+        Objects.requireNonNull(trip);
+        return trip.statusOn(LocalDate.now(clock)) == TripStatus.PAST;
+    }
+
+    /**
+     * Returns whether the specified Plan can receive a review.
+     *
+     * @param plan Plan to check.
+     * @return True if the Plan's scheduled date-time is not after the service Clock.
+     */
+    public boolean isPlanReviewable(Plan plan) {
+        Objects.requireNonNull(plan);
+        LocalDateTime scheduledDateTime = LocalDateTime.of(plan.date(), plan.time());
+        return !scheduledDateTime.isAfter(LocalDateTime.now(clock));
     }
 
     /**
@@ -199,6 +224,9 @@ public final class DoggoService {
         Trip trip = getTrip(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
         Trip updatedTrip = trip.withUpdatedDetails(title, startDate, endDate);
+        if (trip.review().isPresent() && !isTripReviewable(updatedTrip)) {
+            throw new IllegalArgumentException("A reviewed Trip must remain past after editing.");
+        }
         tripRepository.save(updatedTrip);
         return updatedTrip;
     }
@@ -215,15 +243,137 @@ public final class DoggoService {
      * @throws IllegalArgumentException If the Trip, Plan, or new details are invalid.
      */
     public Plan editPlan(UUID tripId, UUID planId, String destination, LocalDate date, LocalTime time) {
-        Trip trip = getTrip(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
-        trip.plans().stream()
-                .filter(plan -> plan.id().equals(planId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Plan not found."));
-        Plan updatedPlan = new Plan(planId, destination, date, time);
+        Trip trip = requireTrip(tripId);
+        Plan existingPlan = requirePlan(trip, planId);
+        Plan updatedPlan = existingPlan.withUpdatedDetails(destination, date, time);
+        if (existingPlan.review().isPresent() && !isPlanReviewable(updatedPlan)) {
+            throw new IllegalArgumentException("A reviewed Plan cannot be moved after its completion time.");
+        }
         Trip updatedTrip = trip.withReplacedPlan(updatedPlan);
         tripRepository.save(updatedTrip);
         return updatedPlan;
+    }
+
+    /**
+     * Adds or replaces a review on the Trip with the specified identity.
+     *
+     * @param tripId Trip identity.
+     * @param review Review to attach.
+     * @return Updated Trip.
+     * @throws IllegalArgumentException If the Trip does not exist or is not past.
+     */
+    public Trip setTripReview(UUID tripId, Review review) {
+        Objects.requireNonNull(review, "Review cannot be null.");
+        Trip trip = requireTrip(tripId);
+        requireTripReviewable(trip);
+        Trip updatedTrip = trip.withReview(review);
+        tripRepository.save(updatedTrip);
+        return updatedTrip;
+    }
+
+    /**
+     * Removes the review from the Trip with the specified identity.
+     *
+     * @param tripId Trip identity.
+     * @return Updated Trip, or the existing Trip when no review is attached.
+     * @throws IllegalArgumentException If the Trip does not exist.
+     */
+    public Trip removeTripReview(UUID tripId) {
+        Trip trip = requireTrip(tripId);
+        if (trip.review().isEmpty()) {
+            return trip;
+        }
+        Trip updatedTrip = trip.withoutReview();
+        tripRepository.save(updatedTrip);
+        return updatedTrip;
+    }
+
+    /**
+     * Adds or replaces a review on a Plan in the specified Trip.
+     *
+     * @param tripId Trip identity.
+     * @param planId Plan identity.
+     * @param review Review to attach.
+     * @return Updated Plan.
+     * @throws IllegalArgumentException If the Trip or Plan does not exist, or the Plan is not complete.
+     */
+    public Plan setPlanReview(UUID tripId, UUID planId, Review review) {
+        Objects.requireNonNull(review, "Review cannot be null.");
+        Trip trip = requireTrip(tripId);
+        Plan plan = requirePlan(trip, planId);
+        requirePlanReviewable(plan);
+        Plan updatedPlan = plan.withReview(review);
+        tripRepository.save(trip.withReplacedPlan(updatedPlan));
+        return updatedPlan;
+    }
+
+    /**
+     * Removes the review from a Plan in the specified Trip.
+     *
+     * @param tripId Trip identity.
+     * @param planId Plan identity.
+     * @return Updated Plan, or the existing Plan when no review is attached.
+     * @throws IllegalArgumentException If the Trip or Plan does not exist.
+     */
+    public Plan removePlanReview(UUID tripId, UUID planId) {
+        Trip trip = requireTrip(tripId);
+        Plan plan = requirePlan(trip, planId);
+        if (plan.review().isEmpty()) {
+            return plan;
+        }
+        Plan updatedPlan = plan.withoutReview();
+        tripRepository.save(trip.withReplacedPlan(updatedPlan));
+        return updatedPlan;
+    }
+
+    /**
+     * Returns the stored Trip with the specified identity.
+     *
+     * @param tripId Trip identity.
+     * @return Stored Trip.
+     * @throws IllegalArgumentException If the Trip does not exist.
+     */
+    private Trip requireTrip(UUID tripId) {
+        return getTrip(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
+    }
+
+    /**
+     * Returns a Plan belonging to the specified Trip.
+     *
+     * @param trip Trip containing the Plan.
+     * @param planId Plan identity.
+     * @return Matching Plan.
+     * @throws IllegalArgumentException If the Plan does not belong to the Trip.
+     */
+    private Plan requirePlan(Trip trip, UUID planId) {
+        return trip.plans().stream()
+                .filter(plan -> plan.id().equals(planId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found."));
+    }
+
+    /**
+     * Rejects review operations for a Trip that has not ended.
+     *
+     * @param trip Trip to validate.
+     * @throws IllegalArgumentException If the Trip is not past.
+     */
+    private void requireTripReviewable(Trip trip) {
+        if (!isTripReviewable(trip)) {
+            throw new IllegalArgumentException("Trip can be reviewed only after its end date.");
+        }
+    }
+
+    /**
+     * Rejects review operations for a Plan that has not reached its scheduled time.
+     *
+     * @param plan Plan to validate.
+     * @throws IllegalArgumentException If the Plan is not complete.
+     */
+    private void requirePlanReviewable(Plan plan) {
+        if (!isPlanReviewable(plan)) {
+            throw new IllegalArgumentException("Plan can be reviewed only after its scheduled time.");
+        }
     }
 }

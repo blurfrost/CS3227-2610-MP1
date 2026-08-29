@@ -1,16 +1,23 @@
 package doggo.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 import doggo.TestClock;
 import doggo.domain.Plan;
+import doggo.domain.Review;
 import doggo.domain.Trip;
 import doggo.domain.TripStatus;
 import doggo.storage.InMemoryTripRepository;
@@ -135,6 +142,267 @@ class DoggoServiceTest {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
 
         assertThrows(NullPointerException.class, () -> service.getTripStatus(null));
+    }
+
+    @Test
+    void isTripReviewable_onlyPastTripsAreEligible() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip pastTrip = new Trip(UUID.randomUUID(), "Past", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Trip currentTrip = new Trip(UUID.randomUUID(), "Current", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 5));
+        Trip futureTrip = new Trip(UUID.randomUUID(), "Future", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 9));
+
+        assertTrue(service.isTripReviewable(pastTrip));
+        assertFalse(service.isTripReviewable(currentTrip));
+        assertFalse(service.isTripReviewable(futureTrip));
+    }
+
+    @Test
+    void isPlanReviewable_beforeExactAndAfterScheduledTime() {
+        Plan plan = new Plan(UUID.randomUUID(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        assertFalse(serviceAt("2027-01-05T08:59:59Z").isPlanReviewable(plan));
+        assertTrue(serviceAt("2027-01-05T09:00:00Z").isPlanReviewable(plan));
+        assertTrue(serviceAt("2027-01-05T09:00:01Z").isPlanReviewable(plan));
+    }
+
+    @Test
+    void setReplaceAndRemoveTripReview_returnsAndStoresUpdatedValues() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Review ratingReview = new Review(OptionalInt.of(5), Optional.empty());
+        Review textReview = new Review(OptionalInt.empty(), Optional.of(" Great food. "));
+
+        Trip reviewedTrip = service.setTripReview(trip.id(), ratingReview);
+        Trip replacedTrip = service.setTripReview(trip.id(), textReview);
+        Trip removedTrip = service.removeTripReview(trip.id());
+
+        assertEquals(Optional.of(ratingReview), reviewedTrip.review());
+        assertEquals(Optional.of(textReview), replacedTrip.review());
+        assertEquals(Optional.empty(), removedTrip.review());
+        assertEquals(removedTrip, service.getTrip(trip.id()).orElseThrow());
+    }
+
+    @Test
+    void setReplaceAndRemovePlanReview_supportsRatingAndTextVariants() {
+        DoggoService service = serviceAt("2027-01-05T10:00:00Z");
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        Review textReview = new Review(OptionalInt.empty(), Optional.of(" Great food. "));
+        Review combinedReview = new Review(OptionalInt.of(4), Optional.of("Worth revisiting."));
+
+        Plan reviewedPlan = service.setPlanReview(trip.id(), plan.id(), textReview);
+        Plan replacedPlan = service.setPlanReview(trip.id(), plan.id(), combinedReview);
+        Plan removedPlan = service.removePlanReview(trip.id(), plan.id());
+
+        assertEquals(Optional.of(textReview), reviewedPlan.review());
+        assertEquals(Optional.of(combinedReview), replacedPlan.review());
+        assertEquals(Optional.empty(), removedPlan.review());
+        assertEquals(removedPlan, service.getTrip(trip.id()).orElseThrow().plans().get(0));
+    }
+
+    @Test
+    void setTripReview_ineligibleTrip_rejectsWithActionableMessage() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 5));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> service.setTripReview(trip.id(), ratingReview(4)));
+
+        assertEquals("Trip can be reviewed only after its end date.", exception.getMessage());
+        assertEquals(Optional.empty(), service.getTrip(trip.id()).orElseThrow().review());
+    }
+
+    @Test
+    void setPlanReview_beforeScheduledTime_rejectsWithActionableMessage() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> service.setPlanReview(trip.id(), plan.id(), ratingReview(4)));
+
+        assertEquals("Plan can be reviewed only after its scheduled time.", exception.getMessage());
+        assertEquals(Optional.empty(), service.getTrip(trip.id()).orElseThrow().plans().get(0).review());
+    }
+
+    @Test
+    void reviewOperations_missingTargets_rejectWithoutSaving() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.setTripReview(UUID.randomUUID(), ratingReview(4)));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.removeTripReview(UUID.randomUUID()));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.setPlanReview(trip.id(), UUID.randomUUID(), ratingReview(4)));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.removePlanReview(trip.id(), UUID.randomUUID()));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.setPlanReview(UUID.randomUUID(), UUID.randomUUID(), ratingReview(4)));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.removePlanReview(UUID.randomUUID(), UUID.randomUUID()));
+    }
+
+    @Test
+    void removeAbsentReviews_isIdempotentWithoutRepositoryWrite() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository,
+                Clock.fixed(Instant.parse("2027-01-05T10:00:00Z"), ZoneOffset.UTC));
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 4),
+                LocalTime.of(9, 0));
+        Trip storedTrip = service.getTrip(trip.id()).orElseThrow();
+        repository.setShouldFail(true);
+
+        assertEquals(storedTrip, service.removeTripReview(trip.id()));
+        assertEquals(plan, service.removePlanReview(trip.id(), plan.id()));
+    }
+
+    @Test
+    void editTrip_reviewedTrip_preservesReviewWhenStillPast() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Review review = new Review(OptionalInt.of(5), Optional.of("Wonderful."));
+        service.setTripReview(trip.id(), review);
+
+        Trip updatedTrip = service.editTrip(trip.id(), " Korea ", LocalDate.of(2027, 1, 2),
+                LocalDate.of(2027, 1, 4));
+
+        assertEquals("Korea", updatedTrip.title());
+        assertEquals(Optional.of(review), updatedTrip.review());
+        assertEquals(updatedTrip, service.getTrip(trip.id()).orElseThrow());
+    }
+
+    @Test
+    void editTrip_reviewedTrip_movingOutOfPastIsRejected() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        service.setTripReview(trip.id(), ratingReview(5));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> service.editTrip(trip.id(), "Japan", LocalDate.of(2027, 1, 1),
+                        LocalDate.of(2027, 1, 5)));
+
+        assertEquals("A reviewed Trip must remain past after editing.", exception.getMessage());
+        assertEquals(LocalDate.of(2027, 1, 4), service.getTrip(trip.id()).orElseThrow().endDate());
+        assertTrue(service.getTrip(trip.id()).orElseThrow().review().isPresent());
+    }
+
+    @Test
+    void editPlan_reviewedPlan_preservesReviewWhenStillComplete() {
+        DoggoService service = serviceAt("2027-01-05T10:00:00Z");
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        Review review = new Review(OptionalInt.empty(), Optional.of("Worth revisiting."));
+        service.setPlanReview(trip.id(), plan.id(), review);
+
+        Plan updatedPlan = service.editPlan(trip.id(), plan.id(), "Gallery",
+                LocalDate.of(2027, 1, 5), LocalTime.of(10, 0));
+
+        assertEquals("Gallery", updatedPlan.destination());
+        assertEquals(Optional.of(review), updatedPlan.review());
+        assertEquals(updatedPlan, service.getTrip(trip.id()).orElseThrow().plans().get(0));
+    }
+
+    @Test
+    void editPlan_reviewedPlan_movingAfterNowIsRejected() {
+        DoggoService service = serviceAt("2027-01-05T10:00:00Z");
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        service.setPlanReview(trip.id(), plan.id(), ratingReview(4));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> service.editPlan(trip.id(), plan.id(), "Gallery", LocalDate.of(2027, 1, 5),
+                        LocalTime.of(11, 0)));
+
+        assertEquals("A reviewed Plan cannot be moved after its completion time.",
+                exception.getMessage());
+        Plan storedPlan = service.getTrip(trip.id()).orElseThrow().plans().get(0);
+        assertEquals(Optional.of(ratingReview(4)), storedPlan.review());
+        assertEquals(plan.destination(), storedPlan.destination());
+        assertEquals(plan.date(), storedPlan.date());
+        assertEquals(plan.time(), storedPlan.time());
+    }
+
+    @Test
+    void setTripReview_failedSave_preservesPreviouslyStoredTrip() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class,
+                () -> service.setTripReview(trip.id(), ratingReview(4)));
+
+        assertEquals(Optional.empty(), service.getTrip(trip.id()).orElseThrow().review());
+    }
+
+    @Test
+    void removeTripReview_failedSave_preservesPreviouslyStoredReview() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = new DoggoService(repository, TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        Review review = service.setTripReview(trip.id(), ratingReview(4)).review().orElseThrow();
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class, () -> service.removeTripReview(trip.id()));
+
+        assertEquals(Optional.of(review), service.getTrip(trip.id()).orElseThrow().review());
+    }
+
+    @Test
+    void setPlanReview_failedSave_preservesPreviouslyStoredPlan() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = serviceAt(repository, "2027-01-05T10:00:00Z");
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class,
+                () -> service.setPlanReview(trip.id(), plan.id(), ratingReview(4)));
+
+        assertEquals(Optional.empty(), service.getTrip(trip.id()).orElseThrow().plans().get(0).review());
+    }
+
+    @Test
+    void removePlanReview_failedSave_preservesPreviouslyStoredReview() {
+        FailingTripRepository repository = new FailingTripRepository();
+        DoggoService service = serviceAt(repository, "2027-01-05T10:00:00Z");
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        Review review = service.setPlanReview(trip.id(), plan.id(), ratingReview(4)).review()
+                .orElseThrow();
+        repository.setShouldFail(true);
+
+        assertThrows(RepositoryException.class,
+                () -> service.removePlanReview(trip.id(), plan.id()));
+
+        assertEquals(Optional.of(review), service.getTrip(trip.id()).orElseThrow().plans().get(0).review());
     }
 
     @Test
@@ -412,6 +680,19 @@ class DoggoServiceTest {
 
         assertThrows(RepositoryException.class, () -> service.deleteTrip(trip.id()));
         assertEquals(trip, service.getTrip(trip.id()).orElseThrow());
+    }
+
+    private static DoggoService serviceAt(String instant) {
+        return new DoggoService(new InMemoryTripRepository(),
+                Clock.fixed(Instant.parse(instant), ZoneOffset.UTC));
+    }
+
+    private static DoggoService serviceAt(FailingTripRepository repository, String instant) {
+        return new DoggoService(repository, Clock.fixed(Instant.parse(instant), ZoneOffset.UTC));
+    }
+
+    private static Review ratingReview(int rating) {
+        return new Review(OptionalInt.of(rating), Optional.empty());
     }
 
     private static final class FailingTripRepository implements TripRepository {
