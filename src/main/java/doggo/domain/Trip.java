@@ -47,6 +47,25 @@ public final class Trip {
         }
     }
 
+    /**
+     * Restores a Trip with its complete persisted state.
+     *
+     * @param id Trip identity.
+     * @param title Trip title.
+     * @param startDate Trip start date.
+     * @param endDate Trip end date.
+     * @param plans Trip Plans.
+     * @param review Optional Trip review.
+     * @return Restored Trip.
+     * @throws NullPointerException If any argument or Plan element is null.
+     * @throws IllegalArgumentException If the title is blank, the end date is before the start date,
+     *                                  or a Plan falls outside the Trip dates.
+     */
+    public static Trip restore(UUID id, String title, LocalDate startDate, LocalDate endDate,
+                               List<Plan> plans, Optional<Review> review) {
+        return new Trip(id, title, startDate, endDate, plans, review);
+    }
+
     public UUID id() {
         return id;
     }

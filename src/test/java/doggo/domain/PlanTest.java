@@ -61,6 +61,51 @@ class PlanTest {
     }
 
     @Test
+    void restore_fullState_preservesIdentityReviewAndTrimsDestination() {
+        UUID id = UUID.randomUUID();
+        LocalDate date = LocalDate.of(2027, 1, 5);
+        LocalTime time = LocalTime.of(9, 0);
+
+        Plan plan = Plan.restore(id, "  Mount Fuji  ", date, time, Optional.of(REVIEW));
+
+        assertAll(
+                () -> assertEquals(id, plan.id()),
+                () -> assertEquals("Mount Fuji", plan.destination()),
+                () -> assertEquals(date, plan.date()),
+                () -> assertEquals(time, plan.time()),
+                () -> assertEquals(Optional.of(REVIEW), plan.review()));
+    }
+
+    @Test
+    void restore_absentReview_preservesUnreviewedState() {
+        Plan plan = Plan.restore(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0), Optional.empty());
+
+        assertEquals(Optional.empty(), plan.review());
+    }
+
+    @Test
+    void restore_invalidOrNullState_throwsException() {
+        UUID id = UUID.randomUUID();
+        LocalDate date = LocalDate.of(2027, 1, 5);
+        LocalTime time = LocalTime.of(9, 0);
+
+        assertAll(
+                () -> assertThrows(NullPointerException.class,
+                        () -> Plan.restore(null, "Tokyo", date, time, Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Plan.restore(id, null, date, time, Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Plan.restore(id, "Tokyo", null, time, Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Plan.restore(id, "Tokyo", date, null, Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Plan.restore(id, "Tokyo", date, time, null)),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> Plan.restore(id, "  ", date, time, Optional.empty())));
+    }
+
+    @Test
     void review_defaultsToEmpty() {
         Plan plan = new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
                 LocalTime.of(9, 0));

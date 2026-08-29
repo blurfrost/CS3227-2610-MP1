@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -59,6 +61,87 @@ class TripTest {
     void createTrip_endBeforeStart_throwsException() {
         assertThrows(IllegalArgumentException.class, () -> new Trip(
                 UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 9), LocalDate.of(2027, 1, 1)));
+    }
+
+    @Test
+    void restore_fullState_preservesIdentityReviewAndPlansAndTrimsTitle() {
+        UUID tripId = UUID.randomUUID();
+        LocalDate startDate = LocalDate.of(2027, 1, 1);
+        LocalDate endDate = LocalDate.of(2027, 1, 9);
+        Plan plan = new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        Trip trip = Trip.restore(tripId, "  Japan  ", startDate, endDate, List.of(plan),
+                Optional.of(REVIEW));
+
+        assertAll(
+                () -> assertEquals(tripId, trip.id()),
+                () -> assertEquals("Japan", trip.title()),
+                () -> assertEquals(startDate, trip.startDate()),
+                () -> assertEquals(endDate, trip.endDate()),
+                () -> assertEquals(List.of(plan), trip.plans()),
+                () -> assertEquals(Optional.of(REVIEW), trip.review()));
+    }
+
+    @Test
+    void restore_absentReviewAndEmptyPlans_preservesEmptyState() {
+        Trip trip = Trip.restore(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9), List.of(), Optional.empty());
+
+        assertAll(
+                () -> assertEquals(List.of(), trip.plans()),
+                () -> assertEquals(Optional.empty(), trip.review()));
+    }
+
+    @Test
+    void restore_plans_areDefensivelyCopiedAndUnmodifiable() {
+        List<Plan> plans = new ArrayList<>();
+        Plan plan = new Plan(UUID.randomUUID(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        plans.add(plan);
+
+        Trip trip = Trip.restore(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9), plans, Optional.empty());
+        plans.clear();
+
+        assertEquals(List.of(plan), trip.plans());
+        assertThrows(UnsupportedOperationException.class, () -> trip.plans().add(plan));
+    }
+
+    @Test
+    void restore_invalidOrNullState_throwsException() {
+        UUID id = UUID.randomUUID();
+        LocalDate startDate = LocalDate.of(2027, 1, 1);
+        LocalDate endDate = LocalDate.of(2027, 1, 9);
+        Plan validPlan = new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        assertAll(
+                () -> assertThrows(NullPointerException.class,
+                        () -> Trip.restore(null, "Japan", startDate, endDate, List.of(),
+                                Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Trip.restore(id, null, startDate, endDate, List.of(), Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Trip.restore(id, "Japan", null, endDate, List.of(), Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Trip.restore(id, "Japan", startDate, null, List.of(), Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Trip.restore(id, "Japan", startDate, endDate, null, Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Trip.restore(id, "Japan", startDate, endDate,
+                                Arrays.asList((Plan) null), Optional.empty())),
+                () -> assertThrows(NullPointerException.class,
+                        () -> Trip.restore(id, "Japan", startDate, endDate, List.of(), null)),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> Trip.restore(id, "Japan", LocalDate.of(2027, 1, 9),
+                                startDate, List.of(), Optional.empty())),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> Trip.restore(id, "Japan", startDate, endDate,
+                                List.of(validPlan.withUpdatedDetails(validPlan.destination(),
+                                        LocalDate.of(2027, 1, 10), validPlan.time())), Optional.empty())),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> Trip.restore(id, "  ", startDate, endDate, List.of(), Optional.empty())));
     }
 
     @Test

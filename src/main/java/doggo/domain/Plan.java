@@ -36,6 +36,23 @@ public final class Plan {
         this.review = Objects.requireNonNull(review);
     }
 
+    /**
+     * Restores a Plan with its complete persisted state.
+     *
+     * @param id Plan identity.
+     * @param destination Plan destination.
+     * @param date Plan date.
+     * @param time Plan time.
+     * @param review Optional Plan review.
+     * @return Restored Plan.
+     * @throws NullPointerException If any argument is null.
+     * @throws IllegalArgumentException If the destination is blank.
+     */
+    public static Plan restore(UUID id, String destination, LocalDate date, LocalTime time,
+                               Optional<Review> review) {
+        return new Plan(id, destination, date, time, review);
+    }
+
     public UUID id() {
         return id;
     }
