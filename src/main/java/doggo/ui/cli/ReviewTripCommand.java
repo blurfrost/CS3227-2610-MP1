@@ -25,7 +25,7 @@ final class ReviewTripCommand implements Command {
                             context.session().displayedTripCount())));
         }
 
-        Optional<Trip> trip = findReviewableGalleryTrip(context, tripId.orElseThrow());
+        Optional<Trip> trip = findGalleryTrip(context, tripId.orElseThrow());
         if (trip.isEmpty()) {
             return galleryResult(context, context.formatter().error(
                     "The selected Trip is no longer available in Gallery."));
@@ -37,7 +37,7 @@ final class ReviewTripCommand implements Command {
             return new CommandResult("Bye!", true);
         }
 
-        Optional<Trip> refreshedTrip = findReviewableGalleryTrip(context, tripId.orElseThrow());
+        Optional<Trip> refreshedTrip = findGalleryTrip(context, tripId.orElseThrow());
         if (refreshedTrip.isEmpty()) {
             return galleryResult(context, context.formatter().error(
                     "The selected Trip is no longer available in Gallery."));
@@ -72,10 +72,9 @@ final class ReviewTripCommand implements Command {
      * @param tripId Retained Trip identity.
      * @return Matching past Trip, if one exists.
      */
-    private static Optional<Trip> findReviewableGalleryTrip(CliContext context, UUID tripId) {
+    private static Optional<Trip> findGalleryTrip(CliContext context, UUID tripId) {
         return context.service().getPastTrips().stream()
                 .filter(trip -> trip.id().equals(tripId))
-                .filter(context.service()::isTripReviewable)
                 .findFirst();
     }
 

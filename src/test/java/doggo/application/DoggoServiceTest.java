@@ -1,9 +1,7 @@
 package doggo.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -194,31 +192,6 @@ class DoggoServiceTest {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
 
         assertThrows(NullPointerException.class, () -> service.getTripStatus(null));
-    }
-
-    @Test
-    void isTripReviewable_onlyPastTripsAreEligible() {
-        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
-        Trip pastTrip = new Trip(UUID.randomUUID(), "Past", LocalDate.of(2027, 1, 1),
-                LocalDate.of(2027, 1, 4));
-        Trip currentTrip = new Trip(UUID.randomUUID(), "Current", LocalDate.of(2027, 1, 1),
-                LocalDate.of(2027, 1, 5));
-        Trip futureTrip = new Trip(UUID.randomUUID(), "Future", LocalDate.of(2027, 1, 6),
-                LocalDate.of(2027, 1, 9));
-
-        assertTrue(service.isTripReviewable(pastTrip));
-        assertFalse(service.isTripReviewable(currentTrip));
-        assertFalse(service.isTripReviewable(futureTrip));
-    }
-
-    @Test
-    void isPlanReviewable_beforeExactAndAfterScheduledTime() {
-        Plan plan = new Plan(UUID.randomUUID(), "Museum", LocalDate.of(2027, 1, 5),
-                LocalTime.of(9, 0));
-
-        assertFalse(serviceAt("2027-01-05T08:59:59Z").isPlanReviewable(plan));
-        assertTrue(serviceAt("2027-01-05T09:00:00Z").isPlanReviewable(plan));
-        assertTrue(serviceAt("2027-01-05T09:00:01Z").isPlanReviewable(plan));
     }
 
     @Test

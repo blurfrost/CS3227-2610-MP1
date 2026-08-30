@@ -2,7 +2,6 @@ package doggo.application;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
@@ -86,29 +85,6 @@ public final class DoggoService {
     public TripStatus getTripStatus(Trip trip) {
         Objects.requireNonNull(trip);
         return trip.statusOn(getCurrentDate());
-    }
-
-    /**
-     * Returns whether the specified Trip can receive a review.
-     *
-     * @param trip Trip to check.
-     * @return True if the Trip is past relative to the service Clock.
-     */
-    public boolean isTripReviewable(Trip trip) {
-        Objects.requireNonNull(trip);
-        return trip.statusOn(getCurrentDate()) == TripStatus.PAST;
-    }
-
-    /**
-     * Returns whether the specified Plan can receive a review.
-     *
-     * @param plan Plan to check.
-     * @return True if the Plan's scheduled date-time is not after the service Clock.
-     */
-    public boolean isPlanReviewable(Plan plan) {
-        Objects.requireNonNull(plan);
-        LocalDateTime scheduledDateTime = LocalDateTime.of(plan.date(), plan.time());
-        return !scheduledDateTime.isAfter(LocalDateTime.now(clock));
     }
 
     /**

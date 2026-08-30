@@ -60,7 +60,7 @@ class CliFormatterTest {
         assertTrue(output.contains("1. 09:00 - Tokyo (Trip: Japan)"));
         assertTrue(output.contains("Edit a Plan with \"edit NUMBER\"."));
         assertTrue(output.contains("Delete a Plan with \"delete NUMBER\"."));
-        assertTrue(output.contains("Review a completed Plan with \"review NUMBER\"."));
+        assertTrue(output.contains("Review a Plan with \"review NUMBER\"."));
     }
 
     @Test
@@ -102,7 +102,7 @@ class CliFormatterTest {
         assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
         assertTrue(output.contains("Type \"edit NUMBER\" to edit a Plan."));
         assertTrue(output.contains("Type \"delete NUMBER\" to delete a Plan."));
-        assertTrue(output.contains("Type \"review NUMBER\" to review a completed Plan."));
+        assertTrue(output.contains("Type \"review NUMBER\" to review a Plan."));
     }
 
     @Test

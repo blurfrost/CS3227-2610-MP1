@@ -24,8 +24,8 @@
   review.
 - `DoggoService` review mutations accept Trips and Plans regardless of their
   scheduled dates, and reviewed Trips or Plans may be edited without losing
-  their reviews. Temporary reviewability query methods remain until the CLI
-  eligibility checks are removed in a later iteration.
+  their reviews. Reviewability query APIs and CLI eligibility checks have been
+  removed.
 - Attaching photos to Plan reviews is a future extension.
 - `DeveloperGuide.md` is the canonical reference for requirements and domain rules.
 

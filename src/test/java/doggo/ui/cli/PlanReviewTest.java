@@ -73,23 +73,24 @@ class PlanReviewTest {
     }
 
     @Test
-    void reviewPlan_dashboardLaterTodayFailsBeforePrompt() {
+    void reviewPlan_dashboardLaterToday_acceptsReviewBeforeScheduledTime() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5), LocalTime.of(9, 0));
-        CliContext context = createContext(service, "5\nShould not be consumed\n");
+        CliContext context = createContext(service, "5\nPlanned activity.\n");
         context.session().enterDashboard();
         context.dashboardMenu();
 
         CommandResult result = new ReviewPlanCommand(1).execute(context);
 
-        assertTrue(result.message().contains("Plan can be reviewed only after its scheduled time."));
-        assertFalse(contextOutput(context).contains("Enter rating"));
+        assertTrue(result.message().contains("Review added."));
+        assertEquals(Optional.of(new Review(OptionalInt.of(5), Optional.of("Planned activity."))),
+                service.getTrip(trip.id()).orElseThrow().plans().get(0).review());
     }
 
     @Test
-    void reviewPlan_selectedTripViewsSupportReviewingCompletedPlans() {
+    void reviewPlan_selectedTripViewsSupportReviewingPlans() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip currentTrip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));

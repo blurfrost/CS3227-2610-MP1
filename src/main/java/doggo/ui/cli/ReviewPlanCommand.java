@@ -36,11 +36,6 @@ final class ReviewPlanCommand implements Command {
             return planResult(context, context.formatter().error(
                     "The selected Plan is no longer available."));
         }
-        if (!context.service().isPlanReviewable(plan.orElseThrow())) {
-            return planResult(context, context.formatter().error(
-                    "Plan can be reviewed only after its scheduled time."));
-        }
-
         ReviewInputHelper.Result input = ReviewInputHelper.prompt(context,
                 plan.orElseThrow().review());
         if (input.endOfInput()) {
@@ -56,11 +51,6 @@ final class ReviewPlanCommand implements Command {
             return planResult(context, context.formatter().error(
                     "The selected Plan is no longer available."));
         }
-        if (!context.service().isPlanReviewable(refreshedPlan.orElseThrow())) {
-            return planResult(context, context.formatter().error(
-                    "Plan can be reviewed only after its scheduled time."));
-        }
-
         Optional<Review> existingReview = refreshedPlan.orElseThrow().review();
         Optional<Review> submittedReview = input.review();
         if (existingReview.equals(submittedReview)) {

@@ -40,22 +40,23 @@ class ReviewPlanCommandTest {
     }
 
     @Test
-    void execute_planScheduledLater_rejectsReviewBeforePrompt() {
+    void execute_planScheduledLater_acceptsReviewBeforeScheduledTime() {
         DoggoService service = CommandTestHelper.service();
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         Plan plan = service.addPlan(trip.id(), "Tokyo", LocalDate.of(2027, 1, 5),
                 LocalTime.of(9, 0));
-        CliContext context = CommandTestHelper.context(service, "5\nShould not be used\n");
+        CliContext context = CommandTestHelper.context(service, "5\nPlanned activity.\n");
         context.session().enterDashboard();
         context.dashboardMenu();
 
         CommandResult result = new ReviewPlanCommand(1).execute(context);
 
-        assertTrue(result.message().contains("Plan can be reviewed only after its scheduled time."));
-        assertEquals(Optional.empty(), service.getTrip(trip.id()).orElseThrow().plans().stream()
-                .filter(candidate -> candidate.id().equals(plan.id()))
-                .findFirst().orElseThrow().review());
+        assertTrue(result.message().contains("Review added."));
+        assertEquals(Optional.of(new Review(OptionalInt.of(5), Optional.of("Planned activity."))),
+                service.getTrip(trip.id()).orElseThrow().plans().stream()
+                        .filter(candidate -> candidate.id().equals(plan.id()))
+                        .findFirst().orElseThrow().review());
         assertFalse(result.shouldExit());
     }
 }
