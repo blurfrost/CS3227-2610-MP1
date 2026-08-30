@@ -20,7 +20,7 @@ Use Java 25.0.3.fx-zulu for this project.
 
 ## JavaFX Version
 
-Use JavaFX 26.0.1. This is the latest JavaFX release currently documented and is compatible with Java 25; JavaFX 26 requires JDK 24 or later. See the [OpenJFX JavaFX 26 highlights](https://openjfx.io/highlights/26/).
+Use JavaFX 25.0.3 with Java 25. JavaFX 25 requires JDK 23 or later. See the [OpenJFX JavaFX 25 release notes](https://github.com/openjdk/jfx/blob/master/doc-files/release-notes-25.md).
 
 ## Post-Prompt Checklist
 

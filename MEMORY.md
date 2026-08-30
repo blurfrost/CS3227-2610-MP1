@@ -31,7 +31,7 @@
 ## Toolchain
 
 - Java: `25.0.3.fx-zulu`
-- JavaFX: `26.0.1`
+- JavaFX: `25.0.3`
 - IDE: Visual Studio Code
 
 ## Developer Context
@@ -58,4 +58,6 @@
 - JavaFX composition and shell classes live under `doggo.ui.javafx`; the FXML
   shell provides persistent navigation, a read-only Dashboard, and styled
   Organise and Gallery placeholders.
+- The JavaFX build packages `win`, `mac`, `mac-aarch64`, and `linux` native
+  classifiers in its cross-platform Shadow JAR.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.

@@ -174,8 +174,8 @@ Domain: Trip -> Plan
 - `./gradlew runCli` starts the CLI using `data/doggo.db`.
 - `./gradlew test` runs the JUnit suite.
 - `./gradlew shadowJar` creates the executable JAR in `build/libs`.
-- JavaFX `26.0.1` dependencies are included for the Windows, macOS, and Linux
-  classifiers.
+- JavaFX `25.0.3` dependencies are included for the Windows, Intel macOS,
+  Apple Silicon macOS, and Linux classifiers.
 - Java 25 native access is enabled for Gradle-launched tests and runs and is recorded in the
   executable JAR manifest for the SQLite JDBC driver.
 

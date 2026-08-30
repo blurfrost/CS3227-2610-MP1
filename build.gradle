@@ -16,21 +16,25 @@ java {
     }
 }
 dependencies {
-    String javaFxVersion = '26.0.1'
+    String javaFxVersion = '25.0.3'
 
     implementation 'org.xerial:sqlite-jdbc:3.53.4.0'
 
     implementation("org.openjfx:javafx-base:${javaFxVersion}:win")
     implementation("org.openjfx:javafx-base:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-base:${javaFxVersion}:mac-aarch64")
     implementation("org.openjfx:javafx-base:${javaFxVersion}:linux")
     implementation("org.openjfx:javafx-controls:${javaFxVersion}:win")
     implementation("org.openjfx:javafx-controls:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-controls:${javaFxVersion}:mac-aarch64")
     implementation("org.openjfx:javafx-controls:${javaFxVersion}:linux")
     implementation("org.openjfx:javafx-fxml:${javaFxVersion}:win")
     implementation("org.openjfx:javafx-fxml:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-fxml:${javaFxVersion}:mac-aarch64")
     implementation("org.openjfx:javafx-fxml:${javaFxVersion}:linux")
     implementation("org.openjfx:javafx-graphics:${javaFxVersion}:win")
     implementation("org.openjfx:javafx-graphics:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-graphics:${javaFxVersion}:mac-aarch64")
     implementation("org.openjfx:javafx-graphics:${javaFxVersion}:linux")
 
     testImplementation platform('org.junit:junit-bom:6.1.2')
@@ -40,7 +44,9 @@ dependencies {
 
 application {
     mainClass = 'doggo.ui.javafx.DoggoLauncher'
-    applicationDefaultJvmArgs = ['--enable-native-access=ALL-UNNAMED']
+    applicationDefaultJvmArgs = [
+        "--enable-native-access=javafx.graphics"
+    ] // add this to suppress warnings
 }
 
 tasks.register('runCli', JavaExec) {
