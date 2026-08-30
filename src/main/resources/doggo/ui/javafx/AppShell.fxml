@@ -21,6 +21,10 @@
                 <Label styleClass="brand-title" text="doggo" />
                 <Label styleClass="brand-subtitle" text="travel, thoughtfully planned" />
             </VBox>
+            <VBox spacing="8.0" styleClass="quick-actions">
+                <Button fx:id="newTripButton" maxWidth="Infinity" mnemonicParsing="false"
+                        onAction="#handleNewTrip" styleClass="primary-button" text="Create Trip" />
+            </VBox>
             <VBox spacing="8.0" styleClass="navigation">
                 <Label styleClass="navigation-label" text="EXPLORE" />
                 <Button fx:id="dashboardButton" maxWidth="Infinity" mnemonicParsing="false"

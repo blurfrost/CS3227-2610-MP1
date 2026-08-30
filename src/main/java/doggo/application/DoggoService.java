@@ -55,6 +55,15 @@ public final class DoggoService {
     }
 
     /**
+     * Returns the current date from the service Clock.
+     *
+     * @return Current local date.
+     */
+    public LocalDate getCurrentDate() {
+        return LocalDate.now(clock);
+    }
+
+    /**
      * Returns all Trips in deterministic start-date order.
      *
      * @return Sorted Trips.
@@ -76,7 +85,7 @@ public final class DoggoService {
      */
     public TripStatus getTripStatus(Trip trip) {
         Objects.requireNonNull(trip);
-        return trip.statusOn(LocalDate.now(clock));
+        return trip.statusOn(getCurrentDate());
     }
 
     /**
@@ -87,7 +96,7 @@ public final class DoggoService {
      */
     public boolean isTripReviewable(Trip trip) {
         Objects.requireNonNull(trip);
-        return trip.statusOn(LocalDate.now(clock)) == TripStatus.PAST;
+        return trip.statusOn(getCurrentDate()) == TripStatus.PAST;
     }
 
     /**
@@ -108,7 +117,7 @@ public final class DoggoService {
      * @return Dashboard entries in deterministic chronological order.
      */
     public List<DashboardEntry> getDashboardEntries() {
-        LocalDate currentDate = LocalDate.now(clock);
+        LocalDate currentDate = getCurrentDate();
         return tripRepository.findAll().stream()
                 .flatMap(trip -> trip.plans().stream()
                         .filter(plan -> plan.date().equals(currentDate))
@@ -123,7 +132,7 @@ public final class DoggoService {
      * @return Current and future Trips.
      */
     public List<Trip> getCurrentAndFutureTrips() {
-        LocalDate currentDate = LocalDate.now(clock);
+        LocalDate currentDate = getCurrentDate();
         return getTrips().stream()
                 .filter(trip -> trip.statusOn(currentDate) != TripStatus.PAST)
                 .toList();
@@ -135,7 +144,7 @@ public final class DoggoService {
      * @return Past Trips.
      */
     public List<Trip> getPastTrips() {
-        LocalDate currentDate = LocalDate.now(clock);
+        LocalDate currentDate = getCurrentDate();
         return getTrips().stream()
                 .filter(trip -> trip.statusOn(currentDate) == TripStatus.PAST)
                 .toList();

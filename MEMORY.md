@@ -63,6 +63,9 @@
   deferred.
 - The Gallery view displays past Trips in a selectable list with completed
   status, optional Trip reviews, and selected-Trip itinerary details.
+- Trip creation is available from the persistent sidebar through a modal form
+  with a title and inclusive start/end dates; current and future Trips return
+  to Organise, while past Trips route to Gallery.
 - The JavaFX build packages `win`, `mac`, `mac-aarch64`, and `linux` native
   classifiers in its cross-platform Shadow JAR.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.

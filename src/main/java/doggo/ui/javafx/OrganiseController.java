@@ -3,6 +3,7 @@ package doggo.ui.javafx;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import doggo.application.DoggoService;
 import doggo.application.RepositoryException;
@@ -104,13 +105,24 @@ public final class OrganiseController {
         planList.setCellFactory(list -> new PlanCell());
         tripList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousTrip, selectedTrip) -> showDetails(selectedTrip));
-        loadTrips();
+        refresh();
     }
 
     /**
-     * Loads and displays the current Organise snapshot.
+     * Refreshes the current Organise snapshot and preserves selection when possible.
      */
-    private void loadTrips() {
+    void refresh() {
+        Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
+        refreshAndSelect(selectedTrip == null ? null : selectedTrip.id());
+    }
+
+    /**
+     * Refreshes Organise and selects the Trip with the specified identity.
+     * If the identity is absent, the first current or future Trip is selected.
+     *
+     * @param selectedTripId Trip identity to select, or null to select the first Trip.
+     */
+    void refreshAndSelect(UUID selectedTripId) {
         try {
             List<Trip> trips = service.getCurrentAndFutureTrips();
             tripList.getItems().setAll(trips);
@@ -120,7 +132,7 @@ public final class OrganiseController {
             if (isEmpty) {
                 showDetails(null);
             } else {
-                tripList.getSelectionModel().selectFirst();
+                selectTrip(trips, selectedTripId);
             }
         } catch (RepositoryException exception) {
             tripList.getItems().clear();
@@ -130,6 +142,35 @@ public final class OrganiseController {
             showDetails(null);
             showLoadError();
         }
+    }
+
+    /**
+     * Selects the requested Trip or falls back to the first available Trip.
+     *
+     * @param trips Trips currently displayed by Organise.
+     * @param selectedTripId Trip identity to select, or null for the first Trip.
+     */
+    private void selectTrip(List<Trip> trips, UUID selectedTripId) {
+        int selectedIndex = selectedTripId == null
+                ? 0
+                : findTripIndex(trips, selectedTripId);
+        tripList.getSelectionModel().select(selectedIndex < 0 ? 0 : selectedIndex);
+    }
+
+    /**
+     * Finds the list index of a Trip identity.
+     *
+     * @param trips Trips to search.
+     * @param tripId Trip identity to find.
+     * @return Matching index, or -1 when absent.
+     */
+    private static int findTripIndex(List<Trip> trips, UUID tripId) {
+        for (int index = 0; index < trips.size(); index++) {
+            if (trips.get(index).id().equals(tripId)) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     /**

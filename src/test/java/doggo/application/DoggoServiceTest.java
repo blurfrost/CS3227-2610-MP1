@@ -61,6 +61,13 @@ class DoggoServiceTest {
     }
 
     @Test
+    void getCurrentDate_usesInjectedClock() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+
+        assertEquals(LocalDate.of(2027, 1, 5), service.getCurrentDate());
+    }
+
+    @Test
     void getTrip_existingAndMissingIds_returnsExpectedResults() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),

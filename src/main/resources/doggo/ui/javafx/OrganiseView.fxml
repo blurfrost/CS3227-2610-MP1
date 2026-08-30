@@ -20,9 +20,8 @@
             <Label styleClass="page-subtitle" text="Shape your upcoming journeys and itineraries."
                    wrapText="true" />
         </VBox>
-        <Button disable="true" mnemonicParsing="false" styleClass="primary-button" text="+  New trip" />
     </HBox>
-    <Label styleClass="prototype-hint" text="Trip and Plan actions will be available here next."
+    <Label styleClass="prototype-hint" text="Use Create Trip in the sidebar to start planning."
            wrapText="true" />
     <HBox spacing="18.0" VBox.vgrow="ALWAYS">
         <VBox minWidth="300.0" spacing="10.0" styleClass="dashboard-list-panel" HBox.hgrow="ALWAYS">

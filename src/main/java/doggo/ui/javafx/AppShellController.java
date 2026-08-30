@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Objects;
 
 import doggo.application.DoggoService;
+import doggo.domain.Trip;
+import doggo.domain.TripStatus;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -42,6 +44,12 @@ public final class AppShellController {
      */
     @FXML
     private Button galleryButton;
+
+    /**
+     * Sidebar button for creating a Trip.
+     */
+    @FXML
+    private Button newTripButton;
 
     /**
      * Dashboard page.
@@ -105,6 +113,7 @@ public final class AppShellController {
     @FXML
     private void handleOrganise() {
         showPage(organisePage, organiseButton);
+        organisePageController.refresh();
     }
 
     /**
@@ -114,6 +123,40 @@ public final class AppShellController {
     private void handleGallery() {
         showPage(galleryPage, galleryButton);
         galleryPageController.refresh();
+    }
+
+    /**
+     * Opens the modal form for creating a Trip from any application mode.
+     */
+    @FXML
+    private void handleNewTrip() {
+        TripCreationDialog dialog = new TripCreationDialog(service,
+                newTripButton.getScene().getWindow());
+        dialog.showAndWait().ifPresent(this::handleCreatedTrip);
+    }
+
+    /**
+     * Refreshes the appropriate view after a Trip is created.
+     *
+     * @param trip Created Trip.
+     */
+    private void handleCreatedTrip(Trip trip) {
+        if (service.getTripStatus(trip) == TripStatus.PAST) {
+            showGalleryForTrip(trip);
+            return;
+        }
+        showPage(organisePage, organiseButton);
+        organisePageController.refreshAndSelect(trip.id());
+    }
+
+    /**
+     * Shows Gallery after a newly created Trip is classified as past.
+     *
+     * @param trip Created past Trip.
+     */
+    private void showGalleryForTrip(Trip trip) {
+        showPage(galleryPage, galleryButton);
+        galleryPageController.refreshAndSelect(trip.id());
     }
 
     /**

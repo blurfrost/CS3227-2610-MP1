@@ -37,6 +37,10 @@
     -fx-letter-spacing: 1.2px;
 }
 
+.quick-actions {
+    -fx-padding: 8px 0 0 0;
+}
+
 .nav-button {
     -fx-background-color: transparent;
     -fx-background-radius: 9px;
@@ -137,6 +141,10 @@
 .primary-button {
     -fx-background-color: #d07855;
     -fx-text-fill: #fff9ef;
+}
+
+.sidebar .primary-button {
+    -fx-alignment: CENTER_LEFT;
 }
 
 .secondary-button {
@@ -322,4 +330,70 @@
 .review-body {
     -fx-text-fill: #26383b;
     -fx-font-size: 13px;
+}
+
+.dialog-pane {
+    -fx-background-color: #fffaf1;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #26383b;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: #fff9ef;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.dialog-pane .button {
+    -fx-background-radius: 9px;
+    -fx-border-radius: 9px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 9px 14px;
+}
+
+.dialog-pane .button:default {
+    -fx-background-color: #d07855;
+    -fx-text-fill: #fff9ef;
+}
+
+.dialog-pane .button:not(:default) {
+    -fx-background-color: #e7efe3;
+    -fx-border-color: #91aa8b;
+    -fx-text-fill: #26383b;
+}
+
+.trip-form {
+    -fx-background-color: #fffaf1;
+}
+
+.form-intro {
+    -fx-text-fill: #66736f;
+    -fx-font-size: 14px;
+}
+
+.form-label {
+    -fx-text-fill: #26383b;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.form-field {
+    -fx-background-color: #f7f2e8;
+    -fx-background-radius: 8px;
+    -fx-border-color: #d9cbb6;
+    -fx-border-radius: 8px;
+    -fx-font-size: 13px;
+    -fx-padding: 8px 10px;
+}
+
+.form-field:focused {
+    -fx-border-color: #d07855;
+}
+
+.form-error {
+    -fx-text-fill: #a4563e;
+    -fx-font-size: 12px;
 }

@@ -12,6 +12,7 @@ import doggo.storage.InMemoryTripRepository;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 
 import org.junit.jupiter.api.AfterAll;
@@ -54,6 +55,7 @@ class AppShellFxmlTest {
         assertInstanceOf(BorderPane.class, root);
         assertInstanceOf(AppShellController.class, loader.getController());
         assertFalse(root.getStylesheets().isEmpty());
+        assertInstanceOf(Button.class, loader.getNamespace().get("newTripButton"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/DashboardView.fxml"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/OrganiseView.fxml"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/GalleryView.fxml"));
