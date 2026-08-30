@@ -61,11 +61,37 @@ public final class TripCell extends ListCell<Trip> {
         titleLabel.setText(trip.title());
         datesLabel.setText(DATE_FORMATTER.format(trip.startDate()) + " – "
                 + DATE_FORMATTER.format(trip.endDate()));
-        statusLabel.setText(status == TripStatus.CURRENT ? "NOW" : "UPCOMING");
-        statusLabel.getStyleClass().removeAll("status-current", "status-future");
-        statusLabel.getStyleClass().add(status == TripStatus.CURRENT
-                ? "status-current"
-                : "status-future");
+        statusLabel.setText(formatStatus(status));
+        statusLabel.getStyleClass().removeAll("status-current", "status-future", "status-past");
+        statusLabel.getStyleClass().add(statusStyleClass(status));
         setGraphic(card);
+    }
+
+    /**
+     * Formats a Trip status for the card badge.
+     *
+     * @param status Trip status to format.
+     * @return Badge text.
+     */
+    private static String formatStatus(TripStatus status) {
+        return switch (status) {
+        case CURRENT -> "NOW";
+        case FUTURE -> "UPCOMING";
+        case PAST -> "COMPLETED";
+        };
+    }
+
+    /**
+     * Returns the style class matching a Trip status.
+     *
+     * @param status Trip status to style.
+     * @return Status style class.
+     */
+    private static String statusStyleClass(TripStatus status) {
+        return switch (status) {
+        case CURRENT -> "status-current";
+        case FUTURE -> "status-future";
+        case PAST -> "status-past";
+        };
     }
 }

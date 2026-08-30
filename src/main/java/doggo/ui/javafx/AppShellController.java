@@ -62,6 +62,18 @@ public final class AppShellController {
     private VBox galleryPage;
 
     /**
+     * Organise controller included in the shell.
+     */
+    @FXML
+    private OrganiseController organisePageController;
+
+    /**
+     * Gallery controller included in the shell.
+     */
+    @FXML
+    private GalleryController galleryPageController;
+
+    /**
      * Creates a shell controller backed by the specified application service.
      *
      * @param service Application service shared by the JavaFX views.
@@ -96,11 +108,12 @@ public final class AppShellController {
     }
 
     /**
-     * Shows the Gallery placeholder when its navigation button is selected.
+     * Shows the Gallery page and refreshes its data when selected.
      */
     @FXML
     private void handleGallery() {
         showPage(galleryPage, galleryButton);
+        galleryPageController.refresh();
     }
 
     /**

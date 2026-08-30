@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox maxWidth="920.0" spacing="10.0" styleClass="page"
+      xmlns="http://javafx.com/javafx/25.0.3"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="doggo.ui.javafx.GalleryController">
+    <Label styleClass="eyebrow" text="LOOK BACK" />
+    <Label styleClass="page-title" text="Gallery" />
+    <Label styleClass="page-subtitle" text="Revisit the places and moments behind each trip."
+           wrapText="true" />
+    <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+        <VBox minWidth="300.0" spacing="10.0" styleClass="dashboard-list-panel" HBox.hgrow="ALWAYS">
+            <Label styleClass="panel-title" text="Past trips" />
+            <Label styleClass="panel-subtitle" text="Select a trip to revisit its itinerary and review."
+                   wrapText="true" />
+            <ListView fx:id="tripList" styleClass="trip-list" VBox.vgrow="ALWAYS" />
+            <Label fx:id="emptyState" managed="false" styleClass="empty-state"
+                   text="No completed trips yet" visible="false" wrapText="true" />
+        </VBox>
+        <VBox minWidth="320.0" spacing="12.0" styleClass="detail-panel" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <Label styleClass="panel-title" text="Trip details" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label fx:id="statusLabel" managed="false" styleClass="status-badge"
+                       text="COMPLETED" visible="false" />
+            </HBox>
+            <Separator />
+            <Label fx:id="detailEmptyState" styleClass="empty-state"
+                   text="Select a completed trip to inspect its details." wrapText="true" />
+            <VBox fx:id="detailContent" managed="false" spacing="12.0" visible="false"
+                  VBox.vgrow="ALWAYS">
+                <Label fx:id="detailTitleLabel" styleClass="detail-destination" text="Trip title"
+                       wrapText="true" />
+                <Label fx:id="detailDatesLabel" styleClass="detail-schedule" text="Trip dates"
+                       wrapText="true" />
+                <Label fx:id="detailSummaryLabel" styleClass="panel-subtitle" text="Trip summary"
+                       wrapText="true" />
+                <VBox spacing="5.0" styleClass="review-card">
+                    <Label styleClass="review-heading" text="Trip review" />
+                    <Label fx:id="detailReviewLabel" styleClass="review-body"
+                           text="No review recorded yet." wrapText="true" />
+                </VBox>
+                <Label styleClass="panel-title" text="Itinerary" />
+                <ListView fx:id="planList" styleClass="organise-plan-list" VBox.vgrow="ALWAYS" />
+                <Label fx:id="planEmptyState" managed="false" styleClass="empty-state"
+                       text="No plans were recorded for this trip." visible="false" wrapText="true" />
+            </VBox>
+        </VBox>
+    </HBox>
+</VBox>

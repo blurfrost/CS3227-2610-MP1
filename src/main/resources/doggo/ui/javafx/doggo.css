@@ -290,6 +290,11 @@
     -fx-text-fill: #a4563e;
 }
 
+.status-past {
+    -fx-background-color: #dce4e0;
+    -fx-text-fill: #526b62;
+}
+
 .plan-date {
     -fx-text-fill: #66736f;
     -fx-font-size: 12px;

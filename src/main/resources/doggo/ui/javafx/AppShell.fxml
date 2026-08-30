@@ -38,19 +38,7 @@
         <StackPane styleClass="content-area">
             <fx:include fx:id="dashboardPage" source="DashboardView.fxml" />
             <fx:include fx:id="organisePage" source="OrganiseView.fxml" />
-            <VBox fx:id="galleryPage" managed="false" maxWidth="920.0" spacing="10.0"
-                  styleClass="page" visible="false">
-                <Label styleClass="eyebrow" text="LOOK BACK" />
-                <Label styleClass="page-title" text="Gallery" />
-                <Label styleClass="page-subtitle" text="Revisit the places and moments behind each trip."
-                       wrapText="true" />
-                <VBox spacing="10.0" styleClass="placeholder-card">
-                    <Label styleClass="placeholder-title" text="Gallery is coming next" />
-                    <Label styleClass="placeholder-body"
-                          text="Past Trips, ratings, and reviews will be shown here."
-                          wrapText="true" />
-                </VBox>
-            </VBox>
+            <fx:include fx:id="galleryPage" source="GalleryView.fxml" />
         </StackPane>
     </center>
 </BorderPane>
