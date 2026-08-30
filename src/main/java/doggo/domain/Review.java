@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 /**
- * Represents an immutable review for a completed Trip or Plan.
+ * Represents an immutable review for a Trip or Plan.
  *
  * @param rating Optional whole-number rating from 1 to 5.
  * @param text Optional written review text.

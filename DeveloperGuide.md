@@ -13,7 +13,7 @@ persistence logic; the CLI remains available through `./gradlew runCli`.
 - **Trip:** An overall journey, such as a trip to Japan. A Trip contains zero or more Plans.
 - **Plan:** One scheduled itinerary item belonging to a Trip, such as visiting a restaurant or landmark.
 - **Review:** An immutable value with an optional whole-number rating from 1 to 5
-  and optional written text associated with a completed Trip or Plan; at least
+  and optional written text associated with a Trip or Plan; at least
   one field must be present.
 - **TripStatus:** A value derived from a Trip's inclusive start and end dates: future, current, or past.
 - **Dashboard:** Displays a flat chronological list of Plans scheduled for the current day, with each Plan's owning Trip title.
@@ -34,7 +34,7 @@ persistence logic; the CLI remains available through `./gradlew runCli`.
 8. As a user, I can select a Trip and view its Plans in chronological order so that I can understand its itinerary.
 9. As a daily user, I can view all Plans scheduled for today in chronological order with their owning Trip titles so that I can follow my daily itinerary.
 10. As a user, I can view Trips grouped as future, current, or past so that I can find the relevant journey quickly.
-11. As a frequent user, I can give a completed Trip or Plan an optional whole-number rating from 1 to 5 and optional written review text so that I can record my experience.
+11. As a frequent user, I can give a Trip or Plan an optional whole-number rating from 1 to 5 and optional written review text so that I can record notes about it.
 12. As a frequent user, I can edit or remove a review so that my recorded experience remains accurate.
 13. As a returning user, I can find my Trips, Plans, and reviews after restarting doggo so that my travel data is retained.
 
@@ -75,14 +75,13 @@ persistence logic; the CLI remains available through `./gradlew runCli`.
     single-day Trip on the current date.
 - Gallery includes every past Trip. Reviews are optional and are displayed only when present.
 - A Review may contain a whole-number rating from 1 to 5 and may contain written text, but at least one field must be present. Review text is trimmed and blank text is treated as absent.
-- Trip reviews are available after the Trip's end date has passed according to
-  the service Clock. Plan reviews are available at or after the Plan's
-  scheduled local date and time.
+- Reviews may be added, updated, or removed regardless of a Trip's or Plan's
+  scheduled dates.
 - Repeating `review NUMBER` edits an existing review. During an edit, blank
   input preserves the existing field and an exact `-` clears it. Clearing both
   fields removes the review. On a new review, blank fields are absent.
-- A reviewed Trip must remain past when its dates are edited. A reviewed Plan
-  may have its destination, date, and time edited without removing its review.
+- A reviewed Trip or Plan may have its details edited without removing its
+  review.
 - Deleting a Trip requires explicit confirmation and removes its Plans and associated reviews.
 - Deleting a Plan requires explicit confirmation and removes its associated review.
 - Dashboard includes Plans whose scheduled local date is the current date.
@@ -144,7 +143,7 @@ Domain: Trip -> Plan
 ### Application and Persistence
 
 - `DoggoService` provides presentation-independent Trip and Plan CRUD, Dashboard
-  and Gallery queries, Clock-backed completion checks, and review operations for
+  and Gallery queries, Clock-backed status checks, and review operations for
   setting, replacing, and removing Trip and Plan reviews.
 - `TripRepository` defines `findAll`, `findById`, `save`, and `delete` operations for Trip aggregates.
 - `InMemoryTripRepository` supports early development and isolated application tests.
@@ -203,7 +202,7 @@ Use separate command classes for navigation and user actions:
 - Navigation and global commands open Dashboard, Organise, or Gallery, return
   to the previous menu, display help, or exit the application.
 - Dashboard commands list today's Plans, create a Trip, edit or delete a Plan by
-  number, and review a completed Plan by number. Dashboard Plan creation and
+  number, and review a Plan by number. Dashboard Plan creation and
   detailed Plan viewing remain deferred.
 - Organise commands support creating a Trip, viewing a Trip and its Plans, editing or deleting a Trip by index, and managing Plans within a viewed Trip.
 - Gallery lists past Trips and supports Trip `new`, `edit`, `delete`, and
@@ -255,8 +254,8 @@ Use separate command classes for navigation and user actions:
 - Gallery lists every past Trip and provides retained UUID-targeted Trip and
   Plan maintenance. Trip mutations route by resulting status and Plan
   mutations stay in the selected Trip view.
-- Reviews support immutable rating/text values, Clock-backed eligibility,
-  contextual Trip and Plan commands, replacement and removal, retained target
+- Reviews support immutable rating/text values, contextual Trip and Plan
+  commands, replacement and removal, retained target
   validation, and rendering in every relevant Trip or Plan view. Review input
   preserves fields on blank input and clears fields on exact `-` input.
 - Feature Sets 1–3, Dashboard, and Gallery maintenance use the SQLite repository in production;
@@ -271,9 +270,9 @@ Use separate command classes for navigation and user actions:
 - Verify Dashboard includes only today's Plans and orders them deterministically.
 - Verify Gallery excludes current and future Trips, includes past Trips without
   reviews, and supports safe Trip and Plan maintenance.
-- Verify Trip and Plan review eligibility, rating/text validation, contextual
-  CLI review flows, replacement/removal semantics, rendering, and reviewed-Plan
-  editing.
+- Verify Trip and Plan review validation, including current and future records,
+  contextual CLI review flows, replacement/removal semantics, rendering, and
+  reviewed-record editing.
 - Verify failed writes do not damage previously persisted data.
 - Verify domain and application tests run without JavaFX or the production database.
 - Verify the JavaFX shell and Dashboard FXML resources load with an isolated
