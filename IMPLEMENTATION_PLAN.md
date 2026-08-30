@@ -47,13 +47,13 @@ future work.
 
 ### 12.1 Configure the cross-platform JavaFX build — Complete
 
-- Set a shared JavaFX version of `26.0.1` in `build.gradle`.
+- Set a shared JavaFX version of `25.0.3` in `build.gradle`.
 - Add `javafx-base`, `javafx-controls`, `javafx-fxml`, and `javafx-graphics`
-  dependencies for each `win`, `mac`, and `linux` classifier, following the
+  dependencies for each `win`, `mac`, `mac-aarch64`, and `linux` classifier,
+  following the
   [SE-EDU JavaFX setup guide](https://se-education.org/guides/tutorials/javaFxPart1.html).
 - Include all classifiers in the existing Shadow JAR so one executable JAR
-  supports Windows, macOS, and Linux, including the tested Apple Silicon
-  setup.
+  supports Windows, Intel and Apple Silicon macOS, and Linux.
 - Keep SQLite native-access JVM and manifest configuration intact.
 
 ### 12.2 Add the JavaFX composition root — Complete
