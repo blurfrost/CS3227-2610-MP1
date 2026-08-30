@@ -117,6 +117,40 @@
     -fx-font-size: 14px;
 }
 
+.prototype-hint {
+    -fx-text-fill: #b46549;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+    -fx-padding: 0 0 12px 0;
+}
+
+.primary-button,
+.secondary-button {
+    -fx-background-radius: 9px;
+    -fx-border-radius: 9px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 14px;
+}
+
+.primary-button {
+    -fx-background-color: #d07855;
+    -fx-text-fill: #fff9ef;
+}
+
+.secondary-button {
+    -fx-background-color: #e7efe3;
+    -fx-border-color: #91aa8b;
+    -fx-text-fill: #26383b;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+    -fx-cursor: default;
+    -fx-opacity: 0.65;
+}
+
 .dashboard-list-panel,
 .detail-panel {
     -fx-background-color: #fffaf1;
@@ -189,6 +223,77 @@
 .detail-schedule {
     -fx-text-fill: #66736f;
     -fx-font-size: 13px;
+}
+
+.trip-list,
+.organise-plan-list {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 4px 0 0 0;
+}
+
+.trip-list .list-cell,
+.organise-plan-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 4px 0;
+}
+
+.trip-list .list-cell:filled:selected,
+.organise-plan-list .list-cell:filled:selected {
+    -fx-background-color: transparent;
+}
+
+.trip-card {
+    -fx-background-color: #f7f2e8;
+    -fx-background-radius: 10px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 10px;
+    -fx-max-width: infinity;
+    -fx-padding: 12px 14px;
+}
+
+.list-cell:filled:selected .trip-card {
+    -fx-background-color: #e7efe3;
+    -fx-border-color: #91aa8b;
+}
+
+.list-cell:filled:hover .trip-card {
+    -fx-background-color: #f0e8da;
+}
+
+.trip-title {
+    -fx-text-fill: #26383b;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.trip-dates {
+    -fx-text-fill: #66736f;
+    -fx-font-size: 12px;
+}
+
+.trip-status,
+.status-badge {
+    -fx-background-radius: 7px;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 7px;
+}
+
+.status-current {
+    -fx-background-color: #dce9d6;
+    -fx-text-fill: #4f704b;
+}
+
+.status-future {
+    -fx-background-color: #f4dfd3;
+    -fx-text-fill: #a4563e;
+}
+
+.plan-date {
+    -fx-text-fill: #66736f;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
 }
 
 .detail-destination {

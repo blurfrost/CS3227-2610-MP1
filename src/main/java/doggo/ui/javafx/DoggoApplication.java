@@ -82,6 +82,9 @@ public final class DoggoApplication extends Application {
             if (type == DashboardController.class) {
                 return new DashboardController(service);
             }
+            if (type == OrganiseController.class) {
+                return new OrganiseController(service);
+            }
             throw new IllegalArgumentException("Unsupported FXML controller: " + type.getName());
         });
         Parent root = loader.load();

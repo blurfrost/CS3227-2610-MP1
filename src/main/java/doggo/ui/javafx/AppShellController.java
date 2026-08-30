@@ -44,19 +44,19 @@ public final class AppShellController {
     private Button galleryButton;
 
     /**
-     * Dashboard placeholder page.
+     * Dashboard page.
      */
     @FXML
     private VBox dashboardPage;
 
     /**
-     * Organise placeholder page.
+     * Organise page.
      */
     @FXML
     private VBox organisePage;
 
     /**
-     * Gallery placeholder page.
+     * Gallery page.
      */
     @FXML
     private VBox galleryPage;
@@ -88,7 +88,7 @@ public final class AppShellController {
     }
 
     /**
-     * Shows the Organise placeholder when its navigation button is selected.
+     * Shows the Organise page when its navigation button is selected.
      */
     @FXML
     private void handleOrganise() {

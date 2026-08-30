@@ -56,8 +56,11 @@
   selected context, while retained UUID/composite targets protect stale or
   reclassified records.
 - JavaFX composition and shell classes live under `doggo.ui.javafx`; the FXML
-  shell provides persistent navigation, a read-only Dashboard, and styled
-  Organise and Gallery placeholders.
+  shell provides persistent navigation, read-only Dashboard and Organise
+  views, and a styled Gallery placeholder.
+- The Organise view displays current and future Trips in a selectable list with
+  selected-Trip itinerary details; Trip and Plan mutation controls remain
+  deferred.
 - The JavaFX build packages `win`, `mac`, `mac-aarch64`, and `linux` native
   classifiers in its cross-platform Shadow JAR.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.

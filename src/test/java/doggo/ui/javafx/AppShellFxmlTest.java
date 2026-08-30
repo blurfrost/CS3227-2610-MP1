@@ -40,6 +40,9 @@ class AppShellFxmlTest {
             if (type == DashboardController.class) {
                 return new DashboardController(service);
             }
+            if (type == OrganiseController.class) {
+                return new OrganiseController(service);
+            }
             throw new IllegalArgumentException("Unsupported FXML controller: " + type.getName());
         });
 
@@ -49,5 +52,6 @@ class AppShellFxmlTest {
         assertInstanceOf(AppShellController.class, loader.getController());
         assertFalse(root.getStylesheets().isEmpty());
         assertNotNull(getClass().getResource("/doggo/ui/javafx/DashboardView.fxml"));
+        assertNotNull(getClass().getResource("/doggo/ui/javafx/OrganiseView.fxml"));
     }
 }

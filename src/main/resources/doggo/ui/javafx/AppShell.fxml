@@ -37,19 +37,7 @@
     <center>
         <StackPane styleClass="content-area">
             <fx:include fx:id="dashboardPage" source="DashboardView.fxml" />
-            <VBox fx:id="organisePage" managed="false" maxWidth="920.0" spacing="10.0"
-                  styleClass="page" visible="false">
-                <Label styleClass="eyebrow" text="PLAN AHEAD" />
-                <Label styleClass="page-title" text="Organise" />
-                <Label styleClass="page-subtitle" text="Shape your upcoming journeys and itineraries."
-                       wrapText="true" />
-                <VBox spacing="10.0" styleClass="placeholder-card">
-                    <Label styleClass="placeholder-title" text="Organise is coming next" />
-                    <Label styleClass="placeholder-body"
-                          text="Trip and Plan management will live in this workspace."
-                          wrapText="true" />
-                </VBox>
-            </VBox>
+            <fx:include fx:id="organisePage" source="OrganiseView.fxml" />
             <VBox fx:id="galleryPage" managed="false" maxWidth="920.0" spacing="10.0"
                   styleClass="page" visible="false">
                 <Label styleClass="eyebrow" text="LOOK BACK" />
