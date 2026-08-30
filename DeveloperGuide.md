@@ -163,6 +163,8 @@ Domain: Trip -> Plan
   `DoggoService`, then loads the FXML shell.
 - `AppShellController` owns persistent Dashboard, Organise, and Gallery
   navigation; the latter two currently display styled placeholders.
+- `DashboardController` queries today's `DashboardEntry` values through
+  `DoggoService`, renders Plan cards, and displays the selected Plan's details.
 - `AppShell.fxml` and `doggo.css` define the warm travel-journal shell while
   keeping views independent from CLI commands.
 
@@ -259,7 +261,8 @@ Use separate command classes for navigation and user actions:
   preserves fields on blank input and clears fields on exact `-` input.
 - Feature Sets 1–3, Dashboard, and Gallery maintenance use the SQLite repository in production;
   the in-memory repository remains available for isolated tests. The JavaFX
-  shell foundation is implemented; functional GUI views remain in progress.
+  shell and read-only Dashboard foundation are implemented; functional CRUD
+  GUI views remain in progress.
 
 ## Acceptance and Test Coverage
 
@@ -273,6 +276,8 @@ Use separate command classes for navigation and user actions:
   edit restrictions.
 - Verify failed writes do not damage previously persisted data.
 - Verify domain and application tests run without JavaFX or the production database.
+- Verify the JavaFX shell and Dashboard FXML resources load with an isolated
+  in-memory service through the `AppShellFxmlTest` smoke test.
 - Verify the CLI exposes help for all supported commands and handles invalid input without crashing.
 - Verify mode-specific parsing, navigation, and list-number-to-UUID mappings.
 - Verify date-sensitive behaviour with an injected fixed Clock.

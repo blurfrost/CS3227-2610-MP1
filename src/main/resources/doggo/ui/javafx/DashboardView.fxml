@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox maxWidth="920.0" spacing="10.0" styleClass="page"
+      xmlns="http://javafx.com/javafx/26.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="doggo.ui.javafx.DashboardController">
+    <Label styleClass="eyebrow" text="YOUR DAY" />
+    <Label styleClass="page-title" text="Dashboard" />
+    <Label fx:id="dateLabel" styleClass="page-subtitle" text="Today's itinerary" wrapText="true" />
+    <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+        <VBox minWidth="300.0" spacing="10.0" styleClass="dashboard-list-panel" HBox.hgrow="ALWAYS">
+            <Label styleClass="panel-title" text="Today's plans" />
+            <Label styleClass="panel-subtitle" text="Select a plan to see the details." wrapText="true" />
+            <ListView fx:id="planList" styleClass="plan-list" VBox.vgrow="ALWAYS" />
+            <Label fx:id="emptyState" managed="false" styleClass="empty-state"
+                   text="No plans scheduled for today" visible="false" wrapText="true" />
+        </VBox>
+        <VBox minWidth="260.0" spacing="12.0" styleClass="detail-panel" HBox.hgrow="ALWAYS">
+            <Label styleClass="panel-title" text="Plan details" />
+            <Separator />
+            <Label fx:id="detailEmptyState" styleClass="empty-state"
+                   text="Select a plan to inspect its details." wrapText="true" />
+            <VBox fx:id="detailContent" managed="false" spacing="12.0" visible="false">
+                <Label fx:id="detailDestinationLabel" styleClass="detail-destination" text="Destination" wrapText="true" />
+                <Label fx:id="detailTripLabel" styleClass="detail-trip" text="Trip" wrapText="true" />
+                <Label fx:id="detailScheduleLabel" styleClass="detail-schedule" text="Date and time" wrapText="true" />
+                <VBox spacing="5.0" styleClass="review-card">
+                    <Label styleClass="review-heading" text="Review" />
+                    <Label fx:id="detailReviewLabel" styleClass="review-body" text="No review recorded yet."
+                           wrapText="true" />
+                </VBox>
+            </VBox>
+        </VBox>
+    </HBox>
+</VBox>
