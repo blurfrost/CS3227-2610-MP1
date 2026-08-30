@@ -205,6 +205,10 @@
     -fx-max-width: infinity;
 }
 
+.plan-edit-button {
+    -fx-padding: 7px 11px;
+}
+
 .list-cell:filled:selected .plan-card {
     -fx-background-color: #e7efe3;
     -fx-border-color: #91aa8b;
@@ -391,6 +395,37 @@
 
 .form-field:focused {
     -fx-border-color: #d07855;
+}
+
+.date-picker.form-field {
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+    -fx-padding: 0;
+}
+
+.date-picker.form-field > .text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px 0 0 8px;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 8px 10px;
+}
+
+.date-picker.form-field > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0 8px 8px 0;
+    -fx-border-color: transparent;
+    -fx-padding: 0 10px;
+}
+
+.date-picker.form-field > .arrow-button:hover {
+    -fx-background-color: #e7efe3;
+}
+
+.date-picker.form-field > .arrow-button > .arrow {
+    -fx-background-color: #66736f;
 }
 
 .form-error {

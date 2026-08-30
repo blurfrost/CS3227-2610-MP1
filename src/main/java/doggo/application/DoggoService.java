@@ -233,9 +233,6 @@ public final class DoggoService {
         Trip trip = getTrip(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
         Trip updatedTrip = trip.withUpdatedDetails(title, startDate, endDate);
-        if (trip.review().isPresent() && !isTripReviewable(updatedTrip)) {
-            throw new IllegalArgumentException("A reviewed Trip must remain past after editing.");
-        }
         tripRepository.save(updatedTrip);
         return updatedTrip;
     }
@@ -255,9 +252,6 @@ public final class DoggoService {
         Trip trip = requireTrip(tripId);
         Plan existingPlan = requirePlan(trip, planId);
         Plan updatedPlan = existingPlan.withUpdatedDetails(destination, date, time);
-        if (existingPlan.review().isPresent() && !isPlanReviewable(updatedPlan)) {
-            throw new IllegalArgumentException("A reviewed Plan cannot be moved after its completion time.");
-        }
         Trip updatedTrip = trip.withReplacedPlan(updatedPlan);
         tripRepository.save(updatedTrip);
         return updatedPlan;
@@ -269,12 +263,11 @@ public final class DoggoService {
      * @param tripId Trip identity.
      * @param review Review to attach.
      * @return Updated Trip.
-     * @throws IllegalArgumentException If the Trip does not exist or is not past.
+     * @throws IllegalArgumentException If the Trip does not exist.
      */
     public Trip setTripReview(UUID tripId, Review review) {
         Objects.requireNonNull(review, "Review cannot be null.");
         Trip trip = requireTrip(tripId);
-        requireTripReviewable(trip);
         Trip updatedTrip = trip.withReview(review);
         tripRepository.save(updatedTrip);
         return updatedTrip;
@@ -304,13 +297,12 @@ public final class DoggoService {
      * @param planId Plan identity.
      * @param review Review to attach.
      * @return Updated Plan.
-     * @throws IllegalArgumentException If the Trip or Plan does not exist, or the Plan is not complete.
+     * @throws IllegalArgumentException If the Trip or Plan does not exist.
      */
     public Plan setPlanReview(UUID tripId, UUID planId, Review review) {
         Objects.requireNonNull(review, "Review cannot be null.");
         Trip trip = requireTrip(tripId);
         Plan plan = requirePlan(trip, planId);
-        requirePlanReviewable(plan);
         Plan updatedPlan = plan.withReview(review);
         tripRepository.save(trip.withReplacedPlan(updatedPlan));
         return updatedPlan;
@@ -362,27 +354,4 @@ public final class DoggoService {
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found."));
     }
 
-    /**
-     * Rejects review operations for a Trip that has not ended.
-     *
-     * @param trip Trip to validate.
-     * @throws IllegalArgumentException If the Trip is not past.
-     */
-    private void requireTripReviewable(Trip trip) {
-        if (!isTripReviewable(trip)) {
-            throw new IllegalArgumentException("Trip can be reviewed only after its end date.");
-        }
-    }
-
-    /**
-     * Rejects review operations for a Plan that has not reached its scheduled time.
-     *
-     * @param plan Plan to validate.
-     * @throws IllegalArgumentException If the Plan is not complete.
-     */
-    private void requirePlanReviewable(Plan plan) {
-        if (!isPlanReviewable(plan)) {
-            throw new IllegalArgumentException("Plan can be reviewed only after its scheduled time.");
-        }
-    }
 }

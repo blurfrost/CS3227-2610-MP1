@@ -17,15 +17,15 @@
   whenever the mode is selected.
 - Organise allows users to select Trips and manage their itineraries.
 - Gallery contains every Trip whose end date has passed, whether or not it has reviews.
-- Completed Trips and Plans can have an optional whole-number rating from 1 to 5 and optional written review text; each Review must contain at least one field.
+- Trips and Plans can have an optional whole-number rating from 1 to 5 and optional written review text; each Review must contain at least one field.
 - Reviews are implemented as immutable values. `review NUMBER` targets Trips
   from Gallery and Plans from Dashboard or selected Trip views; blank fields
   preserve existing values, `-` clears a field, and clearing both removes the
   review.
-- `DoggoService` uses its injected Clock for review eligibility: Trips after
-  their end date and Plans at or after their scheduled local date-time. A
-  reviewed Trip must remain past and a reviewed Plan cannot be moved later than
-  the Clock-derived current date-time, back to an incomplete state.
+- `DoggoService` review mutations accept Trips and Plans regardless of their
+  scheduled dates, and reviewed Trips or Plans may be edited without losing
+  their reviews. Temporary reviewability query methods remain until the CLI
+  eligibility checks are removed in a later iteration.
 - Attaching photos to Plan reviews is a future extension.
 - `DeveloperGuide.md` is the canonical reference for requirements and domain rules.
 
@@ -57,14 +57,16 @@
   selected context, while retained UUID/composite targets protect stale or
   reclassified records.
 - JavaFX composition and shell classes live under `doggo.ui.javafx`; the FXML
-  shell provides persistent navigation and read-only Dashboard, Organise, and
-  Gallery views.
+  shell provides persistent navigation and Dashboard, Organise, and Gallery
+  views.
 - The Organise view displays current and future Trips in a selectable list with
-  selected-Trip itinerary details and supports adding Plans to the selected
-  Trip; other Trip and Plan mutations remain deferred.
+  selected-Trip itinerary details and supports adding and editing Plans in the
+  selected Trip; other Trip and Plan mutations remain deferred.
 - The Gallery view displays past Trips in a selectable list with completed
   status, optional Trip reviews, selected-Trip itinerary details, and adding
-  Plans to the selected Trip.
+  or editing Plans in the selected Trip.
+- Dashboard supports editing the selected current-day Plan from its detail
+  pane and refreshes its list when the edited Plan leaves today's itinerary.
 - Trip creation is available from the persistent sidebar through a modal form
   with a title and inclusive start/end dates; current and future Trips return
   to Organise, while past Trips route to Gallery.

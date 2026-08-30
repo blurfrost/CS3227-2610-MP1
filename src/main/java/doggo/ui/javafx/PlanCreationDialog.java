@@ -2,7 +2,9 @@ package doggo.ui.javafx;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.Optional;
 
 import doggo.application.DoggoService;
 import doggo.application.RepositoryException;
@@ -27,19 +29,20 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 
 /**
- * Displays a modal form for creating a Plan in a selected Trip.
+ * Displays a modal form for creating or editing a Plan in a selected Trip.
  */
 final class PlanCreationDialog extends Dialog<Plan> {
-    private static final ButtonType ADD_BUTTON_TYPE = new ButtonType(
-            "Add plan", ButtonBar.ButtonData.OK_DONE);
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     private final DoggoService service;
     private final Trip trip;
+    private final Optional<Plan> planBeingEdited;
+    private final ButtonType submitButtonType;
     private final TextField destinationField = new TextField();
     private final DatePicker datePicker = new DatePicker();
     private final TextField timeField = new TextField();
     private final Label validationLabel = new Label();
-    private Plan createdPlan;
+    private Plan submittedPlan;
 
     /**
      * Creates a modal Plan form owned by the specified window.
@@ -49,24 +52,51 @@ final class PlanCreationDialog extends Dialog<Plan> {
      * @param owner Window that owns this dialog.
      */
     PlanCreationDialog(DoggoService service, Trip trip, Window owner) {
+        this(service, trip, Optional.empty(), owner);
+    }
+
+    /**
+     * Creates a modal Plan form for editing the specified Plan.
+     *
+     * @param service Application service used to update the Plan.
+     * @param trip Trip containing the Plan.
+     * @param plan Plan being edited.
+     * @param owner Window that owns this dialog.
+     */
+    PlanCreationDialog(DoggoService service, Trip trip, Plan plan, Window owner) {
+        this(service, trip, Optional.of(Objects.requireNonNull(plan)), owner);
+    }
+
+    /**
+     * Creates a modal Plan form in the specified mode.
+     *
+     * @param service Application service used to persist the Plan.
+     * @param trip Trip containing the Plan.
+     * @param planBeingEdited Plan being edited, or empty for creation.
+     * @param owner Window that owns this dialog.
+     */
+    private PlanCreationDialog(DoggoService service, Trip trip, Optional<Plan> planBeingEdited, Window owner) {
         this.service = Objects.requireNonNull(service);
         this.trip = Objects.requireNonNull(trip);
+        this.planBeingEdited = Objects.requireNonNull(planBeingEdited);
+        submitButtonType = new ButtonType(planBeingEdited.isPresent() ? "Save changes" : "Add plan",
+                ButtonBar.ButtonData.OK_DONE);
         initOwner(Objects.requireNonNull(owner));
         initModality(javafx.stage.Modality.WINDOW_MODAL);
-        setTitle("Add a plan");
+        setTitle(planBeingEdited.isPresent() ? "Edit plan" : "Add a plan");
 
         DialogPane dialogPane = getDialogPane();
-        dialogPane.getButtonTypes().addAll(ADD_BUTTON_TYPE, ButtonType.CANCEL);
+        dialogPane.getButtonTypes().addAll(submitButtonType, ButtonType.CANCEL);
         dialogPane.setContent(createForm());
         dialogPane.getStylesheets().add(
                 Objects.requireNonNull(PlanCreationDialog.class.getResource("doggo.css")).toExternalForm());
 
-        Button addButton = (Button) dialogPane.lookupButton(ADD_BUTTON_TYPE);
-        addButton.setDefaultButton(true);
-        addButton.addEventFilter(ActionEvent.ACTION, this::handleAdd);
-        setResultConverter(buttonType -> buttonType == ADD_BUTTON_TYPE ? createdPlan : null);
+        Button submitButton = (Button) dialogPane.lookupButton(submitButtonType);
+        submitButton.setDefaultButton(true);
+        submitButton.addEventFilter(ActionEvent.ACTION, this::handleSubmit);
+        setResultConverter(buttonType -> buttonType == submitButtonType ? submittedPlan : null);
         setOnShown(event -> destinationField.requestFocus());
-        updateValidation(addButton);
+        updateValidation(submitButton);
     }
 
     /**
@@ -76,7 +106,14 @@ final class PlanCreationDialog extends Dialog<Plan> {
      */
     private VBox createForm() {
         destinationField.setPromptText("e.g. Senso-ji Temple");
-        datePicker.setValue(service.getCurrentDate());
+        if (planBeingEdited.isPresent()) {
+            Plan plan = planBeingEdited.get();
+            destinationField.setText(plan.destination());
+            datePicker.setValue(plan.date());
+            timeField.setText(TIME_FORMATTER.format(plan.time()));
+        } else {
+            datePicker.setValue(service.getCurrentDate());
+        }
         datePicker.setEditable(false);
         datePicker.setDayCellFactory(picker -> new DateCell() {
             @Override
@@ -109,7 +146,8 @@ final class PlanCreationDialog extends Dialog<Plan> {
         datePicker.valueProperty().addListener((observable, oldValue, newValue) -> updateValidation());
         timeField.textProperty().addListener((observable, oldValue, newValue) -> updateValidation());
 
-        Label introduction = new Label("Add an itinerary stop to " + trip.title() + ".");
+        String action = planBeingEdited.isPresent() ? "Edit an itinerary stop in " : "Add an itinerary stop to ";
+        Label introduction = new Label(action + trip.title() + ".");
         introduction.getStyleClass().add("form-intro");
         VBox form = new VBox(10, introduction, fields, validationLabel);
         form.getStyleClass().add("trip-form");
@@ -149,26 +187,26 @@ final class PlanCreationDialog extends Dialog<Plan> {
     }
 
     /**
-     * Updates validation feedback and the enabled state of the Add button.
+     * Updates validation feedback and the enabled state of the submit button.
      */
     private void updateValidation() {
-        Button addButton = (Button) getDialogPane().lookupButton(ADD_BUTTON_TYPE);
-        if (addButton != null) {
-            updateValidation(addButton);
+        Button submitButton = (Button) getDialogPane().lookupButton(submitButtonType);
+        if (submitButton != null) {
+            updateValidation(submitButton);
         }
     }
 
     /**
-     * Updates validation feedback and the enabled state of the Add button.
+     * Updates validation feedback and the enabled state of the submit button.
      *
-     * @param addButton Add button to update.
+     * @param submitButton Submit button to update.
      */
-    private void updateValidation(Button addButton) {
+    private void updateValidation(Button submitButton) {
         String validationMessage = getValidationMessage();
         validationLabel.setText(validationMessage);
         validationLabel.setVisible(!validationMessage.isEmpty());
         validationLabel.setManaged(!validationMessage.isEmpty());
-        addButton.setDisable(!validationMessage.isEmpty());
+        submitButton.setDisable(!validationMessage.isEmpty());
     }
 
     /**
@@ -182,11 +220,11 @@ final class PlanCreationDialog extends Dialog<Plan> {
     }
 
     /**
-     * Creates the Plan when the form is valid, or keeps the dialog open on failure.
+     * Creates or updates the Plan when the form is valid, or keeps the dialog open on failure.
      *
-     * @param event Add-button action event.
+     * @param event Submit-button action event.
      */
-    private void handleAdd(ActionEvent event) {
+    private void handleSubmit(ActionEvent event) {
         String validationMessage = getValidationMessage();
         if (!validationMessage.isEmpty()) {
             event.consume();
@@ -195,7 +233,10 @@ final class PlanCreationDialog extends Dialog<Plan> {
         }
         try {
             LocalTime time = PlanFormValidator.parseTime(timeField.getText());
-            createdPlan = service.addPlan(trip.id(), destinationField.getText(), datePicker.getValue(), time);
+            submittedPlan = planBeingEdited.isPresent()
+                    ? service.editPlan(trip.id(), planBeingEdited.get().id(), destinationField.getText(),
+                            datePicker.getValue(), time)
+                    : service.addPlan(trip.id(), destinationField.getText(), datePicker.getValue(), time);
         } catch (RepositoryException exception) {
             event.consume();
             showError("The plan could not be saved. Check the database and try again.");

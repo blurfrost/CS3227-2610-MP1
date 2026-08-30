@@ -82,7 +82,7 @@ persistence logic; the CLI remains available through `./gradlew runCli`.
   input preserves the existing field and an exact `-` clears it. Clearing both
   fields removes the review. On a new review, blank fields are absent.
 - A reviewed Trip must remain past when its dates are edited. A reviewed Plan
-  cannot be moved later than the current Clock-derived date and time.
+  may have its destination, date, and time edited without removing its review.
 - Deleting a Trip requires explicit confirmation and removes its Plans and associated reviews.
 - Deleting a Plan requires explicit confirmation and removes its associated review.
 - Dashboard includes Plans whose scheduled local date is the current date.
@@ -272,8 +272,8 @@ Use separate command classes for navigation and user actions:
 - Verify Gallery excludes current and future Trips, includes past Trips without
   reviews, and supports safe Trip and Plan maintenance.
 - Verify Trip and Plan review eligibility, rating/text validation, contextual
-  CLI review flows, replacement/removal semantics, rendering, and reviewed-date
-  edit restrictions.
+  CLI review flows, replacement/removal semantics, rendering, and reviewed-Plan
+  editing.
 - Verify failed writes do not damage previously persisted data.
 - Verify domain and application tests run without JavaFX or the production database.
 - Verify the JavaFX shell and Dashboard FXML resources load with an isolated

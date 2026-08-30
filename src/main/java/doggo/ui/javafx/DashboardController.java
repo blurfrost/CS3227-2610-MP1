@@ -3,14 +3,17 @@ package doggo.ui.javafx;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import doggo.application.DashboardEntry;
 import doggo.application.DoggoService;
 import doggo.application.RepositoryException;
 import doggo.domain.Plan;
 import doggo.domain.Review;
+import doggo.domain.Trip;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
@@ -77,6 +80,12 @@ public final class DashboardController {
     private Label detailScheduleLabel;
 
     /**
+     * Button for editing the selected Plan.
+     */
+    @FXML
+    private Button editPlanButton;
+
+    /**
      * Selected Plan review label.
      */
     @FXML
@@ -106,6 +115,19 @@ public final class DashboardController {
      * Refreshes the Dashboard snapshot from the application service.
      */
     void refresh() {
+        DashboardEntry selectedEntry = planList.getSelectionModel().getSelectedItem();
+        refreshAndSelect(selectedEntry == null ? null : selectedEntry.tripId(),
+                selectedEntry == null ? null : selectedEntry.plan().id());
+    }
+
+    /**
+     * Refreshes the Dashboard and selects the specified Plan when it remains visible.
+     * If the Plan is no longer scheduled today, the first visible Plan is selected.
+     *
+     * @param selectedTripId Owning Trip identity to select, or null for the first Plan.
+     * @param selectedPlanId Plan identity to select, or null for the first Plan.
+     */
+    void refreshAndSelect(UUID selectedTripId, UUID selectedPlanId) {
         try {
             List<DashboardEntry> entries = service.getDashboardEntries();
             dateLabel.setText(entries.isEmpty()
@@ -118,7 +140,8 @@ public final class DashboardController {
             if (isEmpty) {
                 showDetails(null);
             } else {
-                planList.getSelectionModel().selectFirst();
+                int selectedIndex = findEntryIndex(entries, selectedTripId, selectedPlanId);
+                planList.getSelectionModel().select(selectedIndex < 0 ? 0 : selectedIndex);
             }
         } catch (RepositoryException exception) {
             dateLabel.setText("Today's itinerary is unavailable");
@@ -132,6 +155,27 @@ public final class DashboardController {
     }
 
     /**
+     * Finds a Dashboard entry by its owning Trip and Plan identities.
+     *
+     * @param entries Dashboard entries to search.
+     * @param tripId Owning Trip identity to find.
+     * @param planId Plan identity to find.
+     * @return Matching index, or -1 when no identity pair is supplied or found.
+     */
+    private static int findEntryIndex(List<DashboardEntry> entries, UUID tripId, UUID planId) {
+        if (tripId == null || planId == null) {
+            return -1;
+        }
+        for (int index = 0; index < entries.size(); index++) {
+            DashboardEntry entry = entries.get(index);
+            if (entry.tripId().equals(tripId) && entry.plan().id().equals(planId)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * Updates the detail pane for the selected Dashboard entry.
      *
      * @param entry Selected Dashboard entry, or null when nothing is selected.
@@ -142,6 +186,7 @@ public final class DashboardController {
         detailEmptyState.setManaged(!hasSelection);
         detailContent.setVisible(hasSelection);
         detailContent.setManaged(hasSelection);
+        editPlanButton.setDisable(!hasSelection);
         if (!hasSelection) {
             return;
         }
@@ -152,6 +197,28 @@ public final class DashboardController {
         detailScheduleLabel.setText(plan.date().format(DETAIL_DATE_FORMATTER)
                 + " at " + plan.time().format(TIME_FORMATTER));
         detailReviewLabel.setText(formatReview(plan.review().orElse(null)));
+    }
+
+    /**
+     * Opens the modal form for editing the selected Dashboard Plan.
+     */
+    @FXML
+    private void handleEditPlan() {
+        DashboardEntry selectedEntry = planList.getSelectionModel().getSelectedItem();
+        if (selectedEntry == null) {
+            return;
+        }
+        try {
+            Trip trip = service.getTrip(selectedEntry.tripId())
+                    .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
+            PlanCreationDialog dialog = new PlanCreationDialog(service, trip, selectedEntry.plan(),
+                    editPlanButton.getScene().getWindow());
+            dialog.showAndWait().ifPresent(updatedPlan -> refreshAndSelect(selectedEntry.tripId(), updatedPlan.id()));
+        } catch (RepositoryException exception) {
+            showEditError("The Plan could not be loaded. Check the database and try again.");
+        } catch (IllegalArgumentException exception) {
+            showEditError(exception.getMessage());
+        }
     }
 
     /**
@@ -179,6 +246,19 @@ public final class DashboardController {
         alert.setTitle("Dashboard unavailable");
         alert.setHeaderText("Today's plans could not be loaded.");
         alert.setContentText("Check that the database is accessible, then try again.");
+        alert.showAndWait();
+    }
+
+    /**
+     * Shows an actionable error when a Dashboard Plan cannot be edited.
+     *
+     * @param message Error message to display.
+     */
+    private static void showEditError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Plan unavailable");
+        alert.setHeaderText("The selected Plan could not be edited.");
+        alert.setContentText(message);
         alert.showAndWait();
     }
 }

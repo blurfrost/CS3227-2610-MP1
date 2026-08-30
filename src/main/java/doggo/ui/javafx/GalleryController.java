@@ -115,7 +115,7 @@ public final class GalleryController {
     @FXML
     private void initialize() {
         tripList.setCellFactory(list -> new TripCell(service));
-        planList.setCellFactory(list -> new PlanCell());
+        planList.setCellFactory(list -> new PlanCell(this::handleEditPlan));
         tripList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousTrip, selectedTrip) -> showDetails(selectedTrip));
         refresh();
@@ -214,6 +214,21 @@ public final class GalleryController {
         PlanCreationDialog dialog = new PlanCreationDialog(service, selectedTrip,
                 addPlanButton.getScene().getWindow());
         dialog.showAndWait().ifPresent(plan -> refreshAndSelect(selectedTrip.id(), plan.id()));
+    }
+
+    /**
+     * Opens the modal form for editing a Plan in the selected Trip.
+     *
+     * @param plan Plan selected for editing.
+     */
+    private void handleEditPlan(Plan plan) {
+        Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
+        if (selectedTrip == null) {
+            return;
+        }
+        PlanCreationDialog dialog = new PlanCreationDialog(service, selectedTrip, plan,
+                addPlanButton.getScene().getWindow());
+        dialog.showAndWait().ifPresent(updatedPlan -> refreshAndSelect(selectedTrip.id(), updatedPlan.id()));
     }
 
     /**

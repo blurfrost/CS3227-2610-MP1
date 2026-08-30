@@ -270,31 +270,29 @@ class DoggoServiceTest {
     }
 
     @Test
-    void setTripReview_ineligibleTrip_rejectsWithActionableMessage() {
+    void setTripReview_currentTrip_acceptsReview() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 5));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> service.setTripReview(trip.id(), ratingReview(4)));
+        Trip reviewedTrip = service.setTripReview(trip.id(), ratingReview(4));
 
-        assertEquals("Trip can be reviewed only after its end date.", exception.getMessage());
-        assertEquals(Optional.empty(), service.getTrip(trip.id()).orElseThrow().review());
+        assertEquals(Optional.of(ratingReview(4)), reviewedTrip.review());
+        assertEquals(reviewedTrip, service.getTrip(trip.id()).orElseThrow());
     }
 
     @Test
-    void setPlanReview_beforeScheduledTime_rejectsWithActionableMessage() {
+    void setPlanReview_beforeScheduledTime_acceptsReview() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
         Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 5),
                 LocalTime.of(9, 0));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> service.setPlanReview(trip.id(), plan.id(), ratingReview(4)));
+        Plan reviewedPlan = service.setPlanReview(trip.id(), plan.id(), ratingReview(4));
 
-        assertEquals("Plan can be reviewed only after its scheduled time.", exception.getMessage());
-        assertEquals(Optional.empty(), service.getTrip(trip.id()).orElseThrow().plans().get(0).review());
+        assertEquals(Optional.of(ratingReview(4)), reviewedPlan.review());
+        assertEquals(reviewedPlan, service.getTrip(trip.id()).orElseThrow().plans().get(0));
     }
 
     @Test
@@ -350,19 +348,19 @@ class DoggoServiceTest {
     }
 
     @Test
-    void editTrip_reviewedTrip_movingOutOfPastIsRejected() {
+    void editTrip_reviewedTrip_allowsMovingOutOfPastAndPreservesReview() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 4));
-        service.setTripReview(trip.id(), ratingReview(5));
+        Review review = ratingReview(5);
+        service.setTripReview(trip.id(), review);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> service.editTrip(trip.id(), "Japan", LocalDate.of(2027, 1, 1),
-                        LocalDate.of(2027, 1, 5)));
+        Trip updatedTrip = service.editTrip(trip.id(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 5));
 
-        assertEquals("A reviewed Trip must remain past after editing.", exception.getMessage());
-        assertEquals(LocalDate.of(2027, 1, 4), service.getTrip(trip.id()).orElseThrow().endDate());
-        assertTrue(service.getTrip(trip.id()).orElseThrow().review().isPresent());
+        assertEquals(LocalDate.of(2027, 1, 5), updatedTrip.endDate());
+        assertEquals(Optional.of(review), updatedTrip.review());
+        assertEquals(updatedTrip, service.getTrip(trip.id()).orElseThrow());
     }
 
     @Test
@@ -384,7 +382,7 @@ class DoggoServiceTest {
     }
 
     @Test
-    void editPlan_reviewedPlan_movingAfterNowIsRejected() {
+    void editPlan_reviewedPlan_allowsMovingAfterCompletionAndPreservesReview() {
         DoggoService service = serviceAt("2027-01-05T10:00:00Z");
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
@@ -392,17 +390,16 @@ class DoggoServiceTest {
                 LocalTime.of(9, 0));
         service.setPlanReview(trip.id(), plan.id(), ratingReview(4));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> service.editPlan(trip.id(), plan.id(), "Gallery", LocalDate.of(2027, 1, 5),
-                        LocalTime.of(11, 0)));
+        Plan updatedPlan = service.editPlan(trip.id(), plan.id(), "Gallery", LocalDate.of(2027, 1, 6),
+                LocalTime.of(11, 0));
 
-        assertEquals("A reviewed Plan cannot be moved after its completion time.",
-                exception.getMessage());
+        assertEquals("Gallery", updatedPlan.destination());
+        assertEquals(LocalDate.of(2027, 1, 6), updatedPlan.date());
+        assertEquals(LocalTime.of(11, 0), updatedPlan.time());
+        assertEquals(Optional.of(ratingReview(4)), updatedPlan.review());
         Plan storedPlan = service.getTrip(trip.id()).orElseThrow().plans().get(0);
         assertEquals(Optional.of(ratingReview(4)), storedPlan.review());
-        assertEquals(plan.destination(), storedPlan.destination());
-        assertEquals(plan.date(), storedPlan.date());
-        assertEquals(plan.time(), storedPlan.time());
+        assertEquals(updatedPlan, storedPlan);
     }
 
     @Test

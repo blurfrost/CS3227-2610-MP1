@@ -1,12 +1,18 @@
 package doggo.ui.javafx;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 import doggo.domain.Plan;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
@@ -19,18 +25,41 @@ public final class PlanCell extends ListCell<Plan> {
     private final Label dateLabel = new Label();
     private final Label destinationLabel = new Label();
     private final Label timeLabel = new Label();
-    private final VBox card = new VBox(new HBox(dateLabel, timeLabel), destinationLabel);
+    private final Button editButton = new Button("Edit");
+    private final HBox dateAndTime = new HBox(dateLabel, timeLabel);
+    private final VBox details = new VBox(dateAndTime, destinationLabel);
+    private final Region spacer = new Region();
+    private final HBox card = new HBox(details, spacer, editButton);
+    private final Consumer<Plan> editHandler;
 
     /**
      * Creates a Plan cell with the shared itinerary card style classes.
      */
     public PlanCell() {
+        this(plan -> { });
+    }
+
+    /**
+     * Creates a Plan cell that invokes the specified edit handler.
+     *
+     * @param editHandler Action invoked with the Plan when Edit is pressed.
+     */
+    public PlanCell(Consumer<Plan> editHandler) {
+        this.editHandler = Objects.requireNonNull(editHandler);
         dateLabel.getStyleClass().add("plan-date");
         destinationLabel.getStyleClass().add("plan-destination");
         timeLabel.getStyleClass().add("plan-time");
+        editButton.getStyleClass().addAll("secondary-button", "plan-edit-button");
+        editButton.setOnAction(event -> {
+            Plan plan = getItem();
+            if (plan != null) {
+                this.editHandler.accept(plan);
+            }
+        });
+        HBox.setHgrow(spacer, Priority.ALWAYS);
         card.getStyleClass().add("plan-card");
-        card.setSpacing(4);
-        HBox dateAndTime = (HBox) card.getChildren().getFirst();
+        card.setAlignment(Pos.CENTER_LEFT);
+        details.setSpacing(4);
         dateAndTime.setSpacing(8);
         setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
     }
