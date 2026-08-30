@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Separator?>
@@ -42,6 +43,13 @@
                        wrapText="true" />
                 <Label fx:id="detailSummaryLabel" styleClass="panel-subtitle" text="Trip summary"
                        wrapText="true" />
+                <HBox spacing="8.0">
+                    <Button disable="true" mnemonicParsing="false" styleClass="secondary-button"
+                            text="Edit trip" />
+                    <Button fx:id="addPlanButton" disable="true" mnemonicParsing="false"
+                            onAction="#handleAddPlan" styleClass="primary-button"
+                            text="+  Add plan" />
+                </HBox>
                 <VBox spacing="5.0" styleClass="review-card">
                     <Label styleClass="review-heading" text="Trip review" />
                     <Label fx:id="detailReviewLabel" styleClass="review-body"

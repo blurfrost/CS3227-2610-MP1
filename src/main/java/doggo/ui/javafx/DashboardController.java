@@ -99,13 +99,13 @@ public final class DashboardController {
         planList.setCellFactory(list -> new DashboardEntryCell());
         planList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousEntry, selectedEntry) -> showDetails(selectedEntry));
-        loadEntries();
+        refresh();
     }
 
     /**
-     * Loads and displays the current Dashboard snapshot.
+     * Refreshes the Dashboard snapshot from the application service.
      */
-    private void loadEntries() {
+    void refresh() {
         try {
             List<DashboardEntry> entries = service.getDashboardEntries();
             dateLabel.setText(entries.isEmpty()

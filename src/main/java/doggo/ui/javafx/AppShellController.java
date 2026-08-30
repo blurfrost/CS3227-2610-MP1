@@ -70,6 +70,12 @@ public final class AppShellController {
     private VBox galleryPage;
 
     /**
+     * Dashboard controller included in the shell.
+     */
+    @FXML
+    private DashboardController dashboardPageController;
+
+    /**
      * Organise controller included in the shell.
      */
     @FXML
@@ -105,6 +111,7 @@ public final class AppShellController {
     @FXML
     private void handleDashboard() {
         showPage(dashboardPage, dashboardButton);
+        dashboardPageController.refresh();
     }
 
     /**

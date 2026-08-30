@@ -13,7 +13,7 @@ import javafx.scene.layout.VBox;
  * Renders one Plan as a compact itinerary card.
  */
 public final class PlanCell extends ListCell<Plan> {
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("EEE, d MMM");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMM uuuu (EEE)");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     private final Label dateLabel = new Label();

@@ -53,7 +53,8 @@
                 <HBox spacing="8.0">
                     <Button disable="true" mnemonicParsing="false" styleClass="secondary-button"
                             text="Edit trip" />
-                    <Button disable="true" mnemonicParsing="false" styleClass="primary-button"
+                    <Button fx:id="addPlanButton" disable="true" mnemonicParsing="false"
+                            onAction="#handleAddPlan" styleClass="primary-button"
                             text="+  Add plan" />
                 </HBox>
                 <Label styleClass="panel-title" text="Itinerary" />

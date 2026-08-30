@@ -12,6 +12,7 @@ import doggo.domain.Review;
 import doggo.domain.Trip;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
@@ -26,6 +27,12 @@ public final class GalleryController {
      * Application service used to query completed Trips and their Plans.
      */
     private final DoggoService service;
+
+    /**
+     * Button for adding a Plan to the selected Trip.
+     */
+    @FXML
+    private Button addPlanButton;
 
     /**
      * Completed Trip list.
@@ -129,6 +136,17 @@ public final class GalleryController {
      * @param selectedTripId Trip identity to select, or null to select the first Trip.
      */
     void refreshAndSelect(UUID selectedTripId) {
+        refreshAndSelect(selectedTripId, null);
+    }
+
+    /**
+     * Refreshes the Gallery and selects the specified Trip and Plan.
+     * If either identity is absent, the first available item is selected where appropriate.
+     *
+     * @param selectedTripId Trip identity to select, or null to select the first Trip.
+     * @param selectedPlanId Plan identity to select, or null to clear Plan selection.
+     */
+    void refreshAndSelect(UUID selectedTripId, UUID selectedPlanId) {
         try {
             List<Trip> trips = service.getPastTrips();
             tripList.getItems().setAll(trips);
@@ -138,7 +156,7 @@ public final class GalleryController {
             if (isEmpty) {
                 showDetails(null);
             } else {
-                selectTrip(trips, selectedTripId);
+                selectTrip(trips, selectedTripId, selectedPlanId);
             }
         } catch (RepositoryException exception) {
             tripList.getItems().clear();
@@ -155,12 +173,17 @@ public final class GalleryController {
      *
      * @param trips Trips currently displayed by the Gallery.
      * @param selectedTripId Trip identity to select, or null for the first Trip.
+     * @param selectedPlanId Plan identity to select, or null to clear Plan selection.
      */
-    private void selectTrip(List<Trip> trips, UUID selectedTripId) {
+    private void selectTrip(List<Trip> trips, UUID selectedTripId, UUID selectedPlanId) {
         int selectedIndex = selectedTripId == null
                 ? 0
                 : findTripIndex(trips, selectedTripId);
-        tripList.getSelectionModel().select(selectedIndex < 0 ? 0 : selectedIndex);
+        selectedIndex = selectedIndex < 0 ? 0 : selectedIndex;
+        tripList.getSelectionModel().select(selectedIndex);
+        if (selectedPlanId != null) {
+            showDetails(trips.get(selectedIndex), selectedPlanId);
+        }
     }
 
     /**
@@ -180,11 +203,35 @@ public final class GalleryController {
     }
 
     /**
+     * Opens the modal form for adding a Plan to the selected Trip.
+     */
+    @FXML
+    private void handleAddPlan() {
+        Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
+        if (selectedTrip == null) {
+            return;
+        }
+        PlanCreationDialog dialog = new PlanCreationDialog(service, selectedTrip,
+                addPlanButton.getScene().getWindow());
+        dialog.showAndWait().ifPresent(plan -> refreshAndSelect(selectedTrip.id(), plan.id()));
+    }
+
+    /**
      * Updates the detail pane for the selected Trip.
      *
      * @param trip Selected Trip, or null when nothing is selected.
      */
     private void showDetails(Trip trip) {
+        showDetails(trip, null);
+    }
+
+    /**
+     * Updates the detail pane for the selected Trip and optionally selects a Plan.
+     *
+     * @param trip Selected Trip, or null when nothing is selected.
+     * @param selectedPlanId Plan identity to select, or null to clear Plan selection.
+     */
+    private void showDetails(Trip trip, UUID selectedPlanId) {
         boolean hasSelection = trip != null;
         detailEmptyState.setVisible(!hasSelection);
         detailEmptyState.setManaged(!hasSelection);
@@ -192,6 +239,7 @@ public final class GalleryController {
         detailContent.setManaged(hasSelection);
         statusLabel.setVisible(hasSelection);
         statusLabel.setManaged(hasSelection);
+        addPlanButton.setDisable(!hasSelection);
         if (!hasSelection) {
             return;
         }
@@ -204,9 +252,45 @@ public final class GalleryController {
         statusLabel.getStyleClass().removeAll("status-current", "status-future", "status-past");
         statusLabel.getStyleClass().add("status-past");
         planList.getItems().setAll(plans);
+        if (selectedPlanId == null) {
+            planList.getSelectionModel().clearSelection();
+        } else {
+            selectPlan(plans, selectedPlanId);
+        }
         boolean isPlanEmpty = plans.isEmpty();
         planEmptyState.setVisible(isPlanEmpty);
         planEmptyState.setManaged(isPlanEmpty);
+    }
+
+    /**
+     * Selects the requested Plan or clears selection when it is absent.
+     *
+     * @param plans Plans currently displayed for the selected Trip.
+     * @param selectedPlanId Plan identity to select.
+     */
+    private void selectPlan(List<Plan> plans, UUID selectedPlanId) {
+        int selectedIndex = findPlanIndex(plans, selectedPlanId);
+        if (selectedIndex < 0) {
+            planList.getSelectionModel().clearSelection();
+            return;
+        }
+        planList.getSelectionModel().select(selectedIndex);
+    }
+
+    /**
+     * Finds the list index of a Plan identity.
+     *
+     * @param plans Plans to search.
+     * @param planId Plan identity to find.
+     * @return Matching index, or -1 when absent.
+     */
+    private static int findPlanIndex(List<Plan> plans, UUID planId) {
+        for (int index = 0; index < plans.size(); index++) {
+            if (plans.get(index).id().equals(planId)) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     /**

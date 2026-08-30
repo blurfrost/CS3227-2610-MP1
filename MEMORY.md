@@ -13,7 +13,8 @@
 - A Trip is an overall journey and contains zero or more Plans.
 - A Plan is one scheduled itinerary item belonging to a Trip.
 - The desktop interface has three primary portions: Dashboard, Organise, and Gallery.
-- Dashboard shows Plans scheduled for the current day.
+- Dashboard shows Plans scheduled for the current day and refreshes its query
+  whenever the mode is selected.
 - Organise allows users to select Trips and manage their itineraries.
 - Gallery contains every Trip whose end date has passed, whether or not it has reviews.
 - Completed Trips and Plans can have an optional whole-number rating from 1 to 5 and optional written review text; each Review must contain at least one field.
@@ -59,10 +60,11 @@
   shell provides persistent navigation and read-only Dashboard, Organise, and
   Gallery views.
 - The Organise view displays current and future Trips in a selectable list with
-  selected-Trip itinerary details; Trip and Plan mutation controls remain
-  deferred.
+  selected-Trip itinerary details and supports adding Plans to the selected
+  Trip; other Trip and Plan mutations remain deferred.
 - The Gallery view displays past Trips in a selectable list with completed
-  status, optional Trip reviews, and selected-Trip itinerary details.
+  status, optional Trip reviews, selected-Trip itinerary details, and adding
+  Plans to the selected Trip.
 - Trip creation is available from the persistent sidebar through a modal form
   with a title and inclusive start/end dates; current and future Trips return
   to Organise, while past Trips route to Gallery.
