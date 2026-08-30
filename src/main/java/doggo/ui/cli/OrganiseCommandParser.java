@@ -21,6 +21,10 @@ final class OrganiseCommandParser implements ModeCommandParser {
             return IndexedCommandParser.parse(command, "delete", IndexedEntity.TRIP,
                     DeleteTripCommand::new);
         }
+        if (command.matches("(?i)review(?:\\s+.*)?")) {
+            return IndexedCommandParser.parse(command, "review", IndexedEntity.TRIP,
+                    ReviewTripCommand::new);
+        }
         return new UnknownCommand(command);
     }
 }

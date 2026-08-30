@@ -204,7 +204,7 @@ Use separate command classes for navigation and user actions:
 - Dashboard commands list today's Plans, create a Trip, edit or delete a Plan by
   number, and review a Plan by number. Dashboard Plan creation and
   detailed Plan viewing remain deferred.
-- Organise commands support creating a Trip, viewing a Trip and its Plans, editing or deleting a Trip by index, and managing Plans within a viewed Trip.
+- Organise commands support creating, reviewing, editing, or deleting a Trip by index, viewing a Trip and its Plans, and managing Plans within a viewed Trip.
 - Gallery lists past Trips and supports Trip `new`, `edit`, `delete`, and
   `review NUMBER`. Selected Gallery Trips support Plan `new`, `edit`, `delete`,
   and `review NUMBER`.
@@ -220,9 +220,9 @@ Use separate command classes for navigation and user actions:
   originates in Organise or Gallery and also routes by the resulting status.
   Plan mutations remain in the selected Trip mode.
 - Organise lists current and future Trips and accepts `new`, `edit NUMBER`,
-  `view NUMBER`, `delete NUMBER`, and `back`. When a Trip is viewed, it accepts
-  `new`, `edit NUMBER`, `delete NUMBER`, `review NUMBER`, and `back` for its
-  Plans.
+  `view NUMBER`, `delete NUMBER`, `review NUMBER`, and `back`. When a Trip is
+  viewed, it accepts `new`, `edit NUMBER`, `delete NUMBER`, `review NUMBER`,
+  and `back` for its Plans.
 - Gallery lists past Trips and accepts `new`, `view NUMBER`, `edit NUMBER`,
   `delete NUMBER`, `review NUMBER`, and `back`. A selected Gallery Trip accepts
   Plan `new`, `edit NUMBER`, `delete NUMBER`, `review NUMBER`, and `back`;
@@ -255,9 +255,9 @@ Use separate command classes for navigation and user actions:
   Plan maintenance. Trip mutations route by resulting status and Plan
   mutations stay in the selected Trip view.
 - Reviews support immutable rating/text values, contextual Trip and Plan
-  commands, replacement and removal, retained target
-  validation, and rendering in every relevant Trip or Plan view. Review input
-  preserves fields on blank input and clears fields on exact `-` input.
+  commands in every relevant CLI mode, replacement and removal, retained
+  target validation, and rendering in every relevant Trip or Plan view. Review
+  input preserves fields on blank input and clears fields on exact `-` input.
 - Feature Sets 1–3, Dashboard, and Gallery maintenance use the SQLite repository in production;
   the in-memory repository remains available for isolated tests. The JavaFX
   shell and read-only Dashboard foundation are implemented; functional CRUD

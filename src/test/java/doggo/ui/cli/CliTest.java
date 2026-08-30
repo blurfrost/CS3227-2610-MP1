@@ -89,6 +89,25 @@ class CliTest {
     }
 
     @Test
+    void organiseReview_endToEnd_addsEditsRemovesTripReviewAndStaysInOrganise() {
+        String input = String.join("\n", "organise", "new", "Current trip", "05/01/2027",
+                "09/01/2027", "review 1", "5", "Upcoming journey", "review 1", "",
+                "Updated journey", "review 1", "-", "-", "exit") + "\n";
+        String output = runCli(input);
+        String afterRemoval = output.substring(output.lastIndexOf("Review removed."));
+
+        assertTrue(output.contains("Review added."));
+        assertTrue(output.contains("Rating: 5/5"));
+        assertTrue(output.contains("Review: Upcoming journey"));
+        assertTrue(output.contains("Review updated."));
+        assertTrue(output.contains("Review: Updated journey"));
+        assertTrue(output.contains("Review removed."));
+        assertTrue(afterRemoval.contains("[MODE: ORGANISE]"));
+        assertFalse(afterRemoval.contains("Review: Updated journey"));
+        assertTrue(output.endsWith("Bye!\n"));
+    }
+
+    @Test
     void dashboardReview_endToEnd_rendersInSelectedTripView() {
         String input = String.join("\n", "organise", "new", "Current trip", "01/01/2027",
                 "09/01/2027", "view 1", "new", "Early plan", "05/01/2027", "00:00", "back",
@@ -103,6 +122,24 @@ class CliTest {
         assertTrue(selectedTripOutput.contains("Early plan (05/01/2027 at 00:00)"));
         assertTrue(selectedTripOutput.contains("Rating: 4/5"));
         assertTrue(selectedTripOutput.contains("Review: Excellent plan"));
+    }
+
+    @Test
+    void selectedTripPlanReview_endToEnd_supportsOrganiseAndGallery() {
+        String input = String.join("\n", "organise", "new", "Current trip", "01/01/2027",
+                "09/01/2027", "view 1", "new", "Tokyo", "04/01/2027", "09:00", "review 1",
+                "5", "Organise plan", "back", "back", "new", "Past trip", "01/01/2027",
+                "04/01/2027", "view 1", "new", "Seoul", "02/01/2027", "09:00", "review 1",
+                "4", "Gallery plan", "back", "exit") + "\n";
+        String output = runCli(input);
+
+        assertTrue(output.contains("Tokyo (04/01/2027 at 09:00)"));
+        assertTrue(output.contains("Rating: 5/5"));
+        assertTrue(output.contains("Review: Organise plan"));
+        assertTrue(output.contains("Seoul (02/01/2027 at 09:00)"));
+        assertTrue(output.contains("Rating: 4/5"));
+        assertTrue(output.contains("Review: Gallery plan"));
+        assertTrue(output.endsWith("Bye!\n"));
     }
 
     @Test

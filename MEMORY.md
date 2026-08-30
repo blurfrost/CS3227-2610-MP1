@@ -19,9 +19,9 @@
 - Gallery contains every Trip whose end date has passed, whether or not it has reviews.
 - Trips and Plans can have an optional whole-number rating from 1 to 5 and optional written review text; each Review must contain at least one field.
 - Reviews are implemented as immutable values. `review NUMBER` targets Trips
-  from Gallery and Plans from Dashboard or selected Trip views; blank fields
-  preserve existing values, `-` clears a field, and clearing both removes the
-  review.
+  from Organise or Gallery and Plans from Dashboard or selected Trip views;
+  blank fields preserve existing values, `-` clears a field, and clearing both
+  removes the review.
 - `DoggoService` review mutations accept Trips and Plans regardless of their
   scheduled dates, and reviewed Trips or Plans may be edited without losing
   their reviews. Reviewability query APIs and CLI eligibility checks have been

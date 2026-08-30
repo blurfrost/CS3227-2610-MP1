@@ -13,6 +13,7 @@ class OrganiseCommandParserTest {
         assertInstanceOf(EditTripCommand.class, parser.parse("edit 1"));
         assertInstanceOf(ViewTripCommand.class, parser.parse("view 1"));
         assertInstanceOf(DeleteTripCommand.class, parser.parse("delete 1"));
+        assertInstanceOf(ReviewTripCommand.class, parser.parse("review 1"));
     }
 
     @Test
@@ -23,6 +24,6 @@ class OrganiseCommandParserTest {
 
     @Test
     void parse_unsupportedCommand_returnsUnknownCommand() {
-        assertInstanceOf(UnknownCommand.class, parser.parse("review 1"));
+        assertInstanceOf(UnknownCommand.class, parser.parse("archive 1"));
     }
 }

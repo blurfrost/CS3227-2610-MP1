@@ -64,6 +64,23 @@ class CliFormatterTest {
     }
 
     @Test
+    void organiseMenu_trips_advertisesTripReview() {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 5),
+                LocalDate.of(2027, 1, 9));
+
+        String output = new CliFormatter().organiseMenu(List.of(trip));
+
+        assertTrue(output.contains("Review a Trip with \"review NUMBER\"."));
+    }
+
+    @Test
+    void organiseMenu_emptyTrips_doesNotAdvertiseTripReview() {
+        String output = new CliFormatter().organiseMenu(List.of());
+
+        assertFalse(output.contains("Review a Trip with \"review NUMBER\"."));
+    }
+
+    @Test
     void galleryMenu_pastTrips_displaysTripCreationNavigationAndEditing() {
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 4));

@@ -77,6 +77,7 @@ final class CliFormatter {
             message.append("View a trip with \"view NUMBER\".\n\n");
             message.append("Edit a trip with \"edit NUMBER\".\n\n");
             message.append("Delete a trip with \"delete NUMBER\".\n\n");
+            message.append("Review a Trip with \"review NUMBER\".\n\n");
         }
         message.append("Type \"new\" to create a new Trip.\n")
                 .append("Type \"back\" to go back to the Main Menu.");

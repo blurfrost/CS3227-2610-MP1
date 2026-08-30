@@ -164,7 +164,7 @@ class GalleryReviewTest {
 
         CommandResult result = new ReviewTripCommand(1).execute(context);
 
-        assertTrue(result.message().contains("The selected Trip is no longer available in Gallery."));
+        assertTrue(result.message().contains("The selected Trip is no longer available."));
         assertFalse(contextOutput(context).contains("Enter rating"));
     }
 
@@ -182,7 +182,7 @@ class GalleryReviewTest {
 
         CommandResult result = new ReviewTripCommand(1).execute(context);
 
-        assertTrue(result.message().contains("The selected Trip is no longer available in Gallery."));
+        assertTrue(result.message().contains("The selected Trip is no longer available."));
         assertFalse(contextOutput(context).contains("Enter rating"));
     }
 
@@ -199,7 +199,7 @@ class GalleryReviewTest {
 
         CommandResult result = new ReviewTripCommand(1).execute(context);
 
-        assertTrue(result.message().contains("The selected Trip is no longer available in Gallery."));
+        assertTrue(result.message().contains("The selected Trip is no longer available."));
         assertTrue(service.getTrip(trip.id()).isEmpty());
     }
 
@@ -217,7 +217,7 @@ class GalleryReviewTest {
 
         CommandResult result = new ReviewTripCommand(1).execute(context);
 
-        assertTrue(result.message().contains("The selected Trip is no longer available in Gallery."));
+        assertTrue(result.message().contains("The selected Trip is no longer available."));
         assertEquals(Optional.empty(), service.getTrip(trip.id()).orElseThrow().review());
         assertTrue(result.message().contains("There are no past Trips."));
     }

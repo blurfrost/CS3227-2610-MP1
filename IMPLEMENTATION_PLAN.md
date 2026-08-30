@@ -173,10 +173,10 @@ future work.
 - Refresh the current view and handle the resulting empty or next selection
   state without leaving stale details visible.
 
-### 12.14 Add Trip and Plan review forms
+### 12.14 Add Trip and Plan review forms — Complete
 
-- Add Trip review actions in Gallery and Plan review actions in
-  Dashboard, Organise, and Gallery.
+- Add Trip review actions in Organise and Gallery, and Plan review actions in
+  Dashboard and selected Trip views in Organise and Gallery.
 - Preserve the existing rating, text, and clearing rules without restricting
   reviews by scheduled dates.
 

@@ -407,6 +407,17 @@ or displayed in Organise. Recommended that unrestricted reviews are coherent
 if doggo intentionally treats reviews as user-owned annotations and updates
 its requirements, eligibility checks, and relevant UI entry points together.
 
+## Prompt 39 — Implement the First CLI Review-Availability Iteration
+
+The user requested implementation of the first iteration for standardizing CLI
+review availability. Generalized `ReviewTripCommand` to support both top-level
+Organise and Gallery Trip lists, using retained-ID validation against the
+initiating mode and refreshing that same list after operations. Added Organise
+coverage for current and future Trip reviews, review removal, mode retention,
+and stale reclassification; updated Gallery expectations to use the shared
+stale-target message. Selected Trip views continue to use `review NUMBER` for
+Plans, and parser/documentation changes remain deferred to later iterations.
+
 ## Prompt 37 — Implement the Second Review-Policy Iteration
 
 The user requested implementation of the second iteration for unrestricted Trip
@@ -437,3 +448,23 @@ current/future records and reviewed Trips moving out of the past while
 retaining their reviews. The public reviewability query methods and CLI
 eligibility checks remain temporarily for the next iteration, and the broader
 Developer Guide and implementation-roadmap wording is deferred.
+
+## Prompt 40 — Implement the Second CLI Review-Availability Iteration
+
+The user requested implementation of the next CLI review-availability iteration. Added `review NUMBER` to
+top-level Organise mode for Trip reviews, updated Organise help text, and added parser, formatter, and end-to-end
+coverage for adding, editing, and removing a Trip review while remaining in Organise. Selected Organise Trip views
+continue to use `review NUMBER` for Plans, and no documentation-roadmap files were changed.
+
+## Prompt 41 — Implement the Third CLI Review-Availability Iteration
+
+The user requested implementation of the next CLI review-availability iteration. Added end-to-end coverage proving
+that Plan reviews work in selected Organise and selected Gallery Trip views, complementing the existing Dashboard
+coverage. Updated the Developer Guide and implementation roadmap to document and mark complete the standardized
+Trip and Plan review actions across their relevant CLI modes.
+
+## Prompt 42 — Commit the Review-Availability Changes
+
+The user requested committing the completed workspace changes. Staged the CLI review-standardization code, tests,
+documentation, implementation roadmap, memory, and prompt log, then created commit `b512572` with the subject
+`Standardize CLI Trip and Plan reviews`. The required prompt summary was added to the same commit afterward.

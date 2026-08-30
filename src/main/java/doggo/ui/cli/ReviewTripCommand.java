@@ -7,7 +7,7 @@ import doggo.domain.Review;
 import doggo.domain.Trip;
 
 /**
- * Adds, updates, or removes a Review on a Trip displayed in Gallery.
+ * Adds, updates, or removes a Review on a Trip displayed in a Trip list.
  */
 final class ReviewTripCommand implements Command {
     private final int index;
@@ -18,17 +18,18 @@ final class ReviewTripCommand implements Command {
 
     @Override
     public CommandResult execute(CliContext context) {
+        CliMode initiatingMode = context.session().mode();
         Optional<UUID> tripId = context.session().tripIdAt(index);
         if (tripId.isEmpty()) {
-            return galleryResult(context, context.formatter().error(
-                    context.formatter().invalidIndex("review", IndexedEntity.TRIP,
-                            context.session().displayedTripCount())));
+            String invalidIndexMessage = context.formatter().invalidIndex("review", IndexedEntity.TRIP,
+                    context.session().displayedTripCount());
+            return tripResult(context, context.formatter().error(invalidIndexMessage), initiatingMode);
         }
 
-        Optional<Trip> trip = findGalleryTrip(context, tripId.orElseThrow());
+        Optional<Trip> trip = context.displayedTripAt(index, initiatingMode);
         if (trip.isEmpty()) {
-            return galleryResult(context, context.formatter().error(
-                    "The selected Trip is no longer available in Gallery."));
+            return tripResult(context, context.formatter().error(
+                    "The selected Trip is no longer available."), initiatingMode);
         }
 
         ReviewInputHelper.Result input = ReviewInputHelper.prompt(context,
@@ -37,17 +38,17 @@ final class ReviewTripCommand implements Command {
             return new CommandResult("Bye!", true);
         }
 
-        Optional<Trip> refreshedTrip = findGalleryTrip(context, tripId.orElseThrow());
+        Optional<Trip> refreshedTrip = context.displayedTripAt(index, initiatingMode);
         if (refreshedTrip.isEmpty()) {
-            return galleryResult(context, context.formatter().error(
-                    "The selected Trip is no longer available in Gallery."));
+            return tripResult(context, context.formatter().error(
+                    "The selected Trip is no longer available."), initiatingMode);
         }
 
         Trip currentTrip = refreshedTrip.orElseThrow();
         Optional<Review> existingReview = currentTrip.review();
         Optional<Review> submittedReview = input.review();
         if (existingReview.equals(submittedReview)) {
-            return galleryResult(context, "No changes made.");
+            return tripResult(context, "No changes made.", initiatingMode);
         }
 
         String resultMessage;
@@ -60,32 +61,21 @@ final class ReviewTripCommand implements Command {
                 resultMessage = existingReview.isEmpty() ? "Review added." : "Review updated.";
             }
         } catch (IllegalArgumentException exception) {
-            return galleryResult(context, context.formatter().error(exception.getMessage()));
+            return tripResult(context, context.formatter().error(exception.getMessage()), initiatingMode);
         }
-        return galleryResult(context, resultMessage);
+        return tripResult(context, resultMessage, initiatingMode);
     }
 
     /**
-     * Finds a Trip that is still present in the current Gallery membership.
-     *
-     * @param context CLI dependencies.
-     * @param tripId Retained Trip identity.
-     * @return Matching past Trip, if one exists.
-     */
-    private static Optional<Trip> findGalleryTrip(CliContext context, UUID tripId) {
-        return context.service().getPastTrips().stream()
-                .filter(trip -> trip.id().equals(tripId))
-                .findFirst();
-    }
-
-    /**
-     * Refreshes the Gallery after a review operation.
+     * Returns a Trip review result with the initiating Trip list refreshed.
      *
      * @param context CLI dependencies.
      * @param message Operation result message.
-     * @return Result containing the message and refreshed Gallery.
+     * @param initiatingMode Trip list mode from which the command started.
+     * @return Result containing the message and refreshed Trip list.
      */
-    private static CommandResult galleryResult(CliContext context, String message) {
-        return new CommandResult(message + "\n" + context.galleryMenu(), false);
+    private static CommandResult tripResult(CliContext context, String message,
+                                             CliMode initiatingMode) {
+        return new CommandResult(message + "\n" + context.refreshTripList(initiatingMode), false);
     }
 }
