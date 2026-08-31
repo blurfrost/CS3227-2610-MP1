@@ -8,6 +8,7 @@ import java.util.OptionalInt;
 
 import doggo.application.DoggoService;
 import doggo.application.RepositoryException;
+import doggo.domain.Plan;
 import doggo.domain.Review;
 import doggo.domain.Trip;
 import javafx.event.ActionEvent;
@@ -58,7 +59,27 @@ final class ReviewDialog<T> extends Dialog<T> {
         Objects.requireNonNull(trip);
         return new ReviewDialog<>("Review a trip",
                 "Add an overall rating or a few notes about \"" + trip.title() + "\".",
-                trip, trip.review(), review -> saveTripReview(service, trip, review), owner);
+                trip, trip.review(), review -> saveTripReview(service, trip, review),
+                "What stood out about this trip?", owner);
+    }
+
+    /**
+     * Returns a Review dialog configured for the specified Plan.
+     *
+     * @param service Application service used to persist the Review.
+     * @param trip Trip containing the Plan.
+     * @param plan Plan being reviewed.
+     * @param owner Window that owns this dialog.
+     * @return Configured Plan Review dialog.
+     */
+    static ReviewDialog<Plan> forPlan(DoggoService service, Trip trip, Plan plan, Window owner) {
+        Objects.requireNonNull(service);
+        Objects.requireNonNull(trip);
+        Objects.requireNonNull(plan);
+        return new ReviewDialog<>("Review a plan",
+                "Add a rating or a few notes about \"" + plan.destination() + "\".",
+                plan, plan.review(), review -> savePlanReview(service, trip, plan, review),
+                "What stood out about this plan?", owner);
     }
 
     /**
@@ -69,10 +90,12 @@ final class ReviewDialog<T> extends Dialog<T> {
      * @param originalTarget Original reviewed value.
      * @param existingReview Existing Review, if one is recorded.
      * @param reviewSaver Persistence operation for a submitted Review.
+     * @param notesPrompt Prompt shown in the Notes field.
      * @param owner Window that owns this dialog.
      */
     private ReviewDialog(String title, String introductionText, T originalTarget,
-                         Optional<Review> existingReview, ReviewSaver<T> reviewSaver, Window owner) {
+                         Optional<Review> existingReview, ReviewSaver<T> reviewSaver,
+                         String notesPrompt, Window owner) {
         this.originalTarget = Objects.requireNonNull(originalTarget);
         this.existingReview = Objects.requireNonNull(existingReview);
         this.reviewSaver = Objects.requireNonNull(reviewSaver);
@@ -82,7 +105,8 @@ final class ReviewDialog<T> extends Dialog<T> {
 
         DialogPane dialogPane = getDialogPane();
         dialogPane.getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
-        dialogPane.setContent(createForm(Objects.requireNonNull(introductionText)));
+        dialogPane.setContent(createForm(Objects.requireNonNull(introductionText),
+                Objects.requireNonNull(notesPrompt)));
         dialogPane.setPrefWidth(500);
         dialogPane.getStylesheets().add(
                 Objects.requireNonNull(ReviewDialog.class.getResource("doggo.css")).toExternalForm());
@@ -98,9 +122,10 @@ final class ReviewDialog<T> extends Dialog<T> {
      * Creates the rating and Notes form with any existing Review values.
      *
      * @param introductionText Introductory text shown above the fields.
+     * @param notesPrompt Prompt shown in the Notes field.
      * @return Review form content.
      */
-    private VBox createForm(String introductionText) {
+    private VBox createForm(String introductionText, String notesPrompt) {
         Label introduction = new Label(introductionText);
         introduction.getStyleClass().add("form-intro");
         introduction.setWrapText(true);
@@ -112,7 +137,7 @@ final class ReviewDialog<T> extends Dialog<T> {
         Label notesLabel = new Label("Notes");
         notesLabel.getStyleClass().add("form-label");
         notesArea.setId("reviewNotesField");
-        notesArea.setPromptText("What stood out about this trip?");
+        notesArea.setPromptText(notesPrompt);
         notesArea.setPrefRowCount(6);
         notesArea.setWrapText(true);
         notesArea.getStyleClass().addAll("form-field", "review-notes-field");
@@ -240,6 +265,22 @@ final class ReviewDialog<T> extends Dialog<T> {
         return review.isPresent()
                 ? service.setTripReview(trip.id(), review.orElseThrow())
                 : service.removeTripReview(trip.id());
+    }
+
+    /**
+     * Saves or removes a Plan Review according to the submitted form state.
+     *
+     * @param service Application service used to persist the Plan.
+     * @param trip Trip containing the Plan.
+     * @param plan Plan being reviewed.
+     * @param review Submitted Review, or empty to remove it.
+     * @return Updated Plan.
+     */
+    private static Plan savePlanReview(DoggoService service, Trip trip, Plan plan,
+                                       Optional<Review> review) {
+        return review.isPresent()
+                ? service.setPlanReview(trip.id(), plan.id(), review.orElseThrow())
+                : service.removePlanReview(trip.id(), plan.id());
     }
 
     /**

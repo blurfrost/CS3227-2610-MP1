@@ -25,58 +25,49 @@ public final class PlanCell extends ListCell<Plan> {
     private final Label dateLabel = new Label();
     private final Label destinationLabel = new Label();
     private final Label timeLabel = new Label();
-    private final Button editButton = new Button("Edit");
-    private final Button deleteButton = new Button("Delete");
-    private final HBox dateAndTime = new HBox(dateLabel, timeLabel);
+    private final Label reviewCueLabel = new Label();
+    private final Button detailsButton = new Button("Details");
+    private final HBox dateAndTime = new HBox(dateLabel, timeLabel, reviewCueLabel);
     private final VBox details = new VBox(dateAndTime, destinationLabel);
-    private final HBox actions = new HBox(editButton, deleteButton);
+    private final HBox actions = new HBox(detailsButton);
     private final HBox card = new HBox(details, actions);
-    private final Consumer<Plan> editHandler;
-    private final Consumer<Plan> deleteHandler;
+    private final Consumer<Plan> detailsHandler;
 
     /**
      * Creates a Plan cell with the shared itinerary card style classes.
      */
     public PlanCell() {
-        this(plan -> { }, plan -> { });
+        this(plan -> { });
     }
 
     /**
-     * Creates a Plan cell that invokes the specified edit handler.
+     * Creates a Plan cell that invokes the specified details handler.
      *
-     * @param editHandler Action invoked with the Plan when Edit is pressed.
+     * @param detailsHandler Action invoked with the Plan when Details is pressed.
      */
-    public PlanCell(Consumer<Plan> editHandler) {
-        this(editHandler, plan -> { });
+    public PlanCell(Consumer<Plan> detailsHandler) {
+        this.detailsHandler = Objects.requireNonNull(detailsHandler);
+        configureCell();
     }
 
     /**
-     * Creates a Plan cell that invokes the specified Edit and Delete handlers.
-     *
-     * @param editHandler Action invoked with the Plan when Edit is pressed.
-     * @param deleteHandler Action invoked with the Plan when Delete is pressed.
+     * Configures the compact Plan cell controls and layout.
      */
-    public PlanCell(Consumer<Plan> editHandler, Consumer<Plan> deleteHandler) {
-        this.editHandler = Objects.requireNonNull(editHandler);
-        this.deleteHandler = Objects.requireNonNull(deleteHandler);
+    private void configureCell() {
         dateLabel.getStyleClass().add("plan-date");
         destinationLabel.getStyleClass().add("plan-destination");
         CompactLabelSupport.configure(destinationLabel);
         timeLabel.getStyleClass().add("plan-time");
-        editButton.getStyleClass().addAll("secondary-button", "plan-edit-button");
-        deleteButton.getStyleClass().addAll("danger-button", "plan-delete-button");
-        editButton.setMinWidth(Region.USE_PREF_SIZE);
-        deleteButton.setMinWidth(Region.USE_PREF_SIZE);
-        editButton.setOnAction(event -> {
+        reviewCueLabel.getStyleClass().add("plan-review-cue");
+        reviewCueLabel.setMinWidth(Region.USE_PREF_SIZE);
+        reviewCueLabel.setMaxWidth(Region.USE_PREF_SIZE);
+        detailsButton.getStyleClass().addAll("secondary-button", "plan-details-button");
+        detailsButton.setAccessibleText("View Plan details");
+        detailsButton.setMinWidth(Region.USE_PREF_SIZE);
+        detailsButton.setOnAction(event -> {
             Plan plan = getItem();
             if (plan != null) {
-                this.editHandler.accept(plan);
-            }
-        });
-        deleteButton.setOnAction(event -> {
-            Plan plan = getItem();
-            if (plan != null) {
-                this.deleteHandler.accept(plan);
+                this.detailsHandler.accept(plan);
             }
         });
         HBox.setHgrow(details, Priority.ALWAYS);
@@ -87,6 +78,7 @@ public final class PlanCell extends ListCell<Plan> {
         card.getStyleClass().add("plan-card");
         card.setAlignment(Pos.CENTER_LEFT);
         details.setSpacing(4);
+        dateAndTime.setAlignment(Pos.BASELINE_LEFT);
         dateAndTime.setSpacing(8);
         CompactCardSupport.bindWidthToCell(card, this);
         setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -108,6 +100,9 @@ public final class PlanCell extends ListCell<Plan> {
         dateLabel.setText(DATE_FORMATTER.format(plan.date()));
         CompactLabelSupport.setText(destinationLabel, plan.destination());
         timeLabel.setText(TIME_FORMATTER.format(plan.time()));
+        reviewCueLabel.setText(ReviewDisplaySupport.formatCue(plan.review()));
+        reviewCueLabel.setVisible(plan.review().isPresent());
+        reviewCueLabel.setManaged(plan.review().isPresent());
         setGraphic(card);
     }
 }

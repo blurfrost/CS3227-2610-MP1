@@ -15,6 +15,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 
@@ -25,6 +26,8 @@ public final class DashboardController {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy");
     private static final DateTimeFormatter DETAIL_DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMMM yyyy");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final String DETAIL_NO_PLANS_MESSAGE = "There are no plans to view.";
+    private static final String DETAIL_SELECTION_MESSAGE = "Select a plan to inspect its details.";
 
     /**
      * Application service used to query Dashboard entries.
@@ -86,16 +89,34 @@ public final class DashboardController {
     private Button editPlanButton;
 
     /**
+     * Button for adding or editing the selected Plan's Review.
+     */
+    @FXML
+    private Button reviewPlanButton;
+
+    /**
      * Button for deleting the selected Plan.
      */
     @FXML
     private Button deletePlanButton;
 
     /**
+     * Selected Plan review card.
+     */
+    @FXML
+    private VBox detailReviewCard;
+
+    /**
      * Selected Plan review label.
      */
     @FXML
     private Label detailReviewLabel;
+
+    /**
+     * Scrollable selected Plan review body.
+     */
+    @FXML
+    private ScrollPane detailReviewScrollPane;
 
     /**
      * Creates a Dashboard controller backed by the specified application service.
@@ -112,6 +133,7 @@ public final class DashboardController {
     @FXML
     private void initialize() {
         planList.setCellFactory(list -> new DashboardEntryCell());
+        ReviewCardSupport.configure(detailReviewCard, detailReviewScrollPane, detailReviewLabel);
         planList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousEntry, selectedEntry) -> showDetails(selectedEntry));
         refresh();
@@ -193,8 +215,15 @@ public final class DashboardController {
         detailContent.setVisible(hasSelection);
         detailContent.setManaged(hasSelection);
         editPlanButton.setDisable(!hasSelection);
+        reviewPlanButton.setDisable(!hasSelection);
         deletePlanButton.setDisable(!hasSelection);
+        boolean hasReview = hasSelection && entry.plan().review().isPresent();
+        detailReviewCard.setVisible(hasReview);
+        detailReviewCard.setManaged(hasReview);
         if (!hasSelection) {
+            detailEmptyState.setText(planList.getItems().isEmpty()
+                    ? DETAIL_NO_PLANS_MESSAGE
+                    : DETAIL_SELECTION_MESSAGE);
             return;
         }
 
@@ -204,7 +233,8 @@ public final class DashboardController {
                 "detail-trip-text", "detail-trip-name-text");
         detailScheduleLabel.setText(plan.date().format(DETAIL_DATE_FORMATTER)
                 + " at " + plan.time().format(TIME_FORMATTER));
-        detailReviewLabel.setText(ReviewDisplaySupport.format(plan.review()));
+        reviewPlanButton.setText(hasReview ? "Edit Review" : "Add Review");
+        detailReviewLabel.setText(hasReview ? ReviewDisplaySupport.format(plan.review()) : "");
     }
 
     /**
@@ -222,6 +252,29 @@ public final class DashboardController {
             PlanCreationDialog dialog = new PlanCreationDialog(service, trip, selectedEntry.plan(),
                     editPlanButton.getScene().getWindow());
             dialog.showAndWait().ifPresent(updatedPlan -> refreshAndSelect(selectedEntry.tripId(), updatedPlan.id()));
+        } catch (RepositoryException exception) {
+            showEditError("The Plan could not be loaded. Check the database and try again.");
+        } catch (IllegalArgumentException exception) {
+            showEditError(exception.getMessage());
+        }
+    }
+
+    /**
+     * Opens the modal form for adding, editing, or removing the selected Plan's Review.
+     */
+    @FXML
+    private void handleReviewPlan() {
+        DashboardEntry selectedEntry = planList.getSelectionModel().getSelectedItem();
+        if (selectedEntry == null) {
+            return;
+        }
+        try {
+            Trip trip = service.getTrip(selectedEntry.tripId())
+                    .orElseThrow(() -> new IllegalArgumentException("Trip not found."));
+            ReviewDialog<Plan> dialog = ReviewDialog.forPlan(service, trip, selectedEntry.plan(),
+                    reviewPlanButton.getScene().getWindow());
+            dialog.showAndWait().ifPresent(updatedPlan ->
+                    refreshAndSelect(selectedEntry.tripId(), updatedPlan.id()));
         } catch (RepositoryException exception) {
             showEditError("The Plan could not be loaded. Check the database and try again.");
         } catch (IllegalArgumentException exception) {

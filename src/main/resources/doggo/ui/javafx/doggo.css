@@ -259,12 +259,14 @@
     -fx-max-width: infinity;
 }
 
-.plan-edit-button {
+.plan-details-button {
     -fx-padding: 7px 11px;
 }
 
-.plan-delete-button {
-    -fx-padding: 7px 11px;
+.plan-review-cue {
+    -fx-text-fill: #b46549;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
 }
 
 .delete-confirmation-text {

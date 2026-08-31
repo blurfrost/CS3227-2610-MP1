@@ -11,11 +11,11 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
- * Maintains the adaptive sizing of a Trip review card.
+ * Maintains the adaptive sizing of a review card.
  */
 final class ReviewCardSupport {
     /**
-     * Maximum height of a Trip review card, including its heading and padding.
+     * Maximum height of a review card, including its heading and padding.
      */
     static final double MAX_CARD_HEIGHT = 200.0;
     private static final double DEFAULT_SCROLL_PANE_CHROME_HEIGHT = 2.0;

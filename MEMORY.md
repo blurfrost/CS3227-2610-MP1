@@ -76,6 +76,11 @@
   empty review cards are hidden, short reviews use content-tight adaptive
   sizing, and long review text scrolls within a 200px capped card that reserves
   Plan space.
+- Plan reviews can be added, edited, or removed from Dashboard and from a
+  reusable Plan details inspector opened by compact Plan cells in Organise and
+  Gallery; cells place a complete rating/status cue after the schedule time
+  while full review text remains in the detail surfaces, and the inspector
+  fits its visible content while resizing after review changes.
 - Plan deletion is available in Dashboard, Organise, and Gallery behind a
   shared confirmation dialog; it removes the Plan review and selects the next
   remaining Plan, falling back to the previous one.

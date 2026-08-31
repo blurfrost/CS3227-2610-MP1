@@ -32,4 +32,23 @@ final class ReviewDisplaySupport {
         value.text().ifPresent(notes -> fields.add("Notes: " + notes));
         return String.join("\n", fields);
     }
+
+    /**
+     * Returns a compact status cue for an optional Review.
+     *
+     * @param review Review to summarize, or empty when none is recorded.
+     * @return Compact Review cue, or an empty string when no Review is recorded.
+     */
+    static String formatCue(Optional<Review> review) {
+        Objects.requireNonNull(review);
+        if (review.isEmpty()) {
+            return "";
+        }
+
+        return review.orElseThrow().rating()
+                .stream()
+                .mapToObj(rating -> rating + "/5 stars")
+                .findFirst()
+                .orElse("Reviewed");
+    }
 }

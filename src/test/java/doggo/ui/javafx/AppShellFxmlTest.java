@@ -90,6 +90,7 @@ class AppShellFxmlTest {
         assertInstanceOf(Button.class, root.lookup("#reviewTripButton"));
         assertInstanceOf(Button.class, root.lookup("#deleteTripButton"));
         assertInstanceOf(Button.class, root.lookup("#editPlanButton"));
+        assertInstanceOf(Button.class, root.lookup("#reviewPlanButton"));
         assertInstanceOf(Button.class, root.lookup("#deletePlanButton"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/DashboardView.fxml"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/OrganiseView.fxml"));
@@ -151,7 +152,7 @@ class AppShellFxmlTest {
     }
 
     @Test
-    void loadDashboard_deleteButton_matchesEditButtonHeight() throws IOException {
+    void loadDashboard_actionButtons_matchHeightsAndReviewCardStartsHidden() throws IOException {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
         service.addPlan(trip.id(), "Night market", LocalDate.of(2027, 1, 5), LocalTime.of(23, 30));
@@ -163,10 +164,48 @@ class AppShellFxmlTest {
         page.layout();
 
         Button editButton = assertInstanceOf(Button.class, page.lookup("#editPlanButton"));
+        Button reviewButton = assertInstanceOf(Button.class, page.lookup("#reviewPlanButton"));
         Button deleteButton = assertInstanceOf(Button.class, page.lookup("#deletePlanButton"));
-        Label detailReviewLabel = assertInstanceOf(Label.class, page.lookup("#detailReviewLabel"));
+        VBox reviewCard = assertInstanceOf(VBox.class, page.lookup("#detailReviewCard"));
+        Label detailReviewLabel = getReviewLabel(getReviewScrollPane(page));
         assertEquals(editButton.getHeight(), deleteButton.getHeight(), 0.01);
+        assertEquals(editButton.getHeight(), reviewButton.getHeight(), 0.01);
         assertEquals(Region.USE_PREF_SIZE, detailReviewLabel.getMinHeight());
+        assertFalse(reviewCard.isVisible());
+        assertFalse(reviewCard.isManaged());
+    }
+
+    @Test
+    void loadDashboard_withoutPlans_displaysNoPlansDetailMessage() throws IOException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        VBox page = loadView("DashboardView.fxml", service);
+
+        Label panelSubtitle = assertInstanceOf(Label.class,
+                page.lookup(".dashboard-list-panel .panel-subtitle"));
+        Label detailEmptyState = assertInstanceOf(Label.class, page.lookup("#detailEmptyState"));
+
+        assertEquals("Select a plan to see its details.", panelSubtitle.getText());
+        assertEquals("There are no plans to view.", detailEmptyState.getText());
+        assertTrue(detailEmptyState.isVisible());
+        assertTrue(detailEmptyState.isManaged());
+    }
+
+    @Test
+    void loadDashboard_reviewedPlan_showsReviewActionAndCard() throws IOException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
+        Plan plan = service.addPlan(trip.id(), "Night market", LocalDate.of(2027, 1, 5), LocalTime.of(23, 30));
+        service.setPlanReview(trip.id(), plan.id(), new Review(OptionalInt.of(4), Optional.of("Memorable.")));
+
+        VBox page = loadView("DashboardView.fxml", service);
+        Button reviewButton = assertInstanceOf(Button.class, page.lookup("#reviewPlanButton"));
+        VBox reviewCard = assertInstanceOf(VBox.class, page.lookup("#detailReviewCard"));
+        Label reviewLabel = getReviewLabel(getReviewScrollPane(page));
+
+        assertEquals("Edit Review", reviewButton.getText());
+        assertTrue(reviewCard.isVisible());
+        assertTrue(reviewCard.isManaged());
+        assertEquals("Rating: 4/5\nNotes: Memorable.", reviewLabel.getText());
     }
 
     @Test
@@ -483,7 +522,7 @@ class AppShellFxmlTest {
     }
 
     @Test
-    void updatePlanCell_planWithYear_rendersFullDateAndTime() {
+    void updatePlanCell_planWithYear_rendersFullDateAndCompactActions() {
         Plan plan = new Plan(UUID.randomUUID(), "Night market", LocalDate.of(2026, 8, 30),
                 LocalTime.of(23, 30));
         PlanCell cell = new PlanCell();
@@ -494,16 +533,20 @@ class AppShellFxmlTest {
         VBox details = assertInstanceOf(VBox.class, card.getChildren().getFirst());
         HBox dateAndTime = assertInstanceOf(HBox.class, details.getChildren().getFirst());
         Label dateLabel = assertInstanceOf(Label.class, dateAndTime.getChildren().getFirst());
-        Label timeLabel = assertInstanceOf(Label.class, dateAndTime.getChildren().getLast());
+        Label timeLabel = assertInstanceOf(Label.class, dateAndTime.getChildren().get(1));
+        Label reviewCue = assertInstanceOf(Label.class, dateAndTime.getChildren().getLast());
         Label destinationLabel = assertInstanceOf(Label.class, details.getChildren().getLast());
         assertEquals("30 Aug 2026 (Sun)", dateLabel.getText());
         assertEquals("23:30", timeLabel.getText());
+        assertEquals(3, dateAndTime.getChildren().size());
+        assertFalse(reviewCue.isVisible());
+        assertFalse(reviewCue.isManaged());
         assertEquals(plan.destination(), destinationLabel.getTooltip().getText());
         assertFalse(destinationLabel.isWrapText());
         assertEquals(OverrunStyle.ELLIPSIS, destinationLabel.getTextOverrun());
         HBox actions = assertInstanceOf(HBox.class, card.getChildren().getLast());
-        assertEquals("Edit", assertInstanceOf(Button.class, actions.getChildren().getFirst()).getText());
-        assertEquals("Delete", assertInstanceOf(Button.class, actions.getChildren().getLast()).getText());
+        assertEquals("Details", assertInstanceOf(Button.class, actions.getChildren().getFirst()).getText());
+        assertEquals(1, actions.getChildren().size());
     }
 
     @Test
@@ -622,7 +665,7 @@ class AppShellFxmlTest {
     }
 
     @Test
-    void editPlanCell_editButton_invokesHandlerWithRenderedPlan() {
+    void planCell_detailsButton_invokesHandlerWithRenderedPlan() {
         Plan plan = new Plan(UUID.randomUUID(), "Night market", LocalDate.of(2026, 8, 30),
                 LocalTime.of(23, 30));
         AtomicReference<Plan> editedPlan = new AtomicReference<>();
@@ -630,30 +673,166 @@ class AppShellFxmlTest {
 
         cell.updateItem(plan, false);
 
-        Button editButton = assertInstanceOf(Button.class,
+        Button detailsButton = assertInstanceOf(Button.class,
                 assertInstanceOf(HBox.class,
                         assertInstanceOf(HBox.class, cell.getGraphic()).getChildren().getLast())
                         .getChildren().getFirst());
-        editButton.fire();
+        detailsButton.fire();
 
         assertSame(plan, editedPlan.get());
     }
 
     @Test
-    void planCell_deleteButton_invokesHandlerWithRenderedPlan() {
+    void planCell_reviewCue_displaysRatingWithoutExpandingCell() {
         Plan plan = new Plan(UUID.randomUUID(), "Night market", LocalDate.of(2026, 8, 30),
                 LocalTime.of(23, 30));
-        AtomicReference<Plan> deletedPlan = new AtomicReference<>();
-        PlanCell cell = new PlanCell(planToEdit -> { }, deletedPlan::set);
+        Plan reviewedPlan = plan.withReview(new Review(OptionalInt.of(4), Optional.empty()));
+        PlanCell cell = new PlanCell();
 
-        cell.updateItem(plan, false);
+        cell.updateItem(reviewedPlan, false);
 
         HBox card = assertInstanceOf(HBox.class, cell.getGraphic());
-        HBox actions = assertInstanceOf(HBox.class, card.getChildren().getLast());
-        Button deleteButton = assertInstanceOf(Button.class, actions.getChildren().getLast());
-        deleteButton.fire();
+        HBox dateAndTime = assertInstanceOf(HBox.class,
+                assertInstanceOf(VBox.class, card.getChildren().getFirst()).getChildren().getFirst());
+        Label reviewCue = assertInstanceOf(Label.class, dateAndTime.getChildren().getLast());
+        assertEquals("4/5 stars", reviewCue.getText());
+        assertTrue(reviewCue.isVisible());
+        assertTrue(reviewCue.isManaged());
+        assertEquals(Region.USE_PREF_SIZE, reviewCue.getMinWidth());
+        assertEquals(Region.USE_PREF_SIZE, reviewCue.getMaxWidth());
+        assertEquals("Details", assertInstanceOf(Button.class,
+                assertInstanceOf(HBox.class, card.getChildren().getLast()).getChildren().getFirst()).getText());
+    }
 
-        assertSame(plan, deletedPlan.get());
+    @Test
+    void planCell_reviewCue_displaysReviewedForNotesOnly() {
+        Plan plan = new Plan(UUID.randomUUID(), "Night market", LocalDate.of(2026, 8, 30),
+                LocalTime.of(23, 30));
+        Plan reviewedPlan = plan.withReview(new Review(OptionalInt.empty(), Optional.of("Memorable.")));
+        PlanCell cell = new PlanCell();
+
+        cell.updateItem(reviewedPlan, false);
+
+        HBox card = assertInstanceOf(HBox.class, cell.getGraphic());
+        HBox dateAndTime = assertInstanceOf(HBox.class,
+                assertInstanceOf(VBox.class, card.getChildren().getFirst()).getChildren().getFirst());
+        Label reviewCue = assertInstanceOf(Label.class, dateAndTime.getChildren().getLast());
+        assertEquals("Reviewed", reviewCue.getText());
+        assertFalse(reviewCue.isTextTruncated());
+    }
+
+    @Test
+    void loadTripViews_longPlanNames_preserveReviewCueAndDetailsButton() throws IOException {
+        String destination = "W".repeat(Plan.MAX_DESTINATION_LENGTH);
+        for (String viewName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = viewName.startsWith("Organise")
+                    ? LocalDate.of(2027, 1, 5)
+                    : LocalDate.of(2027, 1, 1);
+            Trip trip = service.createTrip("Japan", tripDate, tripDate);
+            Plan plan = service.addPlan(trip.id(), destination, tripDate, LocalTime.of(9, 0));
+            service.setPlanReview(trip.id(), plan.id(), new Review(OptionalInt.of(4), Optional.empty()));
+
+            VBox page = loadView(viewName, service);
+            page.resize(722, 600);
+            Scene scene = new Scene(page, 722, 600);
+            scene.getRoot().applyCss();
+            page.layout();
+            page.layout();
+
+            ListView<?> planList = assertInstanceOf(ListView.class, page.lookup("#planList"));
+            ListCell<?> cell = assertInstanceOf(ListCell.class, planList.lookup(".list-cell"));
+            HBox card = assertInstanceOf(HBox.class, cell.getGraphic());
+            VBox details = assertInstanceOf(VBox.class, card.getChildren().getFirst());
+            HBox dateAndTime = assertInstanceOf(HBox.class, details.getChildren().getFirst());
+            Label destinationLabel = assertInstanceOf(Label.class, details.getChildren().getLast());
+            Label reviewCue = assertInstanceOf(Label.class, dateAndTime.getChildren().getLast());
+            Button detailsButton = assertInstanceOf(Button.class,
+                    assertInstanceOf(HBox.class, card.getChildren().getLast()).getChildren().getFirst());
+
+            assertTrue(destinationLabel.isTextTruncated());
+            assertEquals("4/5 stars", reviewCue.getText());
+            assertFalse(reviewCue.isTextTruncated());
+            assertFalse(detailsButton.isTextTruncated());
+            assertHorizontalScrollbarHidden(planList);
+        }
+    }
+
+    @Test
+    void planDetailsDialog_reviewedPlan_displaysManagementActionsAndReview()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
+        Plan plan = service.addPlan(trip.id(), "Night market", LocalDate.of(2027, 1, 5), LocalTime.of(23, 30));
+        Plan reviewedPlan = service.setPlanReview(trip.id(), plan.id(),
+                new Review(OptionalInt.of(4), Optional.of("Memorable.")));
+        FutureTask<PlanDetailsState> dialogTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            PlanDetailsDialog dialog = new PlanDetailsDialog(service, trip, reviewedPlan, owner);
+            VBox content = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            Button editButton = assertInstanceOf(Button.class, content.lookup("#planEditButton"));
+            Button reviewButton = assertInstanceOf(Button.class, content.lookup("#planReviewButton"));
+            Button deleteButton = assertInstanceOf(Button.class, content.lookup("#planDeleteButton"));
+            VBox reviewCard = assertInstanceOf(VBox.class, content.lookup(".review-card"));
+            ScrollPane reviewScrollPane = assertInstanceOf(ScrollPane.class,
+                    content.lookup(".review-scroll-pane"));
+            Label reviewLabel = assertInstanceOf(Label.class, reviewScrollPane.getContent());
+            return new PlanDetailsState(dialog.getTitle(), editButton.getText(), reviewButton.getText(),
+                    deleteButton.getText(), reviewCard.isVisible(), reviewLabel.getText(), dialog.isResizable());
+        });
+        Platform.runLater(dialogTask);
+
+        PlanDetailsState state = dialogTask.get(5, TimeUnit.SECONDS);
+        assertEquals("Plan details", state.title());
+        assertEquals("Edit plan", state.editText());
+        assertEquals("Edit Review", state.reviewText());
+        assertEquals("Delete plan", state.deleteText());
+        assertTrue(state.reviewVisible());
+        assertEquals("Rating: 4/5\nNotes: Memorable.", state.reviewTextContent());
+        assertTrue(state.resizable());
+    }
+
+    @Test
+    void planDetailsDialog_openingHeight_matchesVisibleContent()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
+        Plan plan = service.addPlan(trip.id(), "Night market", LocalDate.of(2027, 1, 5), LocalTime.of(23, 30));
+        Plan reviewedPlan = service.setPlanReview(trip.id(), plan.id(),
+                new Review(OptionalInt.of(4), Optional.of("Memorable.")));
+        AtomicReference<PlanDetailsDialog> compactDialog = new AtomicReference<>();
+        AtomicReference<PlanDetailsDialog> reviewedDialog = new AtomicReference<>();
+        AtomicReference<Stage> ownerStage = new AtomicReference<>();
+        FutureTask<Void> showTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            owner.show();
+            ownerStage.set(owner);
+            compactDialog.set(new PlanDetailsDialog(service, trip, plan, owner));
+            reviewedDialog.set(new PlanDetailsDialog(service, trip, reviewedPlan, owner));
+            compactDialog.get().show();
+            reviewedDialog.get().show();
+            return null;
+        });
+        Platform.runLater(showTask);
+        showTask.get(5, TimeUnit.SECONDS);
+
+        FutureTask<PlanDialogHeights> captureTask = new FutureTask<>(() -> {
+            double compactHeight = getDialogStage(compactDialog.get()).getHeight();
+            double reviewedHeight = getDialogStage(reviewedDialog.get()).getHeight();
+            compactDialog.get().close();
+            reviewedDialog.get().close();
+            ownerStage.get().close();
+            return new PlanDialogHeights(compactHeight, reviewedHeight);
+        });
+        Platform.runLater(captureTask);
+
+        PlanDialogHeights heights = captureTask.get(5, TimeUnit.SECONDS);
+        assertTrue(heights.compactHeight() < 520,
+                () -> "Expected compact dialog below the old fixed height, got " + heights.compactHeight());
+        assertTrue(heights.reviewedHeight() > heights.compactHeight(),
+                () -> "Expected reviewed dialog to be taller: " + heights);
     }
 
     @Test
@@ -933,6 +1112,67 @@ class AppShellFxmlTest {
     }
 
     @Test
+    void planReviewDialog_submitRatingAndNotes_persistsCombinedReview()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Senso-ji Temple", LocalDate.of(2027, 1, 6),
+                LocalTime.of(9, 30));
+        FutureTask<Review> saveTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            ReviewDialog<Plan> dialog = ReviewDialog.forPlan(service, trip, plan, owner);
+            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton3")).fire();
+            assertInstanceOf(TextArea.class, form.lookup("#reviewNotesField"))
+                    .setText("  A memorable stop.  ");
+            assertInstanceOf(Button.class,
+                    dialog.getDialogPane().lookupButton(dialog.getDialogPane().getButtonTypes().getFirst())).fire();
+            return service.getTrip(trip.id()).orElseThrow().plans().getFirst().review().orElseThrow();
+        });
+        Platform.runLater(saveTask);
+
+        Review savedReview = saveTask.get(5, TimeUnit.SECONDS);
+        assertEquals(OptionalInt.of(3), savedReview.rating());
+        assertEquals(Optional.of("A memorable stop."), savedReview.text());
+    }
+
+    @Test
+    void planReviewDialog_existingReview_prefillsAndAllowsRemoval()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Senso-ji Temple", LocalDate.of(2027, 1, 6),
+                LocalTime.of(9, 30));
+        Plan reviewedPlan = service.setPlanReview(trip.id(), plan.id(),
+                new Review(OptionalInt.of(4), Optional.of("A memorable stop.")));
+        FutureTask<ReviewRemovalState> removalTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            ReviewDialog<Plan> dialog = ReviewDialog.forPlan(service, trip, reviewedPlan, owner);
+            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            ToggleButton ratingButton = assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton4"));
+            TextArea notesArea = assertInstanceOf(TextArea.class, form.lookup("#reviewNotesField"));
+            boolean wasRatingSelected = ratingButton.isSelected();
+            String existingNotes = notesArea.getText();
+            ratingButton.fire();
+            notesArea.clear();
+            assertInstanceOf(Button.class,
+                    dialog.getDialogPane().lookupButton(dialog.getDialogPane().getButtonTypes().getFirst())).fire();
+            boolean isReviewPresent = service.getTrip(trip.id()).orElseThrow().plans().getFirst().review().isPresent();
+            return new ReviewRemovalState(wasRatingSelected, existingNotes,
+                    ratingButton.isSelected(), isReviewPresent);
+        });
+        Platform.runLater(removalTask);
+
+        ReviewRemovalState state = removalTask.get(5, TimeUnit.SECONDS);
+        assertTrue(state.wasRatingSelected());
+        assertEquals("A memorable stop.", state.existingNotes());
+        assertFalse(state.isRatingSelectedAfterClick());
+        assertFalse(state.isReviewPresentAfterSave());
+    }
+
+    @Test
     void dialogWindowSupport_setsOpeningDimensionsAsMinimums()
             throws InterruptedException, ExecutionException, TimeoutException {
         FutureTask<DialogSize> dialogTask = new FutureTask<>(() -> {
@@ -1111,6 +1351,17 @@ class AppShellFxmlTest {
 
     private record ReviewRemovalState(boolean wasRatingSelected, String existingNotes,
                                       boolean isRatingSelectedAfterClick, boolean isReviewPresentAfterSave) {
+    }
+
+    private record PlanDetailsState(String title, String editText, String reviewText, String deleteText,
+                                    boolean reviewVisible, String reviewTextContent, boolean resizable) {
+    }
+
+    private record PlanDialogHeights(double compactHeight, double reviewedHeight) {
+    }
+
+    private static Stage getDialogStage(PlanDetailsDialog dialog) {
+        return (Stage) dialog.getDialogPane().getScene().getWindow();
     }
 
     private static FXMLLoader createAppShellLoader(DoggoService service) {
@@ -1297,12 +1548,9 @@ class AppShellFxmlTest {
         assertEquals(expectedDestination, destinationLabel.getTooltip().getText());
         assertTrue(destinationLabel.isTextTruncated());
         HBox actions = assertInstanceOf(HBox.class, card.getChildren().getLast());
-        Button editButton = assertInstanceOf(Button.class, actions.getChildren().getFirst());
-        Button deleteButton = assertInstanceOf(Button.class, actions.getChildren().getLast());
-        assertEquals("Edit", editButton.getText());
-        assertEquals("Delete", deleteButton.getText());
-        assertFalse(editButton.isTextTruncated());
-        assertFalse(deleteButton.isTextTruncated());
+        Button detailsButton = assertInstanceOf(Button.class, actions.getChildren().getFirst());
+        assertEquals("Details", detailsButton.getText());
+        assertFalse(detailsButton.isTextTruncated());
         assertEquals(actions.prefWidth(-1), actions.getWidth(), 0.01);
         assertTrue(card.getWidth() <= planList.getWidth(),
                 () -> "cardWidth=" + card.getWidth() + ", listWidth=" + planList.getWidth()

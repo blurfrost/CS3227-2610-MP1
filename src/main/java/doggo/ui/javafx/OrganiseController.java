@@ -162,7 +162,7 @@ public final class OrganiseController {
     @FXML
     private void initialize() {
         tripList.setCellFactory(list -> new TripCell());
-        planList.setCellFactory(list -> new PlanCell(this::handleEditPlan, this::handleDeletePlan));
+        planList.setCellFactory(list -> new PlanCell(this::handlePlanDetails));
         ReviewCardSupport.configure(detailReviewCard, detailReviewScrollPane, detailReviewLabel);
         tripList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousTrip, selectedTrip) -> showDetails(selectedTrip));
@@ -265,43 +265,37 @@ public final class OrganiseController {
     }
 
     /**
-     * Opens the modal form for editing a Plan in the selected Trip.
+     * Opens the Plan inspector for a Plan in the selected Trip.
      *
-     * @param plan Plan selected for editing.
+     * @param plan Plan selected for inspection.
      */
-    private void handleEditPlan(Plan plan) {
-        Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
-        if (selectedTrip == null) {
-            return;
-        }
-        PlanCreationDialog dialog = new PlanCreationDialog(service, selectedTrip, plan,
-                addPlanButton.getScene().getWindow());
-        dialog.showAndWait().ifPresent(updatedPlan -> refreshAndSelect(selectedTrip.id(), updatedPlan.id()));
-    }
-
-    /**
-     * Opens a confirmation dialog and deletes a Plan from the selected Trip.
-     *
-     * @param plan Plan selected for deletion.
-     */
-    private void handleDeletePlan(Plan plan) {
+    private void handlePlanDetails(Plan plan) {
         Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
         int deletedIndex = planList.getItems().indexOf(plan);
         if (selectedTrip == null || deletedIndex < 0) {
             return;
         }
         Plan replacementPlan = findAdjacentPlan(planList.getItems(), deletedIndex);
-        if (!DeletionConfirmationDialog.confirmPlan(plan, selectedTrip.title(),
-                addPlanButton.getScene().getWindow())) {
-            return;
+        PlanDetailsDialog dialog = new PlanDetailsDialog(service, selectedTrip, plan,
+                planList.getScene().getWindow());
+        dialog.showAndWait().ifPresent(result -> refreshAndSelect(selectedTrip.id(),
+                result.isDeleted() && replacementPlan != null ? replacementPlan.id() : result.planId()));
+    }
+
+    /**
+     * Returns the next Plan after the specified row, or the previous Plan when it was last.
+     *
+     * @param plans Plans containing the selected row.
+     * @param selectedIndex Selected row index.
+     * @return Replacement Plan, or null when no other Plan exists.
+     */
+    private static Plan findAdjacentPlan(List<Plan> plans, int selectedIndex) {
+        if (plans.size() <= 1) {
+            return null;
         }
-        try {
-            service.deletePlan(selectedTrip.id(), plan.id());
-            refreshAndSelect(selectedTrip.id(), replacementPlan == null ? null : replacementPlan.id());
-        } catch (RepositoryException | IllegalArgumentException exception) {
-            refreshAndSelect(selectedTrip.id());
-            showDeleteError(exception.getMessage());
-        }
+        return selectedIndex + 1 < plans.size()
+                ? plans.get(selectedIndex + 1)
+                : plans.get(selectedIndex - 1);
     }
 
     /**
@@ -326,22 +320,6 @@ public final class OrganiseController {
             refreshAndSelect(selectedTrip.id());
             showTripDeleteError(exception.getMessage());
         }
-    }
-
-    /**
-     * Returns the next Plan after the deleted row, or the previous Plan when it was last.
-     *
-     * @param plans Plans containing the deleted row.
-     * @param deletedIndex Index of the deleted row.
-     * @return Replacement Plan, or null when no Plans remain.
-     */
-    private static Plan findAdjacentPlan(List<Plan> plans, int deletedIndex) {
-        if (plans.size() <= 1) {
-            return null;
-        }
-        return deletedIndex + 1 < plans.size()
-                ? plans.get(deletedIndex + 1)
-                : plans.get(deletedIndex - 1);
     }
 
     /**
@@ -504,19 +482,6 @@ public final class OrganiseController {
         alert.setTitle("Organise unavailable");
         alert.setHeaderText("Your trips could not be loaded.");
         alert.setContentText("Check that the database is accessible, then try again.");
-        alert.showAndWait();
-    }
-
-    /**
-     * Shows an actionable error when a Plan cannot be deleted.
-     *
-     * @param message Error message to display.
-     */
-    private static void showDeleteError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Plan unavailable");
-        alert.setHeaderText("The selected Plan could not be deleted.");
-        alert.setContentText(message == null ? "Check that the database is accessible, then try again." : message);
         alert.showAndWait();
     }
 
