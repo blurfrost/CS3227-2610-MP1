@@ -59,8 +59,8 @@
                 <Label fx:id="detailSummaryLabel" styleClass="panel-subtitle" text="Trip summary"
                        wrapText="true" />
                 <HBox spacing="8.0">
-                    <Button disable="true" mnemonicParsing="false" styleClass="secondary-button"
-                            text="Edit trip" />
+                    <Button fx:id="editTripButton" disable="true" mnemonicParsing="false"
+                            onAction="#handleEditTrip" styleClass="secondary-button" text="Edit trip" />
                     <Button fx:id="addPlanButton" disable="true" mnemonicParsing="false"
                             onAction="#handleAddPlan" styleClass="primary-button"
                             text="+  Add plan" />

@@ -1,10 +1,13 @@
 package doggo.ui.javafx;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import doggo.application.DoggoService;
 import doggo.application.RepositoryException;
+import doggo.domain.Plan;
 import doggo.domain.Trip;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -12,6 +15,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.DateCell;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
@@ -24,13 +28,14 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 
 /**
- * Displays a modal form for creating a Trip.
+ * Displays a modal form for creating or editing a Trip.
  */
 final class TripCreationDialog extends Dialog<Trip> {
-    private static final ButtonType CREATE_BUTTON_TYPE = new ButtonType(
-            "Create trip", ButtonBar.ButtonData.OK_DONE);
-
     private final DoggoService service;
+    private final Optional<Trip> tripBeingEdited;
+    private final LocalDate earliestPlanDate;
+    private final LocalDate latestPlanDate;
+    private final ButtonType submitButtonType;
     private final TextField titleField = new TextField();
     private final DatePicker startDatePicker = new DatePicker();
     private final DatePicker endDatePicker = new DatePicker();
@@ -44,23 +49,51 @@ final class TripCreationDialog extends Dialog<Trip> {
      * @param owner Window that owns this dialog.
      */
     TripCreationDialog(DoggoService service, Window owner) {
+        this(service, Optional.empty(), owner);
+    }
+
+    /**
+     * Creates a modal Trip form for editing the specified Trip.
+     *
+     * @param service Application service used to update the Trip.
+     * @param trip Trip being edited.
+     * @param owner Window that owns this dialog.
+     */
+    TripCreationDialog(DoggoService service, Trip trip, Window owner) {
+        this(service, Optional.of(Objects.requireNonNull(trip)), owner);
+    }
+
+    /**
+     * Creates a modal Trip form in the specified mode.
+     *
+     * @param service Application service used to persist the Trip.
+     * @param tripBeingEdited Trip being edited, or empty for creation.
+     * @param owner Window that owns this dialog.
+     */
+    private TripCreationDialog(DoggoService service, Optional<Trip> tripBeingEdited, Window owner) {
         this.service = Objects.requireNonNull(service);
+        this.tripBeingEdited = Objects.requireNonNull(tripBeingEdited);
+        List<Plan> plans = tripBeingEdited.map(Trip::plans).orElse(List.of());
+        earliestPlanDate = plans.stream().map(Plan::date).min(LocalDate::compareTo).orElse(null);
+        latestPlanDate = plans.stream().map(Plan::date).max(LocalDate::compareTo).orElse(null);
+        submitButtonType = new ButtonType(tripBeingEdited.isPresent() ? "Save changes" : "Create trip",
+                ButtonBar.ButtonData.OK_DONE);
         initOwner(Objects.requireNonNull(owner));
         initModality(javafx.stage.Modality.WINDOW_MODAL);
-        setTitle("Create a trip");
+        setTitle(tripBeingEdited.isPresent() ? "Edit trip" : "Create a trip");
 
         DialogPane dialogPane = getDialogPane();
-        dialogPane.getButtonTypes().addAll(CREATE_BUTTON_TYPE, ButtonType.CANCEL);
+        dialogPane.getButtonTypes().addAll(submitButtonType, ButtonType.CANCEL);
         dialogPane.setContent(createForm());
         dialogPane.getStylesheets().add(
                 Objects.requireNonNull(TripCreationDialog.class.getResource("doggo.css")).toExternalForm());
 
-        Button createButton = (Button) dialogPane.lookupButton(CREATE_BUTTON_TYPE);
-        createButton.setDefaultButton(true);
-        createButton.addEventFilter(ActionEvent.ACTION, this::handleCreate);
-        setResultConverter(buttonType -> buttonType == CREATE_BUTTON_TYPE ? createdTrip : null);
+        Button submitButton = (Button) dialogPane.lookupButton(submitButtonType);
+        submitButton.setDefaultButton(true);
+        submitButton.addEventFilter(ActionEvent.ACTION, this::handleSubmit);
+        setResultConverter(buttonType -> buttonType == submitButtonType ? createdTrip : null);
         DialogWindowSupport.enableExpandOnly(this, titleField);
-        updateValidation(createButton);
+        updateValidation(submitButton);
     }
 
     /**
@@ -71,8 +104,17 @@ final class TripCreationDialog extends Dialog<Trip> {
     private VBox createForm() {
         LocalDate currentDate = service.getCurrentDate();
         titleField.setPromptText("e.g. A week in Japan");
-        startDatePicker.setValue(currentDate);
-        endDatePicker.setValue(currentDate);
+        if (tripBeingEdited.isPresent()) {
+            Trip trip = tripBeingEdited.get();
+            titleField.setText(trip.title());
+            startDatePicker.setValue(trip.startDate());
+            endDatePicker.setValue(trip.endDate());
+        } else {
+            startDatePicker.setValue(currentDate);
+            endDatePicker.setValue(currentDate);
+        }
+        startDatePicker.setDayCellFactory(picker -> createDateCell(earliestPlanDate, true));
+        endDatePicker.setDayCellFactory(picker -> createDateCell(latestPlanDate, false));
         titleField.getStyleClass().add("form-field");
         startDatePicker.getStyleClass().add("form-field");
         endDatePicker.getStyleClass().add("form-field");
@@ -96,12 +138,35 @@ final class TripCreationDialog extends Dialog<Trip> {
         startDatePicker.valueProperty().addListener((observable, oldValue, newValue) -> updateValidation());
         endDatePicker.valueProperty().addListener((observable, oldValue, newValue) -> updateValidation());
 
-        Label introduction = new Label("Give your next journey a name and a date range to get started.");
+        String introductionText = tripBeingEdited.isPresent()
+                ? "Update your journey's name and date range."
+                : "Give your next journey a name and a date range to get started.";
+        Label introduction = new Label(introductionText);
         introduction.getStyleClass().add("form-intro");
         VBox form = new VBox(10, introduction, fields, validationLabel);
         form.getStyleClass().add("trip-form");
         form.setPadding(new Insets(8, 10, 4, 10));
         return form;
+    }
+
+    /**
+     * Creates a date cell that prevents an edited Trip from excluding Plans.
+     *
+     * @param boundaryDate Plan boundary that the selected date must include.
+     * @param isStartDate Whether the cell belongs to the start-date picker.
+     * @return Configured date cell.
+     */
+    private static DateCell createDateCell(LocalDate boundaryDate, boolean isStartDate) {
+        return new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean isEmpty) {
+                super.updateItem(date, isEmpty);
+                boolean excludesPlan = boundaryDate != null && (isStartDate
+                        ? date != null && date.isAfter(boundaryDate)
+                        : date != null && date.isBefore(boundaryDate));
+                setDisable(isEmpty || excludesPlan);
+            }
+        };
     }
 
     /**
@@ -130,23 +195,23 @@ final class TripCreationDialog extends Dialog<Trip> {
      * Validates the form and updates the Create button state.
      */
     private void updateValidation() {
-        Button createButton = (Button) getDialogPane().lookupButton(CREATE_BUTTON_TYPE);
-        if (createButton != null) {
-            updateValidation(createButton);
+        Button submitButton = (Button) getDialogPane().lookupButton(submitButtonType);
+        if (submitButton != null) {
+            updateValidation(submitButton);
         }
     }
 
     /**
      * Updates validation feedback and the enabled state of the Create button.
      *
-     * @param createButton Create button to update.
+     * @param submitButton Submit button to update.
      */
-    private void updateValidation(Button createButton) {
+    private void updateValidation(Button submitButton) {
         String validationMessage = getValidationMessage();
         validationLabel.setText(validationMessage);
         validationLabel.setVisible(!validationMessage.isEmpty());
         validationLabel.setManaged(!validationMessage.isEmpty());
-        createButton.setDisable(!validationMessage.isEmpty());
+        submitButton.setDisable(!validationMessage.isEmpty());
     }
 
     /**
@@ -156,15 +221,16 @@ final class TripCreationDialog extends Dialog<Trip> {
      */
     private String getValidationMessage() {
         return TripFormValidator.validate(titleField.getText(), startDatePicker.getValue(),
-                endDatePicker.getValue());
+                endDatePicker.getValue(), earliestPlanDate, latestPlanDate,
+                tripBeingEdited.map(Trip::title).orElse(null));
     }
 
     /**
-     * Creates the Trip when the form is valid, or keeps the dialog open on failure.
+     * Creates or updates the Trip when the form is valid, or keeps the dialog open on failure.
      *
-     * @param event Create-button action event.
+     * @param event Submit-button action event.
      */
-    private void handleCreate(ActionEvent event) {
+    private void handleSubmit(ActionEvent event) {
         String validationMessage = getValidationMessage();
         if (!validationMessage.isEmpty()) {
             event.consume();
@@ -172,8 +238,10 @@ final class TripCreationDialog extends Dialog<Trip> {
             return;
         }
         try {
-            createdTrip = service.createTrip(titleField.getText(), startDatePicker.getValue(),
-                    endDatePicker.getValue());
+            createdTrip = tripBeingEdited.isPresent()
+                    ? service.editTrip(tripBeingEdited.get().id(), titleField.getText(), startDatePicker.getValue(),
+                            endDatePicker.getValue())
+                    : service.createTrip(titleField.getText(), startDatePicker.getValue(), endDatePicker.getValue());
         } catch (RepositoryException exception) {
             event.consume();
             validationLabel.setText("The trip could not be saved. Check the database and try again.");

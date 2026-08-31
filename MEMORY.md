@@ -70,6 +70,10 @@
 - Trip creation is available from the persistent sidebar through a modal form
   with a title and inclusive start/end dates; current and future Trips return
   to Organise, while past Trips route to Gallery.
+- Trip editing is available from Organise and Gallery detail panes through the
+  shared expandable Trip dialog; it prepopulates stored fields, preserves
+  reviews, keeps existing Plans inside the edited date range, and routes status
+  changes to the matching view.
 - New Plan dialogs default to the service Clock's current date when it falls
   within the selected Trip, otherwise to the Trip start date; Trip and Plan
   dialogs support expansion while preserving their opening dimensions as

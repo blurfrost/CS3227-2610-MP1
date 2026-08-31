@@ -4,6 +4,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import doggo.application.DoggoService;
 import doggo.application.RepositoryException;
@@ -30,10 +31,21 @@ public final class GalleryController {
     private final DoggoService service;
 
     /**
+     * Handler invoked after a Trip is edited, allowing the shell to route it by status.
+     */
+    private Consumer<Trip> tripEditedHandler = trip -> refreshAndSelect(trip.id());
+
+    /**
      * Button for adding a Plan to the selected Trip.
      */
     @FXML
     private Button addPlanButton;
+
+    /**
+     * Button for editing the selected Trip.
+     */
+    @FXML
+    private Button editTripButton;
 
     /**
      * Completed Trip list.
@@ -108,6 +120,15 @@ public final class GalleryController {
      */
     public GalleryController(DoggoService service) {
         this.service = Objects.requireNonNull(service);
+    }
+
+    /**
+     * Sets the handler invoked after a Trip is edited.
+     *
+     * @param tripEditedHandler Handler that receives the updated Trip.
+     */
+    void setTripEditedHandler(Consumer<Trip> tripEditedHandler) {
+        this.tripEditedHandler = Objects.requireNonNull(tripEditedHandler);
     }
 
     /**
@@ -255,6 +276,7 @@ public final class GalleryController {
         detailContent.setManaged(hasSelection);
         statusLabel.setVisible(hasSelection);
         statusLabel.setManaged(hasSelection);
+        editTripButton.setDisable(!hasSelection);
         addPlanButton.setDisable(!hasSelection);
         if (!hasSelection) {
             return;
@@ -276,6 +298,20 @@ public final class GalleryController {
         boolean isPlanEmpty = plans.isEmpty();
         planEmptyState.setVisible(isPlanEmpty);
         planEmptyState.setManaged(isPlanEmpty);
+    }
+
+    /**
+     * Opens the modal form for editing the selected Trip.
+     */
+    @FXML
+    private void handleEditTrip() {
+        Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
+        if (selectedTrip == null) {
+            return;
+        }
+        TripCreationDialog dialog = new TripCreationDialog(service, selectedTrip,
+                editTripButton.getScene().getWindow());
+        dialog.showAndWait().ifPresent(tripEditedHandler);
     }
 
     /**

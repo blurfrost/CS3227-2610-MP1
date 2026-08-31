@@ -81,6 +81,7 @@ class AppShellFxmlTest {
         assertInstanceOf(AppShellController.class, loader.getController());
         assertFalse(root.getStylesheets().isEmpty());
         assertInstanceOf(Button.class, loader.getNamespace().get("newTripButton"));
+        assertInstanceOf(Button.class, root.lookup("#editTripButton"));
         assertInstanceOf(Button.class, root.lookup("#editPlanButton"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/DashboardView.fxml"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/OrganiseView.fxml"));
@@ -506,6 +507,73 @@ class AppShellFxmlTest {
         assertEquals(LocalDate.of(2027, 1, 7), updatedPlan.date());
         assertEquals(LocalTime.of(10, 15), updatedPlan.time());
         assertEquals(OptionalInt.of(4), updatedPlan.review().orElseThrow().rating());
+    }
+
+    @Test
+    void editTripDialog_prefillsTripFieldsAndUsesSaveAction()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        FutureTask<TripEditDialogState> dialogTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            TripCreationDialog dialog = new TripCreationDialog(service, trip, owner);
+            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            GridPane fields = assertInstanceOf(GridPane.class, form.getChildren().get(1));
+            TextField titleField = assertInstanceOf(TextField.class, fields.getChildren().get(1));
+            DatePicker startDatePicker = assertInstanceOf(DatePicker.class, fields.getChildren().get(3));
+            DatePicker endDatePicker = assertInstanceOf(DatePicker.class, fields.getChildren().get(5));
+            Button submitButton = assertInstanceOf(Button.class,
+                    dialog.getDialogPane().lookupButton(dialog.getDialogPane().getButtonTypes().getFirst()));
+            return new TripEditDialogState(dialog.getTitle(), titleField.getText(), startDatePicker.getValue(),
+                    endDatePicker.getValue(), submitButton.getText());
+        });
+        Platform.runLater(dialogTask);
+
+        TripEditDialogState state = dialogTask.get(5, TimeUnit.SECONDS);
+        assertEquals("Edit trip", state.title());
+        assertEquals(trip.title(), state.tripTitle());
+        assertEquals(trip.startDate(), state.startDate());
+        assertEquals(trip.endDate(), state.endDate());
+        assertEquals("Save changes", state.submitText());
+    }
+
+    @Test
+    void editTripDialog_submit_persistsUpdatedTripAndPreservesReview()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        service.setTripReview(trip.id(), new Review(OptionalInt.of(5), Optional.empty()));
+        FutureTask<Trip> editTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            TripCreationDialog dialog = new TripCreationDialog(service, trip, owner);
+            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            GridPane fields = assertInstanceOf(GridPane.class, form.getChildren().get(1));
+            TextField titleField = assertInstanceOf(TextField.class, fields.getChildren().get(1));
+            DatePicker startDatePicker = assertInstanceOf(DatePicker.class, fields.getChildren().get(3));
+            DatePicker endDatePicker = assertInstanceOf(DatePicker.class, fields.getChildren().get(5));
+            titleField.setText("Korea");
+            startDatePicker.setValue(LocalDate.of(2027, 1, 2));
+            endDatePicker.setValue(LocalDate.of(2027, 1, 10));
+            Button submitButton = assertInstanceOf(Button.class,
+                    dialog.getDialogPane().lookupButton(dialog.getDialogPane().getButtonTypes().getFirst()));
+            submitButton.fire();
+            return service.getTrip(trip.id()).orElseThrow();
+        });
+        Platform.runLater(editTask);
+
+        Trip updatedTrip = editTask.get(5, TimeUnit.SECONDS);
+        assertEquals(trip.id(), updatedTrip.id());
+        assertEquals("Korea", updatedTrip.title());
+        assertEquals(LocalDate.of(2027, 1, 2), updatedTrip.startDate());
+        assertEquals(LocalDate.of(2027, 1, 10), updatedTrip.endDate());
+        assertEquals(OptionalInt.of(5), updatedTrip.review().orElseThrow().rating());
+    }
+
+    private record TripEditDialogState(String title, String tripTitle, LocalDate startDate,
+                                       LocalDate endDate, String submitText) {
     }
 
     private record EditDialogState(String title, String destination, LocalDate date,

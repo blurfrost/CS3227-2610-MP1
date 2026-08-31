@@ -52,6 +52,28 @@ class TripFormValidatorTest {
     }
 
     @Test
+    void validate_startAfterExistingPlan_rejectsInput() {
+        assertEquals("The start date cannot be after an existing plan.",
+                TripFormValidator.validate("Japan", LocalDate.of(2027, 1, 6), END_DATE,
+                        LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 8), "Japan"));
+    }
+
+    @Test
+    void validate_endBeforeExistingPlan_rejectsInput() {
+        assertEquals("The end date cannot be before an existing plan.",
+                TripFormValidator.validate("Japan", START_DATE, LocalDate.of(2027, 1, 7),
+                        LocalDate.of(2027, 1, 6), LocalDate.of(2027, 1, 8), "Japan"));
+    }
+
+    @Test
+    void validate_unchangedLegacyTitle_acceptsInput() {
+        String legacyTitle = "旅".repeat(Trip.MAX_TITLE_LENGTH + 1);
+
+        assertEquals("", TripFormValidator.validate(legacyTitle, START_DATE, END_DATE,
+                null, null, legacyTitle));
+    }
+
+    @Test
     void validate_validFields_acceptsInput() {
         assertEquals("", TripFormValidator.validate("Japan", START_DATE, END_DATE));
     }

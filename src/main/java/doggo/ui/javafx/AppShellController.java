@@ -102,6 +102,8 @@ public final class AppShellController {
     @FXML
     private void initialize() {
         navigationButtons = List.of(dashboardButton, organiseButton, galleryButton);
+        organisePageController.setTripEditedHandler(this::handleEditedTrip);
+        galleryPageController.setTripEditedHandler(this::handleEditedTrip);
         showPage(dashboardPage, dashboardButton);
     }
 
@@ -148,6 +150,15 @@ public final class AppShellController {
      * @param trip Created Trip.
      */
     private void handleCreatedTrip(Trip trip) {
+        handleEditedTrip(trip);
+    }
+
+    /**
+     * Routes an edited Trip to the view matching its resulting status.
+     *
+     * @param trip Updated Trip.
+     */
+    private void handleEditedTrip(Trip trip) {
         if (service.getTripStatus(trip) == TripStatus.PAST) {
             showGalleryForTrip(trip);
             return;
