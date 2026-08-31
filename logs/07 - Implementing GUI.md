@@ -948,118 +948,14 @@ The user requested committing the remaining worktree changes using the SE-EDU Gi
 the completed implementation-plan updates and GUI prompt log; they will be reviewed, included in one documentation
 commit, and left uncommitted only if verification exposes an issue.
 
-## Prompt 110 — Refine Create Trip Button Border and Text
-
-The user reported that the Create Trip button's border did not cleanly wrap its background and requested larger,
-more prominent text. Collapsed JavaFX's default background and border insets for the sidebar button, aligned its
-rounded geometry, increased the font size, and expanded the rendered regression coverage for these properties.
-
-## Prompt 111 — Align Tests with Confirmed Create Trip Styling
-
-The user confirmed that the Create Trip styling is correct and requested updating the tests to match it. Removed the
-test assumptions about a concrete JavaFX border object, and instead asserted the confirmed minimum height, larger
-font, centered alignment, light background, and clean single-layer background configuration without changing CSS.
-
-## Prompt 112 — Commit GUI Changes with Requested Message Prefix
-
-The user requested committing the GUI changes with the SE-EDU Git standard and specified that the commit message
-should begin with “Style Create Trip button”. The GUI files and durable memory will be committed while `docs/`, logs,
-implementation-plan files, and unrelated worktree changes remain uncommitted.
-
 ## Prompt 109 — Emphasize Create Trip Action
 
 The user requested making the sidebar's Create Trip button more prominent than the Dashboard navigation button. Made
 the button taller with a thick terracotta border, a light background, dark text, and centered alignment, and added
 rendered JavaFX coverage for its alignment, relative height, and border thickness.
 
-## Prompt 113 — Locate the Packaged Application Database
+## Prompt 110 — Refine Create Trip Button Border and Text
 
-The user asked where to access the database used when launching the JAR. Confirmed that the JavaFX application opens
-the SQLite file at the relative path `data/doggo.db`, resolved from the process working directory rather than the JAR's
-location. When the JAR is launched from the repository root, the database is the repository's `data/doggo.db`.
-
-## Prompt 114 — Clarify Database Location for a Downloads JAR
-
-The user asked where the database is located when `doggo.jar` is stored in Downloads. Clarified that the relative
-`data/doggo.db` path follows the process working directory: launching after changing into Downloads uses
-`~/Downloads/data/doggo.db`, while invoking the Downloads JAR from another directory uses that other directory's
-`data/doggo.db`. The JAR's storage location alone does not determine the database location.
-
-## Prompt 115 — Assess JAR-Relative Database Storage
-
-The user asked whether doggo can always create and access `data/doggo.db` beside the packaged JAR, independently of
-the launch working directory. Confirmed that this is feasible by resolving the running JAR through its code-source
-location and constructing the database path from the JAR's parent directory. Recommended retaining a development-mode
-fallback for Gradle or IDE execution and noted that the JAR directory must be writable. No production code was changed.
-
-## Prompt 116 — Roll Back JAR-Relative Database Resolution
-
-The user asked to roll back the JAR-relative database-path implementation. Removed the resolver class and its tests,
-restored the original `data/doggo.db` wiring in both application entry points, and removed the empty database created
-by the packaged verification run. Existing unrelated worktree changes and the prior prompt history were preserved.
-
-## Prompt 117 — Create the User Guide
-
-The user requested a complete `UserGuide.md` covering cross-platform setup, Java dependencies, GitHub JAR download and
-launch methods, interface menus, all Trip and Plan workflows, and frequently asked questions. Created the guide at
-`docs/UserGuide.md`, documenting the current JavaFX UI, bundled runtime dependencies, working-directory database path,
-validation rules, status-based navigation, review behavior, deletion consequences, and troubleshooting guidance.
-
-## Prompt 118 — Reflect on AI-Assisted Software Engineering
-
-The user requested a first-person reflection in `docs/Reflections.md` about using AI-assisted software engineering
-throughout doggo's development, informed by the project prompt logs. The reflection follows the requested progression
-from initial planning, through the CLI as a product-discovery tool, into JavaFX, and then examines the skills and
-repeatable workflow used for code quality. It also discusses concrete occasions when AI output exceeded the intended
-scope or required visual review, correction, or rollback; explains how planning, coding agents, subagents, Gradle,
-SQLite tests, JavaFX checks, project memory, and visual diffs served different scopes; and includes four representative
-project prompts with commentary on why they were significant.
-
-## Prompt 119 — Update the Developer Guide
-
-The user requested a current `DeveloperGuide.md` containing a setup guide,
-architecture and design explanation, UML/component/sequence/activity diagrams,
-target-user and value-proposition requirements, prioritized user stories, use
-cases with Main Success Stories and Extensions, non-functional requirements,
-a glossary, and manual-testing instructions for launch/shutdown, Trip
-creation, Plan creation, and saving data. Updated `docs/DeveloperGuide.md` to
-match the implemented JavaFX and CLI system: it documents Java 25.0.3.fx-zulu,
-JavaFX 25.0.3, SQLite JDBC, the Gradle wrapper, the layered architecture with
-repository dependency inversion, current domain rules, status-aware routing,
-and eager persistence. Added Mermaid component, class, startup, Trip/Plan
-mutation sequence, and activity diagrams. The guide marks photo attachments,
-Plan copying, and search/filtering as deferred extensions. No Java production or
-test code was changed; verification and the HEAD-versus-WORKTREE visual diff
-remain to be completed.
-
-## Prompt 120 — Fix the Developer Guide Component Diagram
-
-The user reported a Mermaid parse error in the Developer Guide component
-diagram because class-diagram relationship operators (`*--`, `o--`, and
-`..|>`) had been used inside a `flowchart`. Replaced those relationships with
-valid flowchart arrows and labels for ownership, optional reviews, derived
-status, and repository implementation. The class diagram retains the original
-UML relationship notation. No Java code was changed; the corrected block was
-checked and the HEAD-versus-WORKTREE visual diff was regenerated successfully.
-
-## Prompt 121 — Consider JAR-Based Manual Testing
-
-The user asked whether Section 5 of `docs/DeveloperGuide.md` should use
-`doggo.jar` for manual testing. Recommended using the packaged JAR for release
-acceptance because it verifies the actual deliverable, bundled JavaFX native
-classifiers, startup options, and the working-directory-dependent database
-path. The Gradle `run` task should remain as a faster developer smoke test.
-Suggested structuring Section 5 with the JAR as the primary manual-test path
-and Gradle as an optional source-build path; no Developer Guide change was
-made because the user asked for a recommendation rather than an edit.
-
-## Prompt 122 — Use the Packaged JAR in Manual Testing
-
-The user asked to change Section 5 according to the recommendation to test the
-release artifact. Updated `docs/DeveloperGuide.md` so manual GUI testing first
-builds `doggo.jar` with the Shadow JAR task, launches it with the JavaFX
-native-access option, and explains both repository-root and disposable-working-
-directory database behavior. The launch/shutdown, Trip creation, Plan
-creation, and save/reopen procedures now explicitly use the packaged JAR;
-`./gradlew runCli` remains an optional CLI smoke test and `./gradlew run` is
-identified only as a developer smoke test. No Java source was changed.
+The user reported that the Create Trip button's border did not cleanly wrap its background and requested larger,
+more prominent text. Collapsed JavaFX's default background and border insets for the sidebar button, aligned its
+rounded geometry, increased the font size, and expanded the rendered regression coverage for these properties.
