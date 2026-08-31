@@ -71,6 +71,8 @@
                     <Button fx:id="addPlanButton" disable="true" mnemonicParsing="false"
                             onAction="#handleAddPlan" styleClass="primary-button"
                             text="+  Add plan" />
+                    <Button fx:id="deleteTripButton" disable="true" mnemonicParsing="false"
+                            onAction="#handleDeleteTrip" styleClass="danger-button" text="Delete trip" />
                 </HBox>
                 <Label styleClass="panel-title" text="Itinerary" />
                 <ListView fx:id="planList" styleClass="organise-plan-list" VBox.vgrow="ALWAYS" />

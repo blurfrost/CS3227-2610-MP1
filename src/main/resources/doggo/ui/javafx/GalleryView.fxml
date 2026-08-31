@@ -64,6 +64,8 @@
                     <Button fx:id="addPlanButton" disable="true" mnemonicParsing="false"
                             onAction="#handleAddPlan" styleClass="primary-button"
                             text="+  Add plan" />
+                    <Button fx:id="deleteTripButton" disable="true" mnemonicParsing="false"
+                            onAction="#handleDeleteTrip" styleClass="danger-button" text="Delete trip" />
                 </HBox>
                 <VBox spacing="5.0" styleClass="review-card">
                     <Label styleClass="review-heading" text="Trip review" />

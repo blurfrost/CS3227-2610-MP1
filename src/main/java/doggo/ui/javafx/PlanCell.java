@@ -12,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
@@ -25,16 +26,19 @@ public final class PlanCell extends ListCell<Plan> {
     private final Label destinationLabel = new Label();
     private final Label timeLabel = new Label();
     private final Button editButton = new Button("Edit");
+    private final Button deleteButton = new Button("Delete");
     private final HBox dateAndTime = new HBox(dateLabel, timeLabel);
     private final VBox details = new VBox(dateAndTime, destinationLabel);
-    private final HBox card = new HBox(details, editButton);
+    private final HBox actions = new HBox(editButton, deleteButton);
+    private final HBox card = new HBox(details, actions);
     private final Consumer<Plan> editHandler;
+    private final Consumer<Plan> deleteHandler;
 
     /**
      * Creates a Plan cell with the shared itinerary card style classes.
      */
     public PlanCell() {
-        this(plan -> { });
+        this(plan -> { }, plan -> { });
     }
 
     /**
@@ -43,20 +47,43 @@ public final class PlanCell extends ListCell<Plan> {
      * @param editHandler Action invoked with the Plan when Edit is pressed.
      */
     public PlanCell(Consumer<Plan> editHandler) {
+        this(editHandler, plan -> { });
+    }
+
+    /**
+     * Creates a Plan cell that invokes the specified Edit and Delete handlers.
+     *
+     * @param editHandler Action invoked with the Plan when Edit is pressed.
+     * @param deleteHandler Action invoked with the Plan when Delete is pressed.
+     */
+    public PlanCell(Consumer<Plan> editHandler, Consumer<Plan> deleteHandler) {
         this.editHandler = Objects.requireNonNull(editHandler);
+        this.deleteHandler = Objects.requireNonNull(deleteHandler);
         dateLabel.getStyleClass().add("plan-date");
         destinationLabel.getStyleClass().add("plan-destination");
         CompactLabelSupport.configure(destinationLabel);
         timeLabel.getStyleClass().add("plan-time");
         editButton.getStyleClass().addAll("secondary-button", "plan-edit-button");
+        deleteButton.getStyleClass().addAll("danger-button", "plan-delete-button");
+        editButton.setMinWidth(Region.USE_PREF_SIZE);
+        deleteButton.setMinWidth(Region.USE_PREF_SIZE);
         editButton.setOnAction(event -> {
             Plan plan = getItem();
             if (plan != null) {
                 this.editHandler.accept(plan);
             }
         });
+        deleteButton.setOnAction(event -> {
+            Plan plan = getItem();
+            if (plan != null) {
+                this.deleteHandler.accept(plan);
+            }
+        });
         HBox.setHgrow(details, Priority.ALWAYS);
         details.setMinWidth(0);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+        actions.setSpacing(8);
+        actions.setMinWidth(Region.USE_PREF_SIZE);
         card.getStyleClass().add("plan-card");
         card.setAlignment(Pos.CENTER_LEFT);
         details.setSpacing(4);

@@ -3,6 +3,7 @@ package doggo.ui.javafx;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Objects;
 
 import doggo.application.DoggoService;
 import doggo.application.RepositoryException;
@@ -24,8 +25,6 @@ public final class DoggoApplication extends Application {
     private static final Path DEFAULT_DATABASE_PATH = Path.of("data", "doggo.db");
     private static final double INITIAL_WIDTH = 1180;
     private static final double INITIAL_HEIGHT = 760;
-    private static final double MINIMUM_WIDTH = 960;
-    private static final double MINIMUM_HEIGHT = 640;
 
     /**
      * Application service shared by the JavaFX views.
@@ -57,14 +56,24 @@ public final class DoggoApplication extends Application {
 
         try {
             stage.setTitle("doggo");
-            stage.setMinWidth(MINIMUM_WIDTH);
-            stage.setMinHeight(MINIMUM_HEIGHT);
             stage.setScene(createInitialScene());
             stage.show();
+            setOpeningSizeAsMinimum(stage);
         } catch (IOException exception) {
             showStartupError("The application interface could not be loaded.",
                     "Restart doggo and try again.");
         }
+    }
+
+    /**
+     * Sets the current dimensions of the primary window as its minimum dimensions.
+     *
+     * @param stage Primary window to constrain.
+     */
+    static void setOpeningSizeAsMinimum(Stage stage) {
+        Objects.requireNonNull(stage);
+        stage.setMinWidth(stage.getWidth());
+        stage.setMinHeight(stage.getHeight());
     }
 
     /**

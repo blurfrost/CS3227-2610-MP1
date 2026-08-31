@@ -87,6 +87,12 @@ public final class DashboardController {
     private Button editPlanButton;
 
     /**
+     * Button for deleting the selected Plan.
+     */
+    @FXML
+    private Button deletePlanButton;
+
+    /**
      * Selected Plan review label.
      */
     @FXML
@@ -188,6 +194,7 @@ public final class DashboardController {
         detailContent.setVisible(hasSelection);
         detailContent.setManaged(hasSelection);
         editPlanButton.setDisable(!hasSelection);
+        deletePlanButton.setDisable(!hasSelection);
         if (!hasSelection) {
             return;
         }
@@ -220,6 +227,50 @@ public final class DashboardController {
         } catch (IllegalArgumentException exception) {
             showEditError(exception.getMessage());
         }
+    }
+
+    /**
+     * Opens a confirmation dialog and deletes the selected Dashboard Plan.
+     */
+    @FXML
+    private void handleDeletePlan() {
+        DashboardEntry selectedEntry = planList.getSelectionModel().getSelectedItem();
+        if (selectedEntry == null) {
+            return;
+        }
+        DashboardEntry replacementEntry = findAdjacentEntry(
+                planList.getItems(), planList.getSelectionModel().getSelectedIndex());
+        if (!DeletionConfirmationDialog.confirmPlan(selectedEntry.plan(), selectedEntry.tripTitle(),
+                deletePlanButton.getScene().getWindow())) {
+            return;
+        }
+        try {
+            service.deletePlan(selectedEntry.tripId(), selectedEntry.plan().id());
+            if (replacementEntry == null) {
+                refresh();
+            } else {
+                refreshAndSelect(replacementEntry.tripId(), replacementEntry.plan().id());
+            }
+        } catch (RepositoryException | IllegalArgumentException exception) {
+            refresh();
+            showDeleteError(exception.getMessage());
+        }
+    }
+
+    /**
+     * Returns the next entry after the deleted row, or the previous entry when it was last.
+     *
+     * @param entries Dashboard entries containing the deleted row.
+     * @param deletedIndex Index of the deleted row.
+     * @return Replacement entry, or null when no entries remain.
+     */
+    private static DashboardEntry findAdjacentEntry(List<DashboardEntry> entries, int deletedIndex) {
+        if (entries.size() <= 1) {
+            return null;
+        }
+        return deletedIndex + 1 < entries.size()
+                ? entries.get(deletedIndex + 1)
+                : entries.get(deletedIndex - 1);
     }
 
     /**
@@ -260,6 +311,19 @@ public final class DashboardController {
         alert.setTitle("Plan unavailable");
         alert.setHeaderText("The selected Plan could not be edited.");
         alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    /**
+     * Shows an actionable error when a Dashboard Plan cannot be deleted.
+     *
+     * @param message Error message to display.
+     */
+    private static void showDeleteError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Plan unavailable");
+        alert.setHeaderText("The selected Plan could not be deleted.");
+        alert.setContentText(message == null ? "Check that the database is accessible, then try again." : message);
         alert.showAndWait();
     }
 }

@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
@@ -49,8 +50,12 @@
                     <Text styleClass="detail-trip-text" text="Trip" />
                 </TextFlow>
                 <Label fx:id="detailScheduleLabel" styleClass="detail-schedule" text="Date and time" wrapText="true" />
-                <Button fx:id="editPlanButton" mnemonicParsing="false" onAction="#handleEditPlan"
-                        styleClass="secondary-button" text="Edit" />
+                <HBox spacing="8.0">
+                    <Button fx:id="editPlanButton" mnemonicParsing="false" onAction="#handleEditPlan"
+                            styleClass="secondary-button" text="Edit" />
+                    <Button fx:id="deletePlanButton" mnemonicParsing="false" onAction="#handleDeletePlan"
+                            styleClass="danger-button" text="Delete" />
+                </HBox>
                 <VBox spacing="5.0" styleClass="review-card">
                     <Label styleClass="review-heading" text="Review" />
                     <Label fx:id="detailReviewLabel" styleClass="review-body" text="No review recorded yet."

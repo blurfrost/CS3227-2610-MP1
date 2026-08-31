@@ -48,6 +48,12 @@ public final class GalleryController {
     private Button editTripButton;
 
     /**
+     * Button for deleting the selected Trip.
+     */
+    @FXML
+    private Button deleteTripButton;
+
+    /**
      * Completed Trip list.
      */
     @FXML
@@ -137,7 +143,7 @@ public final class GalleryController {
     @FXML
     private void initialize() {
         tripList.setCellFactory(list -> new TripCell());
-        planList.setCellFactory(list -> new PlanCell(this::handleEditPlan));
+        planList.setCellFactory(list -> new PlanCell(this::handleEditPlan, this::handleDeletePlan));
         tripList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousTrip, selectedTrip) -> showDetails(selectedTrip));
         refresh();
@@ -254,6 +260,71 @@ public final class GalleryController {
     }
 
     /**
+     * Opens a confirmation dialog and deletes a Plan from the selected Trip.
+     *
+     * @param plan Plan selected for deletion.
+     */
+    private void handleDeletePlan(Plan plan) {
+        Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
+        int deletedIndex = planList.getItems().indexOf(plan);
+        if (selectedTrip == null || deletedIndex < 0) {
+            return;
+        }
+        Plan replacementPlan = findAdjacentPlan(planList.getItems(), deletedIndex);
+        if (!DeletionConfirmationDialog.confirmPlan(plan, selectedTrip.title(),
+                addPlanButton.getScene().getWindow())) {
+            return;
+        }
+        try {
+            service.deletePlan(selectedTrip.id(), plan.id());
+            refreshAndSelect(selectedTrip.id(), replacementPlan == null ? null : replacementPlan.id());
+        } catch (RepositoryException | IllegalArgumentException exception) {
+            refreshAndSelect(selectedTrip.id());
+            showDeleteError(exception.getMessage());
+        }
+    }
+
+    /**
+     * Opens a confirmation dialog and deletes the selected Trip.
+     */
+    @FXML
+    private void handleDeleteTrip() {
+        Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
+        int deletedIndex = tripList.getItems().indexOf(selectedTrip);
+        if (selectedTrip == null || deletedIndex < 0) {
+            return;
+        }
+        Trip replacementTrip = findAdjacentTrip(tripList.getItems(), deletedIndex);
+        if (!DeletionConfirmationDialog.confirmTrip(selectedTrip,
+                deleteTripButton.getScene().getWindow())) {
+            return;
+        }
+        try {
+            service.deleteTrip(selectedTrip.id());
+            refreshAndSelect(replacementTrip == null ? null : replacementTrip.id());
+        } catch (RepositoryException | IllegalArgumentException exception) {
+            refreshAndSelect(selectedTrip.id());
+            showTripDeleteError(exception.getMessage());
+        }
+    }
+
+    /**
+     * Returns the next Plan after the deleted row, or the previous Plan when it was last.
+     *
+     * @param plans Plans containing the deleted row.
+     * @param deletedIndex Index of the deleted row.
+     * @return Replacement Plan, or null when no Plans remain.
+     */
+    private static Plan findAdjacentPlan(List<Plan> plans, int deletedIndex) {
+        if (plans.size() <= 1) {
+            return null;
+        }
+        return deletedIndex + 1 < plans.size()
+                ? plans.get(deletedIndex + 1)
+                : plans.get(deletedIndex - 1);
+    }
+
+    /**
      * Updates the detail pane for the selected Trip.
      *
      * @param trip Selected Trip, or null when nothing is selected.
@@ -277,6 +348,7 @@ public final class GalleryController {
         statusLabel.setVisible(hasSelection);
         statusLabel.setManaged(hasSelection);
         editTripButton.setDisable(!hasSelection);
+        deleteTripButton.setDisable(!hasSelection);
         addPlanButton.setDisable(!hasSelection);
         if (!hasSelection) {
             return;
@@ -346,6 +418,22 @@ public final class GalleryController {
     }
 
     /**
+     * Returns the next Trip after the deleted row, or the previous Trip when it was last.
+     *
+     * @param trips Trips containing the deleted row.
+     * @param deletedIndex Index of the deleted row.
+     * @return Replacement Trip, or null when no Trips remain.
+     */
+    private static Trip findAdjacentTrip(List<Trip> trips, int deletedIndex) {
+        if (trips.size() <= 1) {
+            return null;
+        }
+        return deletedIndex + 1 < trips.size()
+                ? trips.get(deletedIndex + 1)
+                : trips.get(deletedIndex - 1);
+    }
+
+    /**
      * Formats the selected Trip's inclusive date range.
      *
      * @param trip Trip whose dates are formatted.
@@ -391,6 +479,32 @@ public final class GalleryController {
         alert.setTitle("Gallery unavailable");
         alert.setHeaderText("Your past trips could not be loaded.");
         alert.setContentText("Check that the database is accessible, then try again.");
+        alert.showAndWait();
+    }
+
+    /**
+     * Shows an actionable error when a Plan cannot be deleted.
+     *
+     * @param message Error message to display.
+     */
+    private static void showDeleteError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Plan unavailable");
+        alert.setHeaderText("The selected Plan could not be deleted.");
+        alert.setContentText(message == null ? "Check that the database is accessible, then try again." : message);
+        alert.showAndWait();
+    }
+
+    /**
+     * Shows an actionable error when a Trip cannot be deleted.
+     *
+     * @param message Error message to display.
+     */
+    private static void showTripDeleteError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Trip unavailable");
+        alert.setHeaderText("The selected Trip could not be deleted.");
+        alert.setContentText(message == null ? "Check that the database is accessible, then try again." : message);
         alert.showAndWait();
     }
 }

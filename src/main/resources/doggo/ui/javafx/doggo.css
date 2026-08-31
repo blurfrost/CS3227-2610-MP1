@@ -153,6 +153,47 @@
     -fx-text-fill: #26383b;
 }
 
+.danger-button {
+    -fx-background-color: #f8e3dc;
+    -fx-border-color: #cf765c;
+    -fx-border-radius: 9px;
+    -fx-background-radius: 9px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 14px;
+    -fx-text-fill: #9c3f2c;
+}
+
+.danger-button:hover {
+    -fx-background-color: #f2d2c9;
+}
+
+.danger-button:disabled {
+    -fx-cursor: default;
+    -fx-opacity: 0.65;
+}
+
+.delete-confirm-button {
+    -fx-background-color: #e5a08e;
+    -fx-border-color: #cf765c;
+    -fx-text-fill: #7f2f21;
+}
+
+.delete-confirm-button:hover {
+    -fx-background-color: #dc8c77;
+}
+
+.delete-cancel-button {
+    -fx-background-color: #fffaf1;
+    -fx-border-color: #cf765c;
+    -fx-text-fill: #26383b;
+}
+
+.delete-cancel-button:hover {
+    -fx-background-color: #f7f0e5;
+}
+
 .primary-button:disabled,
 .secondary-button:disabled {
     -fx-cursor: default;
@@ -207,6 +248,15 @@
 
 .plan-edit-button {
     -fx-padding: 7px 11px;
+}
+
+.plan-delete-button {
+    -fx-padding: 7px 11px;
+}
+
+.delete-confirmation-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: #526467;
 }
 
 .list-cell:filled:selected .plan-card {
@@ -371,6 +421,30 @@
     -fx-background-color: #e7efe3;
     -fx-border-color: #91aa8b;
     -fx-text-fill: #26383b;
+}
+
+.dialog-pane .button.delete-confirm-button,
+.dialog-pane .button.delete-confirm-button:default {
+    -fx-background-color: #e5a08e;
+    -fx-border-color: #cf765c;
+    -fx-text-fill: #7f2f21;
+}
+
+.dialog-pane .button.delete-confirm-button:hover,
+.dialog-pane .button.delete-confirm-button:default:hover {
+    -fx-background-color: #dc8c77;
+}
+
+.dialog-pane .button.delete-cancel-button,
+.dialog-pane .button.delete-cancel-button:default {
+    -fx-background-color: #fffaf1;
+    -fx-border-color: #cf765c;
+    -fx-text-fill: #26383b;
+}
+
+.dialog-pane .button.delete-cancel-button:hover,
+.dialog-pane .button.delete-cancel-button:default:hover {
+    -fx-background-color: #f7f0e5;
 }
 
 .trip-form {

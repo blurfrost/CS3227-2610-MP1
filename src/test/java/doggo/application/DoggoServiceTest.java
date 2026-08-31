@@ -2,6 +2,7 @@ package doggo.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -577,6 +578,22 @@ class DoggoServiceTest {
     }
 
     @Test
+    void deleteTrip_reviewedTrip_removesTripPlansAndReviews() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        service.setTripReview(trip.id(), ratingReview(5));
+        service.setPlanReview(trip.id(), plan.id(), ratingReview(4));
+
+        service.deleteTrip(trip.id());
+
+        assertEquals(Optional.empty(), service.getTrip(trip.id()));
+        assertEquals(0, service.getTrips().size());
+    }
+
+    @Test
     void deletePlan_removesOnlySelectedPlan() {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
@@ -589,6 +606,20 @@ class DoggoServiceTest {
         service.deletePlan(trip.id(), firstPlan.id());
 
         assertEquals(List.of(secondPlan), service.getTrip(trip.id()).orElseThrow().plans());
+    }
+
+    @Test
+    void deletePlan_reviewedPlan_removesPlanAndReview() {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Mount Fuji", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        service.setPlanReview(trip.id(), plan.id(), new Review(OptionalInt.of(5), Optional.empty()));
+
+        service.deletePlan(trip.id(), plan.id());
+
+        assertTrue(service.getTrip(trip.id()).orElseThrow().plans().isEmpty());
     }
 
     @Test

@@ -67,6 +67,12 @@
   or editing Plans in the selected Trip.
 - Dashboard supports editing the selected current-day Plan from its detail
   pane and refreshes its list when the edited Plan leaves today's itinerary.
+- Plan deletion is available in Dashboard, Organise, and Gallery behind a
+  shared confirmation dialog; it removes the Plan review and selects the next
+  remaining Plan, falling back to the previous one.
+- Trip deletion is available in Organise and Gallery behind the same shared
+  confirmation dialog; it removes the complete Trip aggregate and selects the
+  next remaining Trip, falling back to the previous one.
 - Trip creation is available from the persistent sidebar through a modal form
   with a title and inclusive start/end dates; current and future Trips return
   to Organise, while past Trips route to Gallery.
@@ -92,8 +98,8 @@
   to the list viewport, subtracting a visible vertical scrollbar's width so
   ellipsized names do not introduce horizontal scrolling after item growth,
   hidden-mode navigation, or window resizing.
-- Dashboard, Organise, and Gallery use equal-width master-detail panels that
-  remain within the existing minimum application size.
+- Dashboard, Organise, and Gallery use equal-width master-detail panels. The
+  primary window cannot be resized below its approximately 1180×760 opening size.
 - The JavaFX build packages `win`, `mac`, `mac-aarch64`, and `linux` native
   classifiers in its cross-platform Shadow JAR.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.

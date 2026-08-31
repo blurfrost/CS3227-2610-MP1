@@ -34,6 +34,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -62,7 +63,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 class AppShellFxmlTest {
     @BeforeAll
     static void initializeJavaFx() {
-        Platform.startup(() -> { });
+        Platform.startup(() -> Platform.setImplicitExit(false));
     }
 
     @AfterAll
@@ -82,7 +83,9 @@ class AppShellFxmlTest {
         assertFalse(root.getStylesheets().isEmpty());
         assertInstanceOf(Button.class, loader.getNamespace().get("newTripButton"));
         assertInstanceOf(Button.class, root.lookup("#editTripButton"));
+        assertInstanceOf(Button.class, root.lookup("#deleteTripButton"));
         assertInstanceOf(Button.class, root.lookup("#editPlanButton"));
+        assertInstanceOf(Button.class, root.lookup("#deletePlanButton"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/DashboardView.fxml"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/OrganiseView.fxml"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/GalleryView.fxml"));
@@ -115,20 +118,59 @@ class AppShellFxmlTest {
     }
 
     @Test
-    void loadMainViews_atSupportedWidths_useEqualPanelColumns() throws IOException {
+    void loadMainViews_atMinimumWidth_useEqualPanelColumns() throws IOException {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
-        double[] windowWidths = {1180, 960};
+        double windowWidth = 1180;
 
-        for (double windowWidth : windowWidths) {
-            double pageWidth = Math.min(920, windowWidth - 238);
-            assertEqualPanelColumns(loadView("DashboardView.fxml", service), pageWidth);
-            assertEqualPanelColumns(loadView("OrganiseView.fxml", service), pageWidth);
-            assertEqualPanelColumns(loadView("GalleryView.fxml", service), pageWidth);
+        double pageWidth = Math.min(920, windowWidth - 238);
+        assertEqualPanelColumns(loadView("DashboardView.fxml", service), pageWidth);
+        assertEqualPanelColumns(loadView("OrganiseView.fxml", service), pageWidth);
+        assertEqualPanelColumns(loadView("GalleryView.fxml", service), pageWidth);
+    }
+
+    @Test
+    void loadDashboard_deleteButton_matchesEditButtonHeight() throws IOException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
+        service.addPlan(trip.id(), "Night market", LocalDate.of(2027, 1, 5), LocalTime.of(23, 30));
+        VBox page = loadView("DashboardView.fxml", service);
+        page.resize(722, 600);
+        Scene scene = new Scene(page, 722, 600);
+        scene.getRoot().applyCss();
+        page.layout();
+        page.layout();
+
+        Button editButton = assertInstanceOf(Button.class, page.lookup("#editPlanButton"));
+        Button deleteButton = assertInstanceOf(Button.class, page.lookup("#deletePlanButton"));
+        assertEquals(editButton.getHeight(), deleteButton.getHeight(), 0.01);
+    }
+
+    @Test
+    void tripDetail_deleteButton_followsAddPlanInOrganiseAndGallery() throws IOException {
+        for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = resourceName.equals("GalleryView.fxml")
+                    ? LocalDate.of(2027, 1, 1)
+                    : LocalDate.of(2027, 1, 5);
+            service.createTrip("Japan", tripDate, tripDate);
+            VBox page = loadView(resourceName, service);
+            Button editButton = assertInstanceOf(Button.class, page.lookup("#editTripButton"));
+            Button addPlanButton = assertInstanceOf(Button.class, page.lookup("#addPlanButton"));
+            Button deleteTripButton = assertInstanceOf(Button.class, page.lookup("#deleteTripButton"));
+            HBox actionBar = assertInstanceOf(HBox.class, editButton.getParent());
+
+            assertSame(actionBar, addPlanButton.getParent());
+            assertSame(actionBar, deleteTripButton.getParent());
+            assertEquals(editButton, actionBar.getChildren().get(0));
+            assertEquals(addPlanButton, actionBar.getChildren().get(1));
+            assertEquals(deleteTripButton, actionBar.getChildren().get(2));
+            assertTrue(deleteTripButton.getStyleClass().contains("danger-button"));
+            assertFalse(deleteTripButton.isDisabled());
         }
     }
 
     @Test
-    void appShell_supportedSizes_preserveLayoutAcrossNavigationAndSelection() throws IOException {
+    void appShell_minimumSize_preservesLayoutAcrossNavigationAndSelection() throws IOException {
         String title = "W".repeat(Trip.MAX_TITLE_LENGTH);
         String destination = "W".repeat(Plan.MAX_DESTINATION_LENGTH);
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
@@ -148,41 +190,58 @@ class AppShellFxmlTest {
 
         Scene scene = new Scene(root, 1180, 760);
         scene.getRoot().applyCss();
-        for (double[] windowSize : new double[][] {{1180, 760}, {960, 640}}) {
-            scene.getRoot().resize(windowSize[0], windowSize[1]);
-            dashboardButton.fire();
-            root.layout();
-            root.layout();
-            assertRenderedEqualPanelColumns(dashboardPage);
-            assertRenderedDetailLabelsWrap(dashboardPage,
-                    List.of("#detailDestinationLabel", "#detailTripLabel"), destination);
-            assertRenderedDashboardPlanCardFitsViewport(dashboardPage, destination);
-            assertInstanceOf(ListView.class, dashboardPage.lookup("#planList"))
-                    .getSelectionModel().select(0);
-            assertRenderedEqualPanelColumns(dashboardPage);
+        dashboardButton.fire();
+        root.layout();
+        root.layout();
+        assertRenderedEqualPanelColumns(dashboardPage);
+        assertRenderedDetailLabelsWrap(dashboardPage,
+                List.of("#detailDestinationLabel", "#detailTripLabel"), destination);
+        assertRenderedDashboardPlanCardFitsViewport(dashboardPage, destination);
+        assertInstanceOf(ListView.class, dashboardPage.lookup("#planList"))
+                .getSelectionModel().select(0);
+        assertRenderedEqualPanelColumns(dashboardPage);
 
-            organiseButton.fire();
-            root.layout();
-            root.layout();
-            assertRenderedEqualPanelColumns(organisePage);
-            assertRenderedDetailLabelsWrap(organisePage, List.of("#detailTitleLabel"), title);
-            assertRenderedTripCardFitsViewport(organisePage, title);
-            assertRenderedPlanCardFitsViewport(organisePage, destination);
-            assertInstanceOf(ListView.class, organisePage.lookup("#tripList"))
-                    .getSelectionModel().select(0);
-            assertRenderedEqualPanelColumns(organisePage);
+        organiseButton.fire();
+        root.layout();
+        root.layout();
+        assertRenderedEqualPanelColumns(organisePage);
+        assertRenderedDetailLabelsWrap(organisePage, List.of("#detailTitleLabel"), title);
+        assertRenderedTripCardFitsViewport(organisePage, title);
+        assertRenderedPlanCardFitsViewport(organisePage, destination);
+        assertInstanceOf(ListView.class, organisePage.lookup("#tripList"))
+                .getSelectionModel().select(0);
+        assertRenderedEqualPanelColumns(organisePage);
 
-            galleryButton.fire();
-            root.layout();
-            root.layout();
-            assertRenderedEqualPanelColumns(galleryPage);
-            assertRenderedDetailLabelsWrap(galleryPage, List.of("#detailTitleLabel"), title);
-            assertRenderedTripCardFitsViewport(galleryPage, title);
-            assertRenderedPlanCardFitsViewport(galleryPage, destination);
-            assertInstanceOf(ListView.class, galleryPage.lookup("#tripList"))
-                    .getSelectionModel().select(0);
-            assertRenderedEqualPanelColumns(galleryPage);
-        }
+        galleryButton.fire();
+        root.layout();
+        root.layout();
+        assertRenderedEqualPanelColumns(galleryPage);
+        assertRenderedDetailLabelsWrap(galleryPage, List.of("#detailTitleLabel"), title);
+        assertRenderedTripCardFitsViewport(galleryPage, title);
+        assertRenderedPlanCardFitsViewport(galleryPage, destination);
+        assertInstanceOf(ListView.class, galleryPage.lookup("#tripList"))
+                .getSelectionModel().select(0);
+        assertRenderedEqualPanelColumns(galleryPage);
+    }
+
+    @Test
+    void setOpeningSizeAsMinimum_openStage_preventsShrinkingBelowOpeningSize()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        FutureTask<DialogSize> stageTask = new FutureTask<>(() -> {
+            Stage stage = new Stage();
+            stage.setScene(new Scene(new VBox(), 1180, 760));
+            stage.show();
+            DoggoApplication.setOpeningSizeAsMinimum(stage);
+            DialogSize size = new DialogSize(stage.getWidth(), stage.getHeight(), stage.getMinWidth(),
+                    stage.getMinHeight());
+            stage.close();
+            return size;
+        });
+        Platform.runLater(stageTask);
+
+        DialogSize size = stageTask.get(5, TimeUnit.SECONDS);
+        assertEquals(size.width(), size.minWidth(), 0.01);
+        assertEquals(size.height(), size.minHeight(), 0.01);
     }
 
     @Test
@@ -204,7 +263,9 @@ class AppShellFxmlTest {
         assertEquals(plan.destination(), destinationLabel.getTooltip().getText());
         assertFalse(destinationLabel.isWrapText());
         assertEquals(OverrunStyle.ELLIPSIS, destinationLabel.getTextOverrun());
-        assertEquals("Edit", assertInstanceOf(Button.class, card.getChildren().getLast()).getText());
+        HBox actions = assertInstanceOf(HBox.class, card.getChildren().getLast());
+        assertEquals("Edit", assertInstanceOf(Button.class, actions.getChildren().getFirst()).getText());
+        assertEquals("Delete", assertInstanceOf(Button.class, actions.getChildren().getLast()).getText());
     }
 
     @Test
@@ -332,10 +393,122 @@ class AppShellFxmlTest {
         cell.updateItem(plan, false);
 
         Button editButton = assertInstanceOf(Button.class,
-                assertInstanceOf(HBox.class, cell.getGraphic()).getChildren().getLast());
+                assertInstanceOf(HBox.class,
+                        assertInstanceOf(HBox.class, cell.getGraphic()).getChildren().getLast())
+                        .getChildren().getFirst());
         editButton.fire();
 
         assertSame(plan, editedPlan.get());
+    }
+
+    @Test
+    void planCell_deleteButton_invokesHandlerWithRenderedPlan() {
+        Plan plan = new Plan(UUID.randomUUID(), "Night market", LocalDate.of(2026, 8, 30),
+                LocalTime.of(23, 30));
+        AtomicReference<Plan> deletedPlan = new AtomicReference<>();
+        PlanCell cell = new PlanCell(planToEdit -> { }, deletedPlan::set);
+
+        cell.updateItem(plan, false);
+
+        HBox card = assertInstanceOf(HBox.class, cell.getGraphic());
+        HBox actions = assertInstanceOf(HBox.class, card.getChildren().getLast());
+        Button deleteButton = assertInstanceOf(Button.class, actions.getChildren().getLast());
+        deleteButton.fire();
+
+        assertSame(plan, deletedPlan.get());
+    }
+
+    @Test
+    void planDeletionDialog_displaysNamesAndSafeConfirmationActions()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        Plan plan = new Plan(UUID.randomUUID(), "Night market", LocalDate.of(2026, 8, 30),
+                LocalTime.of(23, 30));
+        FutureTask<DeletionDialogState> dialogTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            DeletionConfirmationDialog dialog = DeletionConfirmationDialog.forPlan(plan, "Japan", owner);
+            DialogPane dialogPane = dialog.getDialogPane();
+            Label description = assertInstanceOf(Label.class, dialogPane.getContent());
+            Button yesButton = assertInstanceOf(Button.class,
+                    dialogPane.lookupButton(dialogPane.getButtonTypes().getFirst()));
+            Button noButton = assertInstanceOf(Button.class,
+                    dialogPane.lookupButton(dialogPane.getButtonTypes().getLast()));
+            return new DeletionDialogState(dialog.getTitle(), description.getText(), yesButton.getText(),
+                    yesButton.getStyleClass(), noButton.getText(), noButton.getStyleClass(),
+                    noButton.isDefaultButton(), noButton.isCancelButton());
+        });
+        Platform.runLater(dialogTask);
+
+        DeletionDialogState state = dialogTask.get(5, TimeUnit.SECONDS);
+        assertEquals("Delete a plan", state.title());
+        assertEquals("Do you really want to delete the plan \"Night market\" from the trip \"Japan\"?",
+                state.description());
+        assertEquals(List.of("Yes", "No"), state.buttonTexts());
+        assertTrue(state.yesStyles().contains("danger-button"));
+        assertTrue(state.noStyles().contains("delete-cancel-button"));
+        assertEquals("No", state.noText());
+        assertTrue(state.noIsDefault());
+        assertTrue(state.noIsCancel());
+    }
+
+    @Test
+    void planDeletionDialog_appliesDistinctRenderedButtonColors()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        Plan plan = new Plan(UUID.randomUUID(), "Night market", LocalDate.of(2026, 8, 30),
+                LocalTime.of(23, 30));
+        FutureTask<DeletionButtonStyleState> styleTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            DeletionConfirmationDialog dialog = DeletionConfirmationDialog.forPlan(plan, "Japan", owner);
+            DialogPane dialogPane = dialog.getDialogPane();
+            dialogPane.getScene().getRoot().applyCss();
+            dialogPane.getScene().getRoot().layout();
+            Button yesButton = assertInstanceOf(Button.class,
+                    dialogPane.lookupButton(dialogPane.getButtonTypes().getFirst()));
+            Button noButton = assertInstanceOf(Button.class,
+                    dialogPane.lookupButton(dialogPane.getButtonTypes().getLast()));
+            return new DeletionButtonStyleState(getBackgroundColor(yesButton), getBackgroundColor(noButton));
+        });
+        Platform.runLater(styleTask);
+
+        DeletionButtonStyleState state = styleTask.get(5, TimeUnit.SECONDS);
+        assertEquals("0xe5a08eff", state.yesBackground());
+        assertEquals("0xfffaf1ff", state.noBackground());
+    }
+
+    @Test
+    void tripDeletionDialog_displaysNameAndSafeConfirmationActions()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        FutureTask<DeletionDialogState> dialogTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            DeletionConfirmationDialog dialog = DeletionConfirmationDialog.forTrip(trip, owner);
+            DialogPane dialogPane = dialog.getDialogPane();
+            Label description = assertInstanceOf(Label.class, dialogPane.getContent());
+            Button yesButton = assertInstanceOf(Button.class,
+                    dialogPane.lookupButton(dialogPane.getButtonTypes().getFirst()));
+            Button noButton = assertInstanceOf(Button.class,
+                    dialogPane.lookupButton(dialogPane.getButtonTypes().getLast()));
+            return new DeletionDialogState(dialog.getTitle(), description.getText(), yesButton.getText(),
+                    yesButton.getStyleClass(), noButton.getText(), noButton.getStyleClass(),
+                    noButton.isDefaultButton(), noButton.isCancelButton());
+        });
+        Platform.runLater(dialogTask);
+
+        DeletionDialogState state = dialogTask.get(5, TimeUnit.SECONDS);
+        assertEquals("Delete a trip", state.title());
+        assertEquals("Do you really want to delete the trip \"Japan\"?", state.description());
+        assertEquals(List.of("Yes", "No"), state.buttonTexts());
+        assertTrue(state.yesStyles().contains("danger-button"));
+        assertTrue(state.noStyles().contains("delete-cancel-button"));
+        assertTrue(state.noIsDefault());
+        assertTrue(state.noIsCancel());
+    }
+
+    private static String getBackgroundColor(Button button) {
+        return button.getBackground().getFills().getFirst().getFill().toString();
     }
 
     @Test
@@ -580,6 +753,16 @@ class AppShellFxmlTest {
                                    String time, String submitText) {
     }
 
+    private record DeletionDialogState(String title, String description, String yesText, List<String> yesStyles,
+                                       String noText, List<String> noStyles, boolean noIsDefault, boolean noIsCancel) {
+        private List<String> buttonTexts() {
+            return List.of(yesText, noText);
+        }
+    }
+
+    private record DeletionButtonStyleState(String yesBackground, String noBackground) {
+    }
+
     private record DialogSize(double width, double height, double minWidth, double minHeight) {
     }
 
@@ -753,7 +936,14 @@ class AppShellFxmlTest {
         Label destinationLabel = assertInstanceOf(Label.class, details.getChildren().getLast());
         assertEquals(expectedDestination, destinationLabel.getTooltip().getText());
         assertTrue(destinationLabel.isTextTruncated());
-        assertEquals("Edit", assertInstanceOf(Button.class, card.getChildren().getLast()).getText());
+        HBox actions = assertInstanceOf(HBox.class, card.getChildren().getLast());
+        Button editButton = assertInstanceOf(Button.class, actions.getChildren().getFirst());
+        Button deleteButton = assertInstanceOf(Button.class, actions.getChildren().getLast());
+        assertEquals("Edit", editButton.getText());
+        assertEquals("Delete", deleteButton.getText());
+        assertFalse(editButton.isTextTruncated());
+        assertFalse(deleteButton.isTextTruncated());
+        assertEquals(actions.prefWidth(-1), actions.getWidth(), 0.01);
         assertTrue(card.getWidth() <= planList.getWidth(),
                 () -> "cardWidth=" + card.getWidth() + ", listWidth=" + planList.getWidth()
                         + ", cellWidth=" + cell.getWidth() + ", pageWidth=" + page.getWidth());
