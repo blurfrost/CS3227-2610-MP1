@@ -4,7 +4,6 @@ build/
 
 # Java compilation and packaging output
 *.class
-*.jar
 !gradle/wrapper/gradle-wrapper.jar
 out/
 
