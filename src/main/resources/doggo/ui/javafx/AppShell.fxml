@@ -35,7 +35,7 @@
                         onAction="#handleGallery" styleClass="nav-button" text="Gallery" />
             </VBox>
             <Region VBox.vgrow="ALWAYS" />
-            <Label styleClass="sidebar-footer" text="A local-first travel journal" wrapText="true" />
+
         </VBox>
     </left>
     <center>

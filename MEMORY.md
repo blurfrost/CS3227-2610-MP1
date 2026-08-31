@@ -114,6 +114,9 @@
   hidden-mode navigation, or window resizing.
 - Dashboard, Organise, and Gallery use equal-width master-detail panels. The
   primary window cannot be resized below its approximately 1180×760 opening size.
+- The sidebar Create Trip action is a centered, light, thick-bordered button
+  with a minimum height greater than the navigation buttons and a larger
+  label than the navigation actions.
 - The JavaFX build packages `win`, `mac`, `mac-aarch64`, and `linux` native
   classifiers in its cross-platform Shadow JAR.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.

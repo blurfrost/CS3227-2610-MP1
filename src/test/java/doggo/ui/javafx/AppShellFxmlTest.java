@@ -31,6 +31,7 @@ import doggo.storage.InMemoryTripRepository;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -95,6 +96,27 @@ class AppShellFxmlTest {
         assertNotNull(getClass().getResource("/doggo/ui/javafx/DashboardView.fxml"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/OrganiseView.fxml"));
         assertNotNull(getClass().getResource("/doggo/ui/javafx/GalleryView.fxml"));
+    }
+
+    @Test
+    void loadAppShell_createTripButton_isProminentAndCentered() throws IOException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        FXMLLoader loader = createAppShellLoader(service);
+        BorderPane root = assertInstanceOf(BorderPane.class, loader.load());
+        Button createTripButton = assertInstanceOf(Button.class, loader.getNamespace().get("newTripButton"));
+        Button dashboardButton = assertInstanceOf(Button.class, root.lookup("#dashboardButton"));
+        Scene scene = new Scene(root, 1180, 760);
+        scene.getRoot().applyCss();
+        root.layout();
+
+        assertEquals(Pos.CENTER, createTripButton.getAlignment());
+        assertTrue(createTripButton.getHeight() > dashboardButton.getHeight());
+        assertEquals(50.0, createTripButton.getMinHeight(), 0.01);
+        assertTrue(createTripButton.getFont().getSize() > dashboardButton.getFont().getSize());
+        assertEquals("0xfffaf1ff", getBackgroundColor(createTripButton));
+        assertEquals(1, createTripButton.getBackground().getFills().size());
+        assertEquals(0.0, createTripButton.getBackground().getFills().getFirst().getInsets().getTop(), 0.01);
+        assertEquals(17.0, createTripButton.getFont().getSize(), 0.01);
     }
 
     @Test

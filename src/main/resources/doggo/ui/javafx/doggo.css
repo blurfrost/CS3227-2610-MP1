@@ -145,7 +145,18 @@
 }
 
 .sidebar .primary-button {
-    -fx-alignment: CENTER_LEFT;
+    -fx-alignment: CENTER;
+    -fx-background-color: #fffaf1;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-width: 3px;
+    -fx-font-size: 17px;
+    -fx-min-height: 50px;
+    -fx-text-fill: #26383b;
+}
+
+.sidebar .primary-button:hover {
+    -fx-background-color: #e3ccb1;
 }
 
 .secondary-button {
