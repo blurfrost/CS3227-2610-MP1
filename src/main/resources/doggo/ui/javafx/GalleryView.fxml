@@ -61,19 +61,19 @@
                     <Button fx:id="editTripButton" disable="true" mnemonicParsing="false"
                             onAction="#handleEditTrip" styleClass="secondary-button" text="Edit trip" />
                     <Button fx:id="reviewTripButton" disable="true" mnemonicParsing="false"
-                            onAction="#handleReviewTrip" styleClass="primary-button" text="Add Review" />
+                            onAction="#handleReviewTrip" styleClass="review-action-button" text="Add Review" />
                     <Button fx:id="deleteTripButton" disable="true" mnemonicParsing="false"
                             onAction="#handleDeleteTrip" styleClass="danger-button" text="Delete trip" />
                 </HBox>
-                <VBox fx:id="detailReviewCard" maxHeight="200.0" minHeight="120.0" spacing="5.0"
-                      styleClass="review-card">
+                <VBox fx:id="detailReviewCard" managed="false" maxHeight="200.0"
+                      spacing="5.0" styleClass="review-card" visible="false">
                     <Label styleClass="review-heading" text="Trip Review" />
                     <ScrollPane fx:id="detailReviewScrollPane" fitToWidth="true" hbarPolicy="NEVER"
-                                minHeight="64.0" styleClass="review-scroll-pane" vbarPolicy="AS_NEEDED"
+                                styleClass="review-scroll-pane" vbarPolicy="AS_NEEDED"
                                 VBox.vgrow="ALWAYS">
                         <content>
                             <Label fx:id="detailReviewLabel" minHeight="-Infinity" styleClass="review-body"
-                                   text="No review recorded yet." wrapText="true" />
+                                   text="" wrapText="true" />
                         </content>
                     </ScrollPane>
                 </VBox>

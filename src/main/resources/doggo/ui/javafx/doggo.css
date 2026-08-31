@@ -129,7 +129,8 @@
 }
 
 .primary-button,
-.secondary-button {
+.secondary-button,
+.review-action-button {
     -fx-background-radius: 9px;
     -fx-border-radius: 9px;
     -fx-cursor: hand;
@@ -151,6 +152,17 @@
     -fx-background-color: #e7efe3;
     -fx-border-color: #91aa8b;
     -fx-text-fill: #26383b;
+}
+
+.review-action-button {
+    -fx-background-color: #f7f2e8;
+    -fx-border-color: #a88f72;
+    -fx-border-width: 1px;
+    -fx-text-fill: #26383b;
+}
+
+.review-action-button:hover {
+    -fx-background-color: #eee3cf;
 }
 
 .danger-button {
@@ -195,7 +207,8 @@
 }
 
 .primary-button:disabled,
-.secondary-button:disabled {
+.secondary-button:disabled,
+.review-action-button:disabled {
     -fx-cursor: default;
     -fx-opacity: 0.65;
 }

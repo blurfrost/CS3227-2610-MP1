@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -133,6 +134,23 @@ class AppShellFxmlTest {
     }
 
     @Test
+    void loadMainViews_headerStructure_matchesDashboardSpacing() throws IOException {
+        for (String resourceName : List.of("DashboardView.fxml", "OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            VBox page = loadView(resourceName, service);
+
+            assertEquals(10.0, page.getSpacing(), 0.01);
+            assertInstanceOf(Label.class, page.getChildren().get(0));
+            assertInstanceOf(Label.class, page.getChildren().get(1));
+            assertInstanceOf(Label.class, page.getChildren().get(2));
+            assertTrue(page.getChildren().get(0).getStyleClass().contains("eyebrow"));
+            assertTrue(page.getChildren().get(1).getStyleClass().contains("page-title"));
+            assertTrue(page.getChildren().get(2).getStyleClass().contains("page-subtitle"));
+            assertNull(page.lookup(".prototype-hint"));
+        }
+    }
+
+    @Test
     void loadDashboard_deleteButton_matchesEditButtonHeight() throws IOException {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5));
@@ -164,6 +182,7 @@ class AppShellFxmlTest {
             Button reviewButton = assertInstanceOf(Button.class, page.lookup("#reviewTripButton"));
             Button addPlanButton = assertInstanceOf(Button.class, page.lookup("#addPlanButton"));
             Button deleteTripButton = assertInstanceOf(Button.class, page.lookup("#deleteTripButton"));
+            VBox detailReviewCard = assertInstanceOf(VBox.class, page.lookup("#detailReviewCard"));
             ScrollPane reviewScrollPane = getReviewScrollPane(page);
             Label detailReviewLabel = getReviewLabel(reviewScrollPane);
             Label reviewHeading = assertInstanceOf(Label.class, page.lookup(".review-heading"));
@@ -177,16 +196,46 @@ class AppShellFxmlTest {
             assertEquals(reviewButton, actionBar.getChildren().get(1));
             assertEquals(deleteTripButton, actionBar.getChildren().get(2));
             assertEquals("Add Review", reviewButton.getText());
-            assertTrue(reviewButton.getStyleClass().contains("primary-button"));
             assertEquals("Trip Review", reviewHeading.getText());
             assertSame(plansHeader, addPlanButton.getParent());
             assertEquals(plansLabel, plansHeader.getChildren().get(0));
             assertEquals(addPlanButton, plansHeader.getChildren().get(2));
             assertEquals("Plans (0)", plansLabel.getText());
-            assertEquals("No review recorded yet.", detailReviewLabel.getText());
+            assertFalse(detailReviewCard.isVisible());
+            assertFalse(detailReviewCard.isManaged());
+            assertEquals("", detailReviewLabel.getText());
             assertTrue(deleteTripButton.getStyleClass().contains("danger-button"));
             assertFalse(reviewButton.isDisabled());
             assertFalse(deleteTripButton.isDisabled());
+        }
+    }
+
+    @Test
+    void tripDetail_actionButtons_haveEqualHeightsInOrganiseAndGallery() throws IOException {
+        for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = resourceName.equals("GalleryView.fxml")
+                    ? LocalDate.of(2027, 1, 1)
+                    : LocalDate.of(2027, 1, 5);
+            service.createTrip("Japan", tripDate, tripDate);
+
+            VBox page = loadView(resourceName, service);
+            page.resize(802, 646);
+            Scene scene = new Scene(page, 802, 646);
+            scene.getStylesheets().add(getClass().getResource("/doggo/ui/javafx/doggo.css").toExternalForm());
+            scene.getRoot().applyCss();
+            page.layout();
+            page.layout();
+
+            Button editTripButton = assertInstanceOf(Button.class, page.lookup("#editTripButton"));
+            Button reviewTripButton = assertInstanceOf(Button.class, page.lookup("#reviewTripButton"));
+            Button deleteTripButton = assertInstanceOf(Button.class, page.lookup("#deleteTripButton"));
+
+            assertEquals(editTripButton.getHeight(), reviewTripButton.getHeight(), 0.01);
+            assertEquals(editTripButton.getHeight(), deleteTripButton.getHeight(), 0.01);
+            assertTrue(reviewTripButton.getStyleClass().contains("review-action-button"));
+            assertEquals("0xf7f2e8ff", getBackgroundColor(reviewTripButton));
+            assertEquals("0xa88f72ff", getBorderColor(reviewTripButton));
         }
     }
 
@@ -204,9 +253,46 @@ class AppShellFxmlTest {
             VBox page = loadView(resourceName, service);
 
             Button reviewButton = assertInstanceOf(Button.class, page.lookup("#reviewTripButton"));
+            VBox detailReviewCard = assertInstanceOf(VBox.class, page.lookup("#detailReviewCard"));
             Label detailReviewLabel = getReviewLabel(getReviewScrollPane(page));
             assertEquals("Edit Review", reviewButton.getText());
+            assertTrue(detailReviewCard.isVisible());
+            assertTrue(detailReviewCard.isManaged());
             assertEquals("Rating: 4/5\nNotes: A memorable journey.", detailReviewLabel.getText());
+        }
+    }
+
+    @Test
+    void tripDetail_clearedReview_hidesCardAndRestoresAddActionInOrganiseAndGallery()
+            throws IOException {
+        for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = resourceName.equals("GalleryView.fxml")
+                    ? LocalDate.of(2027, 1, 1)
+                    : LocalDate.of(2027, 1, 5);
+            Trip trip = service.createTrip("Japan", tripDate, tripDate);
+            service.setTripReview(trip.id(), new Review(OptionalInt.of(4), Optional.of("A memorable journey.")));
+
+            FXMLLoader loader = createViewLoader(resourceName, service);
+            VBox page = assertInstanceOf(VBox.class, loader.load());
+            Object controller = loader.getController();
+            VBox detailReviewCard = assertInstanceOf(VBox.class, page.lookup("#detailReviewCard"));
+            Button reviewButton = assertInstanceOf(Button.class, page.lookup("#reviewTripButton"));
+            Label detailReviewLabel = getReviewLabel(getReviewScrollPane(page));
+            assertTrue(detailReviewCard.isVisible());
+            assertEquals("Edit Review", reviewButton.getText());
+
+            service.removeTripReview(trip.id());
+            if (controller instanceof OrganiseController organiseController) {
+                organiseController.refreshAndSelect(trip.id());
+            } else {
+                assertInstanceOf(GalleryController.class, controller).refreshAndSelect(trip.id());
+            }
+
+            assertFalse(detailReviewCard.isVisible());
+            assertFalse(detailReviewCard.isManaged());
+            assertEquals("Add Review", reviewButton.getText());
+            assertEquals("", detailReviewLabel.getText());
         }
     }
 
@@ -256,12 +342,13 @@ class AppShellFxmlTest {
 
             assertTrue(verticalScrollBar.isVisible());
             assertFalse(findScrollBar(reviewScrollPane, Orientation.HORIZONTAL).isVisible());
-            assertEquals(200.0, reviewCard.getMaxHeight(), 0.01);
-            assertEquals(120.0, reviewCard.getMinHeight(), 0.01);
-            assertEquals(64.0, reviewScrollPane.getMinHeight(), 0.01);
+            assertEquals(ReviewCardSupport.MAX_CARD_HEIGHT, reviewCard.getMaxHeight(), 0.01);
+            assertEquals(ReviewCardSupport.MAX_CARD_HEIGHT, reviewCard.getMinHeight(), 0.01);
+            assertEquals(reviewCard.getMinHeight(), reviewCard.getPrefHeight(), 0.01);
+            assertEquals(reviewScrollPane.getMinHeight(), reviewScrollPane.getPrefHeight(), 0.01);
             assertTrue(reviewCard.getHeight() <= reviewCard.getMaxHeight() + 0.01);
             assertTrue(reviewCard.getHeight() >= reviewCard.getMinHeight() - 0.01);
-            assertTrue(reviewScrollPane.getViewportBounds().getHeight() >= 64.0);
+            assertTrue(reviewScrollPane.getViewportBounds().getHeight() > 0);
             assertTrue(planList.getHeight() >= planList.getMinHeight() - 0.01);
             assertTrue(planList.getHeight() >= 90.0);
             assertTrue(planList.getBoundsInParent().getMaxY() <= detailPanel.getHeight() + 0.01);
@@ -290,10 +377,14 @@ class AppShellFxmlTest {
 
             ScrollPane reviewScrollPane = getReviewScrollPane(page);
             Label reviewLabel = getReviewLabel(reviewScrollPane);
+            VBox reviewCard = assertInstanceOf(VBox.class, reviewScrollPane.getParent());
 
             assertEquals("Rating: 3/5\nNotes: Cool trip", reviewLabel.getText());
             assertFalse(findScrollBar(reviewScrollPane, Orientation.VERTICAL).isVisible());
             assertTrue(reviewLabel.getHeight() <= reviewScrollPane.getViewportBounds().getHeight() + 0.01);
+            assertEquals(reviewCard.getMinHeight(), reviewCard.getHeight(), 0.01);
+            assertEquals(reviewCard.getPrefHeight(), reviewCard.getHeight(), 0.01);
+            assertTrue(reviewCard.getHeight() < 120.0);
         }
     }
 
@@ -656,6 +747,10 @@ class AppShellFxmlTest {
 
     private static String getBackgroundColor(Button button) {
         return button.getBackground().getFills().getFirst().getFill().toString();
+    }
+
+    private static String getBorderColor(Button button) {
+        return button.getBorder().getStrokes().getFirst().getTopStroke().toString();
     }
 
     @Test

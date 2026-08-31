@@ -72,9 +72,10 @@
   with `+ Add plan` aligned to the right.
 - Trip reviews can be added, edited, or removed from Organise and Gallery
   through an expandable optional rating-and-Notes dialog; both detail panes
-  display the same review card and state-aware Add Review or Edit Review action;
-  review labels preserve their preferred height so combined fields remain visible,
-  while long review text scrolls within a capped card that reserves Plan space.
+  display the same review card and state-aware neutral Add Review or Edit Review action;
+  empty review cards are hidden, short reviews use content-tight adaptive
+  sizing, and long review text scrolls within a 200px capped card that reserves
+  Plan space.
 - Plan deletion is available in Dashboard, Organise, and Gallery behind a
   shared confirmation dialog; it removes the Plan review and selects the next
   remaining Plan, falling back to the previous one.

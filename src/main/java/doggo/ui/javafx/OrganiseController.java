@@ -16,6 +16,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 
@@ -102,10 +103,22 @@ public final class OrganiseController {
     private Label statusLabel;
 
     /**
+     * Selected Trip review card.
+     */
+    @FXML
+    private VBox detailReviewCard;
+
+    /**
      * Selected Trip review label.
      */
     @FXML
     private Label detailReviewLabel;
+
+    /**
+     * Scrollable selected Trip review body.
+     */
+    @FXML
+    private ScrollPane detailReviewScrollPane;
 
     /**
      * Selected Trip Plan list.
@@ -150,6 +163,7 @@ public final class OrganiseController {
     private void initialize() {
         tripList.setCellFactory(list -> new TripCell());
         planList.setCellFactory(list -> new PlanCell(this::handleEditPlan, this::handleDeletePlan));
+        ReviewCardSupport.configure(detailReviewCard, detailReviewScrollPane, detailReviewLabel);
         tripList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousTrip, selectedTrip) -> showDetails(selectedTrip));
         refresh();
@@ -347,12 +361,15 @@ public final class OrganiseController {
      */
     private void showDetails(Trip trip, UUID selectedPlanId) {
         boolean hasSelection = trip != null;
+        boolean hasReview = hasSelection && trip.review().isPresent();
         detailEmptyState.setVisible(!hasSelection);
         detailEmptyState.setManaged(!hasSelection);
         detailContent.setVisible(hasSelection);
         detailContent.setManaged(hasSelection);
         statusLabel.setVisible(hasSelection);
         statusLabel.setManaged(hasSelection);
+        detailReviewCard.setVisible(hasReview);
+        detailReviewCard.setManaged(hasReview);
         editTripButton.setDisable(!hasSelection);
         reviewTripButton.setDisable(!hasSelection);
         deleteTripButton.setDisable(!hasSelection);
@@ -366,8 +383,8 @@ public final class OrganiseController {
         DetailTextSupport.setText(detailTitleLabel, trip.title(), "detail-destination-text");
         detailDatesLabel.setText(formatDateRange(trip));
         plansLabel.setText("Plans (" + plans.size() + ")");
-        reviewTripButton.setText(trip.review().isPresent() ? "Edit Review" : "Add Review");
-        detailReviewLabel.setText(ReviewDisplaySupport.format(trip.review()));
+        reviewTripButton.setText(hasReview ? "Edit Review" : "Add Review");
+        detailReviewLabel.setText(hasReview ? ReviewDisplaySupport.format(trip.review()) : "");
         statusLabel.setText(formatStatus(status));
         statusLabel.getStyleClass().removeAll("status-current", "status-future");
         statusLabel.getStyleClass().add(status == TripStatus.CURRENT
