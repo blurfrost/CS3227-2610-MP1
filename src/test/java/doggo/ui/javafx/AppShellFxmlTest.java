@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -42,6 +43,11 @@ import javafx.stage.Stage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+
+@Execution(ExecutionMode.SAME_THREAD)
 class AppShellFxmlTest {
     @BeforeAll
     static void initializeJavaFx() {
@@ -182,6 +188,44 @@ class AppShellFxmlTest {
         assertEquals(trip.startDate(), getPlanCreationDate(service, trip));
     }
 
+    @Test
+    void creationDialogs_areResizable() throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = new Plan(UUID.randomUUID(), "Senso-ji Temple", LocalDate.of(2027, 1, 6),
+                LocalTime.of(9, 30));
+        FutureTask<Boolean> dialogTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            TripCreationDialog tripDialog = new TripCreationDialog(service, owner);
+            PlanCreationDialog createDialog = new PlanCreationDialog(service, trip, owner);
+            PlanCreationDialog editDialog = new PlanCreationDialog(service, trip, plan, owner);
+            return tripDialog.isResizable() && createDialog.isResizable() && editDialog.isResizable();
+        });
+        Platform.runLater(dialogTask);
+
+        assertTrue(dialogTask.get(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void dialogWindowSupport_setsOpeningDimensionsAsMinimums()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        FutureTask<DialogSize> dialogTask = new FutureTask<>(() -> {
+            Stage stage = new Stage();
+            stage.setWidth(480);
+            stage.setHeight(320);
+            DialogWindowSupport.setOpeningSizeAsMinimum(stage);
+            return new DialogSize(stage.getWidth(), stage.getHeight(), stage.getMinWidth(),
+                    stage.getMinHeight());
+        });
+        Platform.runLater(dialogTask);
+
+        DialogSize size = dialogTask.get(5, TimeUnit.SECONDS);
+        assertEquals(size.width(), size.minWidth(), 0.01);
+        assertEquals(size.height(), size.minHeight(), 0.01);
+    }
+
 
     @Test
     void editPlanDialog_prefillsPlanFieldsAndUsesSaveAction()
@@ -254,6 +298,9 @@ class AppShellFxmlTest {
 
     private record EditDialogState(String title, String destination, LocalDate date,
                                    String time, String submitText) {
+    }
+
+    private record DialogSize(double width, double height, double minWidth, double minHeight) {
     }
 
     private static LocalDate getPlanCreationDate(DoggoService service, Trip trip)

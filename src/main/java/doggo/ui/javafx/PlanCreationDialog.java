@@ -95,7 +95,7 @@ final class PlanCreationDialog extends Dialog<Plan> {
         submitButton.setDefaultButton(true);
         submitButton.addEventFilter(ActionEvent.ACTION, this::handleSubmit);
         setResultConverter(buttonType -> buttonType == submitButtonType ? submittedPlan : null);
-        setOnShown(event -> destinationField.requestFocus());
+        DialogWindowSupport.enableExpandOnly(this, destinationField);
         updateValidation(submitButton);
     }
 

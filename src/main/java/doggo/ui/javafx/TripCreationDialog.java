@@ -59,7 +59,7 @@ final class TripCreationDialog extends Dialog<Trip> {
         createButton.setDefaultButton(true);
         createButton.addEventFilter(ActionEvent.ACTION, this::handleCreate);
         setResultConverter(buttonType -> buttonType == CREATE_BUTTON_TYPE ? createdTrip : null);
-        setOnShown(event -> titleField.requestFocus());
+        DialogWindowSupport.enableExpandOnly(this, titleField);
         updateValidation(createButton);
     }
 
