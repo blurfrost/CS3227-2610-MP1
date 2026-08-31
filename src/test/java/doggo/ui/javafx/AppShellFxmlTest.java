@@ -42,7 +42,6 @@ import javafx.stage.Stage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
 class AppShellFxmlTest {
     @BeforeAll
     static void initializeJavaFx() {
@@ -154,24 +153,35 @@ class AppShellFxmlTest {
     }
 
     @Test
-    void createPlanDialog_defaultDate_usesCurrentServiceDate()
+    void createPlanDialog_currentDateWithinTrip_usesCurrentServiceDate()
             throws InterruptedException, ExecutionException, TimeoutException {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
         Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
                 LocalDate.of(2027, 1, 9));
-        FutureTask<LocalDate> dateTask = new FutureTask<>(() -> {
-            Stage owner = new Stage();
-            owner.setScene(new Scene(new VBox()));
-            PlanCreationDialog dialog = new PlanCreationDialog(service, trip, owner);
-            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
-            GridPane fields = assertInstanceOf(GridPane.class, form.getChildren().get(1));
-            DatePicker datePicker = assertInstanceOf(DatePicker.class, fields.getChildren().get(3));
-            return datePicker.getValue();
-        });
-        Platform.runLater(dateTask);
 
-        assertEquals(service.getCurrentDate(), dateTask.get(5, TimeUnit.SECONDS));
+        assertEquals(service.getCurrentDate(), getPlanCreationDate(service, trip));
     }
+
+    @Test
+    void createPlanDialog_currentDateBeforeTrip_usesTripStartDate()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 6),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(trip.startDate(), getPlanCreationDate(service, trip));
+    }
+
+    @Test
+    void createPlanDialog_currentDateAfterTrip_usesTripStartDate()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+
+        assertEquals(trip.startDate(), getPlanCreationDate(service, trip));
+    }
+
 
     @Test
     void editPlanDialog_prefillsPlanFieldsAndUsesSaveAction()
@@ -245,4 +255,20 @@ class AppShellFxmlTest {
     private record EditDialogState(String title, String destination, LocalDate date,
                                    String time, String submitText) {
     }
+
+    private static LocalDate getPlanCreationDate(DoggoService service, Trip trip)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        FutureTask<LocalDate> dateTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            PlanCreationDialog dialog = new PlanCreationDialog(service, trip, owner);
+            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            GridPane fields = assertInstanceOf(GridPane.class, form.getChildren().get(1));
+            DatePicker datePicker = assertInstanceOf(DatePicker.class, fields.getChildren().get(3));
+            return datePicker.getValue();
+        });
+        Platform.runLater(dateTask);
+        return dateTask.get(5, TimeUnit.SECONDS);
+    }
+
 }

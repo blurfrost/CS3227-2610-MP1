@@ -112,7 +112,7 @@ final class PlanCreationDialog extends Dialog<Plan> {
             datePicker.setValue(plan.date());
             timeField.setText(TIME_FORMATTER.format(plan.time()));
         } else {
-            datePicker.setValue(service.getCurrentDate());
+            datePicker.setValue(getDefaultPlanDate());
         }
         datePicker.setEditable(false);
         datePicker.setDayCellFactory(picker -> new DateCell() {
@@ -153,6 +153,18 @@ final class PlanCreationDialog extends Dialog<Plan> {
         form.getStyleClass().add("trip-form");
         form.setPadding(new Insets(8, 10, 4, 10));
         return form;
+    }
+
+    /**
+     * Returns the preferred default date for a newly created Plan.
+     *
+     * @return Current date when it is within the Trip, otherwise the Trip start date.
+     */
+    private LocalDate getDefaultPlanDate() {
+        LocalDate currentDate = service.getCurrentDate();
+        boolean isCurrentDateInTrip = !currentDate.isBefore(trip.startDate())
+                && !currentDate.isAfter(trip.endDate());
+        return isCurrentDateInTrip ? currentDate : trip.startDate();
     }
 
     /**
