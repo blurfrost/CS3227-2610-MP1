@@ -47,7 +47,7 @@
                     <Text styleClass="detail-destination-text" text="Destination" />
                 </TextFlow>
                 <TextFlow fx:id="detailTripLabel" maxWidth="Infinity" minWidth="0.0">
-                    <Text styleClass="detail-trip-text" text="Trip" />
+                    <Text styleClass="detail-trip-text" text="From " />
                 </TextFlow>
                 <Label fx:id="detailScheduleLabel" styleClass="detail-schedule" text="Date and time" wrapText="true" />
                 <HBox spacing="8.0">
@@ -58,8 +58,8 @@
                 </HBox>
                 <VBox spacing="5.0" styleClass="review-card">
                     <Label styleClass="review-heading" text="Review" />
-                    <Label fx:id="detailReviewLabel" styleClass="review-body" text="No review recorded yet."
-                           wrapText="true" />
+                    <Label fx:id="detailReviewLabel" minHeight="-Infinity" styleClass="review-body"
+                           text="No review recorded yet." wrapText="true" />
                 </VBox>
             </VBox>
         </VBox>

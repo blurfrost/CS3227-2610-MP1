@@ -40,7 +40,10 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -83,6 +86,7 @@ class AppShellFxmlTest {
         assertFalse(root.getStylesheets().isEmpty());
         assertInstanceOf(Button.class, loader.getNamespace().get("newTripButton"));
         assertInstanceOf(Button.class, root.lookup("#editTripButton"));
+        assertInstanceOf(Button.class, root.lookup("#reviewTripButton"));
         assertInstanceOf(Button.class, root.lookup("#deleteTripButton"));
         assertInstanceOf(Button.class, root.lookup("#editPlanButton"));
         assertInstanceOf(Button.class, root.lookup("#deletePlanButton"));
@@ -142,11 +146,13 @@ class AppShellFxmlTest {
 
         Button editButton = assertInstanceOf(Button.class, page.lookup("#editPlanButton"));
         Button deleteButton = assertInstanceOf(Button.class, page.lookup("#deletePlanButton"));
+        Label detailReviewLabel = assertInstanceOf(Label.class, page.lookup("#detailReviewLabel"));
         assertEquals(editButton.getHeight(), deleteButton.getHeight(), 0.01);
+        assertEquals(Region.USE_PREF_SIZE, detailReviewLabel.getMinHeight());
     }
 
     @Test
-    void tripDetail_deleteButton_followsAddPlanInOrganiseAndGallery() throws IOException {
+    void tripDetail_actionsAndPlanHeader_haveRequestedOrderInOrganiseAndGallery() throws IOException {
         for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
             DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
             LocalDate tripDate = resourceName.equals("GalleryView.fxml")
@@ -155,17 +161,158 @@ class AppShellFxmlTest {
             service.createTrip("Japan", tripDate, tripDate);
             VBox page = loadView(resourceName, service);
             Button editButton = assertInstanceOf(Button.class, page.lookup("#editTripButton"));
+            Button reviewButton = assertInstanceOf(Button.class, page.lookup("#reviewTripButton"));
             Button addPlanButton = assertInstanceOf(Button.class, page.lookup("#addPlanButton"));
             Button deleteTripButton = assertInstanceOf(Button.class, page.lookup("#deleteTripButton"));
+            ScrollPane reviewScrollPane = getReviewScrollPane(page);
+            Label detailReviewLabel = getReviewLabel(reviewScrollPane);
+            Label reviewHeading = assertInstanceOf(Label.class, page.lookup(".review-heading"));
+            Label plansLabel = assertInstanceOf(Label.class, page.lookup("#plansLabel"));
             HBox actionBar = assertInstanceOf(HBox.class, editButton.getParent());
+            HBox plansHeader = assertInstanceOf(HBox.class, plansLabel.getParent());
 
-            assertSame(actionBar, addPlanButton.getParent());
+            assertSame(actionBar, reviewButton.getParent());
             assertSame(actionBar, deleteTripButton.getParent());
             assertEquals(editButton, actionBar.getChildren().get(0));
-            assertEquals(addPlanButton, actionBar.getChildren().get(1));
+            assertEquals(reviewButton, actionBar.getChildren().get(1));
             assertEquals(deleteTripButton, actionBar.getChildren().get(2));
+            assertEquals("Add Review", reviewButton.getText());
+            assertTrue(reviewButton.getStyleClass().contains("primary-button"));
+            assertEquals("Trip Review", reviewHeading.getText());
+            assertSame(plansHeader, addPlanButton.getParent());
+            assertEquals(plansLabel, plansHeader.getChildren().get(0));
+            assertEquals(addPlanButton, plansHeader.getChildren().get(2));
+            assertEquals("Plans (0)", plansLabel.getText());
+            assertEquals("No review recorded yet.", detailReviewLabel.getText());
             assertTrue(deleteTripButton.getStyleClass().contains("danger-button"));
+            assertFalse(reviewButton.isDisabled());
             assertFalse(deleteTripButton.isDisabled());
+        }
+    }
+
+    @Test
+    void tripDetail_existingReview_usesEditActionAndDisplaysReviewInBothViews() throws IOException {
+        Review review = new Review(OptionalInt.of(4), Optional.of("A memorable journey."));
+        for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = resourceName.equals("GalleryView.fxml")
+                    ? LocalDate.of(2027, 1, 1)
+                    : LocalDate.of(2027, 1, 5);
+            Trip trip = service.createTrip("Japan", tripDate, tripDate);
+            service.setTripReview(trip.id(), review);
+
+            VBox page = loadView(resourceName, service);
+
+            Button reviewButton = assertInstanceOf(Button.class, page.lookup("#reviewTripButton"));
+            Label detailReviewLabel = getReviewLabel(getReviewScrollPane(page));
+            assertEquals("Edit Review", reviewButton.getText());
+            assertEquals("Rating: 4/5\nNotes: A memorable journey.", detailReviewLabel.getText());
+        }
+    }
+
+    @Test
+    void tripDetail_reviewLabel_preservesPreferredHeightInOrganiseAndGallery() throws IOException {
+        for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = resourceName.equals("GalleryView.fxml")
+                    ? LocalDate.of(2027, 1, 1)
+                    : LocalDate.of(2027, 1, 5);
+            service.createTrip("Japan", tripDate, tripDate);
+            VBox page = loadView(resourceName, service);
+
+            Label detailReviewLabel = getReviewLabel(getReviewScrollPane(page));
+
+            assertEquals(Region.USE_PREF_SIZE, detailReviewLabel.getMinHeight());
+        }
+    }
+
+    @Test
+    void tripDetail_longReview_preservesPlanViewportInOrganiseAndGallery() throws IOException {
+        String longNotes = "A memorable day with many details. ".repeat(80);
+        String longTitle = "W".repeat(Trip.MAX_TITLE_LENGTH);
+        for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = resourceName.equals("GalleryView.fxml")
+                    ? LocalDate.of(2027, 1, 1)
+                    : LocalDate.of(2027, 1, 5);
+            Trip trip = service.createTrip(longTitle, tripDate, tripDate);
+            service.addPlan(trip.id(), "Breakfast", tripDate, LocalTime.of(9, 0));
+            service.addPlan(trip.id(), "Museum", tripDate, LocalTime.of(11, 0));
+            service.setTripReview(trip.id(), new Review(OptionalInt.of(3), Optional.of(longNotes)));
+
+            VBox page = loadView(resourceName, service);
+            page.resize(802, 646);
+            Scene scene = new Scene(page, 802, 646);
+            scene.getRoot().applyCss();
+            page.layout();
+            page.layout();
+
+            ScrollPane reviewScrollPane = getReviewScrollPane(page);
+            ScrollBar verticalScrollBar = findScrollBar(reviewScrollPane, Orientation.VERTICAL);
+            ListView<?> planList = assertInstanceOf(ListView.class, page.lookup("#planList"));
+            GridPane panels = findMainLayout(page);
+            VBox detailPanel = assertInstanceOf(VBox.class, panels.getChildren().getLast());
+            VBox reviewCard = assertInstanceOf(VBox.class, reviewScrollPane.getParent());
+
+            assertTrue(verticalScrollBar.isVisible());
+            assertFalse(findScrollBar(reviewScrollPane, Orientation.HORIZONTAL).isVisible());
+            assertEquals(200.0, reviewCard.getMaxHeight(), 0.01);
+            assertEquals(120.0, reviewCard.getMinHeight(), 0.01);
+            assertEquals(64.0, reviewScrollPane.getMinHeight(), 0.01);
+            assertTrue(reviewCard.getHeight() <= reviewCard.getMaxHeight() + 0.01);
+            assertTrue(reviewCard.getHeight() >= reviewCard.getMinHeight() - 0.01);
+            assertTrue(reviewScrollPane.getViewportBounds().getHeight() >= 64.0);
+            assertTrue(planList.getHeight() >= planList.getMinHeight() - 0.01);
+            assertTrue(planList.getHeight() >= 90.0);
+            assertTrue(planList.getBoundsInParent().getMaxY() <= detailPanel.getHeight() + 0.01);
+            assertInstanceOf(ListCell.class, planList.lookup(".list-cell"));
+        }
+    }
+
+    @Test
+    void tripDetail_combinedReview_showsRatingAndNotesWithoutClippingInOrganiseAndGallery()
+            throws IOException {
+        Review review = new Review(OptionalInt.of(3), Optional.of("Cool trip"));
+        for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = resourceName.equals("GalleryView.fxml")
+                    ? LocalDate.of(2027, 1, 1)
+                    : LocalDate.of(2027, 1, 5);
+            Trip trip = service.createTrip("Japan", tripDate, tripDate);
+            service.setTripReview(trip.id(), review);
+
+            VBox page = loadView(resourceName, service);
+            page.resize(802, 646);
+            Scene scene = new Scene(page, 802, 646);
+            scene.getRoot().applyCss();
+            page.layout();
+            page.layout();
+
+            ScrollPane reviewScrollPane = getReviewScrollPane(page);
+            Label reviewLabel = getReviewLabel(reviewScrollPane);
+
+            assertEquals("Rating: 3/5\nNotes: Cool trip", reviewLabel.getText());
+            assertFalse(findScrollBar(reviewScrollPane, Orientation.VERTICAL).isVisible());
+            assertTrue(reviewLabel.getHeight() <= reviewScrollPane.getViewportBounds().getHeight() + 0.01);
+        }
+    }
+
+    @Test
+    void tripDetail_planHeading_showsSelectedTripPlanCount() throws IOException {
+        for (String resourceName : List.of("OrganiseView.fxml", "GalleryView.fxml")) {
+            DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+            LocalDate tripDate = resourceName.equals("GalleryView.fxml")
+                    ? LocalDate.of(2027, 1, 1)
+                    : LocalDate.of(2027, 1, 5);
+            Trip trip = service.createTrip("Japan", tripDate, tripDate);
+            service.addPlan(trip.id(), "Breakfast", tripDate, LocalTime.of(9, 0));
+            service.addPlan(trip.id(), "Museum", tripDate, LocalTime.of(11, 0));
+            service.addPlan(trip.id(), "Dinner", tripDate, LocalTime.of(19, 0));
+
+            VBox page = loadView(resourceName, service);
+
+            Label plansLabel = assertInstanceOf(Label.class, page.lookup("#plansLabel"));
+            assertEquals("Plans (3)", plansLabel.getText());
         }
     }
 
@@ -595,6 +742,102 @@ class AppShellFxmlTest {
     }
 
     @Test
+    void tripReviewDialog_emptyReview_hasOptionalNumericFieldsAndEnabledSave()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        FutureTask<ReviewDialogState> dialogTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            ReviewDialog<Trip> dialog = ReviewDialog.forTrip(service, trip, owner);
+            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            List<String> ratingTexts = List.of(
+                    assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton1")).getText(),
+                    assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton2")).getText(),
+                    assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton3")).getText(),
+                    assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton4")).getText(),
+                    assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton5")).getText());
+            TextArea notesArea = assertInstanceOf(TextArea.class, form.lookup("#reviewNotesField"));
+            Button saveButton = assertInstanceOf(Button.class,
+                    dialog.getDialogPane().lookupButton(dialog.getDialogPane().getButtonTypes().getFirst()));
+            boolean isSaveDisabled = saveButton.isDisabled();
+            boolean isSaveDefault = saveButton.isDefaultButton();
+            saveButton.fire();
+            boolean isReviewPresent = service.getTrip(trip.id()).orElseThrow().review().isPresent();
+            return new ReviewDialogState(dialog.getTitle(), ratingTexts, notesArea.getText(),
+                    isSaveDisabled, isSaveDefault, dialog.isResizable(), isReviewPresent);
+        });
+        Platform.runLater(dialogTask);
+
+        ReviewDialogState state = dialogTask.get(5, TimeUnit.SECONDS);
+        assertEquals("Review a trip", state.title());
+        assertEquals(List.of("1", "2", "3", "4", "5"), state.ratingTexts());
+        assertEquals("", state.notes());
+        assertFalse(state.saveDisabled());
+        assertTrue(state.saveDefault());
+        assertTrue(state.resizable());
+        assertFalse(state.isReviewPresentAfterSave());
+    }
+
+    @Test
+    void tripReviewDialog_submitRatingAndNotes_persistsCombinedReview()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        FutureTask<Review> saveTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            ReviewDialog<Trip> dialog = ReviewDialog.forTrip(service, trip, owner);
+            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton2")).fire();
+            assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton4")).fire();
+            assertInstanceOf(TextArea.class, form.lookup("#reviewNotesField"))
+                    .setText("  A memorable journey.  ");
+            assertInstanceOf(Button.class,
+                    dialog.getDialogPane().lookupButton(dialog.getDialogPane().getButtonTypes().getFirst())).fire();
+            return service.getTrip(trip.id()).orElseThrow().review().orElseThrow();
+        });
+        Platform.runLater(saveTask);
+
+        Review savedReview = saveTask.get(5, TimeUnit.SECONDS);
+        assertEquals(OptionalInt.of(4), savedReview.rating());
+        assertEquals(Optional.of("A memorable journey."), savedReview.text());
+    }
+
+    @Test
+    void tripReviewDialog_existingReview_prefillsAndAllowsRemoval()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9));
+        Trip reviewedTrip = service.setTripReview(trip.id(),
+                new Review(OptionalInt.of(4), Optional.of("A memorable journey.")));
+        FutureTask<ReviewRemovalState> removalTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            ReviewDialog<Trip> dialog = ReviewDialog.forTrip(service, reviewedTrip, owner);
+            VBox form = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
+            ToggleButton ratingButton = assertInstanceOf(ToggleButton.class, form.lookup("#ratingButton4"));
+            TextArea notesArea = assertInstanceOf(TextArea.class, form.lookup("#reviewNotesField"));
+            boolean wasRatingSelected = ratingButton.isSelected();
+            String existingNotes = notesArea.getText();
+            ratingButton.fire();
+            notesArea.clear();
+            assertInstanceOf(Button.class,
+                    dialog.getDialogPane().lookupButton(dialog.getDialogPane().getButtonTypes().getFirst())).fire();
+            boolean isReviewPresent = service.getTrip(trip.id()).orElseThrow().review().isPresent();
+            return new ReviewRemovalState(wasRatingSelected, existingNotes,
+                    ratingButton.isSelected(), isReviewPresent);
+        });
+        Platform.runLater(removalTask);
+
+        ReviewRemovalState state = removalTask.get(5, TimeUnit.SECONDS);
+        assertTrue(state.wasRatingSelected());
+        assertEquals("A memorable journey.", state.existingNotes());
+        assertFalse(state.isRatingSelectedAfterClick());
+        assertFalse(state.isReviewPresentAfterSave());
+    }
+
+    @Test
     void dialogWindowSupport_setsOpeningDimensionsAsMinimums()
             throws InterruptedException, ExecutionException, TimeoutException {
         FutureTask<DialogSize> dialogTask = new FutureTask<>(() -> {
@@ -766,6 +1009,15 @@ class AppShellFxmlTest {
     private record DialogSize(double width, double height, double minWidth, double minHeight) {
     }
 
+    private record ReviewDialogState(String title, List<String> ratingTexts, String notes,
+                                     boolean saveDisabled, boolean saveDefault, boolean resizable,
+                                     boolean isReviewPresentAfterSave) {
+    }
+
+    private record ReviewRemovalState(boolean wasRatingSelected, String existingNotes,
+                                      boolean isRatingSelectedAfterClick, boolean isReviewPresentAfterSave) {
+    }
+
     private static FXMLLoader createAppShellLoader(DoggoService service) {
         FXMLLoader loader = new FXMLLoader(AppShellFxmlTest.class.getResource("/doggo/ui/javafx/AppShell.fxml"));
         loader.setControllerFactory(type -> {
@@ -789,6 +1041,14 @@ class AppShellFxmlTest {
     private static VBox loadView(String resourceName, DoggoService service) throws IOException {
         FXMLLoader loader = createViewLoader(resourceName, service);
         return assertInstanceOf(VBox.class, loader.load());
+    }
+
+    private static ScrollPane getReviewScrollPane(VBox page) {
+        return assertInstanceOf(ScrollPane.class, page.lookup("#detailReviewScrollPane"));
+    }
+
+    private static Label getReviewLabel(ScrollPane reviewScrollPane) {
+        return assertInstanceOf(Label.class, reviewScrollPane.getContent());
     }
 
     private static FXMLLoader createViewLoader(String resourceName, DoggoService service) {
@@ -861,9 +1121,14 @@ class AppShellFxmlTest {
             label.getChildren().forEach(child ->
                     displayedText.append(assertInstanceOf(Text.class, child).getText()));
             String expectedLabelText = labelId.equals("#detailTripLabel")
-                    ? "Trip · " + expectedText
+                    ? "From " + expectedText
                     : expectedText;
             assertEquals(expectedLabelText, displayedText.toString());
+            if (labelId.equals("#detailTripLabel")) {
+                assertTrue(label.getChildren().subList(1, label.getChildren().size()).stream()
+                        .allMatch(child -> assertInstanceOf(Text.class, child)
+                                .getStyleClass().contains("detail-trip-name-text")));
+            }
             Text firstCharacter = assertInstanceOf(Text.class, label.getChildren().getFirst());
             assertTrue(label.getHeight() > firstCharacter.getLayoutBounds().getHeight() * 1.5,
                     () -> labelId + " height=" + label.getHeight() + " lineHeight="
@@ -959,6 +1224,15 @@ class AppShellFxmlTest {
 
     private static ScrollBar findScrollBar(ListView<?> listView, Orientation orientation) {
         return listView.lookupAll(".scroll-bar").stream()
+                .filter(ScrollBar.class::isInstance)
+                .map(ScrollBar.class::cast)
+                .filter(scrollBar -> scrollBar.getOrientation() == orientation)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static ScrollBar findScrollBar(ScrollPane scrollPane, Orientation orientation) {
+        return scrollPane.lookupAll(".scroll-bar").stream()
                 .filter(ScrollBar.class::isInstance)
                 .map(ScrollBar.class::cast)
                 .filter(scrollBar -> scrollBar.getOrientation() == orientation)

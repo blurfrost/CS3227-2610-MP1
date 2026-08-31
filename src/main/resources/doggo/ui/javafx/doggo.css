@@ -373,6 +373,12 @@
     -fx-font-size: 13px;
 }
 
+.detail-trip-name-text {
+    -fx-fill: #66736f;
+    -fx-font-size: 13px;
+    -fx-underline: true;
+}
+
 .review-card {
     -fx-background-color: #f7f2e8;
     -fx-background-radius: 10px;
@@ -388,6 +394,17 @@
 .review-body {
     -fx-text-fill: #26383b;
     -fx-font-size: 13px;
+}
+
+.review-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.review-scroll-pane > .viewport,
+.review-scroll-pane .content {
+    -fx-background-color: transparent;
 }
 
 .dialog-pane {
@@ -447,8 +464,45 @@
     -fx-background-color: #f7f0e5;
 }
 
-.trip-form {
+.trip-form,
+.review-form {
     -fx-background-color: #fffaf1;
+}
+
+.rating-choices {
+    -fx-padding: 0 0 4px 0;
+}
+
+.rating-button {
+    -fx-background-color: #f7f2e8;
+    -fx-background-radius: 8px;
+    -fx-border-color: #d9cbb6;
+    -fx-border-radius: 8px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-min-width: 44px;
+    -fx-padding: 8px 12px;
+    -fx-text-fill: #526467;
+}
+
+.rating-button:hover {
+    -fx-background-color: #f0e8da;
+}
+
+.rating-button:selected {
+    -fx-background-color: #d07855;
+    -fx-border-color: #b46549;
+    -fx-text-fill: #fff9ef;
+}
+
+.review-notes-field {
+    -fx-padding: 0;
+}
+
+.review-notes-field .content {
+    -fx-background-color: #f7f2e8;
+    -fx-background-radius: 8px;
 }
 
 .form-intro {

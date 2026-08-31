@@ -48,6 +48,12 @@ public final class OrganiseController {
     private Button editTripButton;
 
     /**
+     * Button for adding or editing the selected Trip's Review.
+     */
+    @FXML
+    private Button reviewTripButton;
+
+    /**
      * Button for deleting the selected Trip.
      */
     @FXML
@@ -90,16 +96,16 @@ public final class OrganiseController {
     private Label detailDatesLabel;
 
     /**
-     * Selected Trip summary label.
-     */
-    @FXML
-    private Label detailSummaryLabel;
-
-    /**
      * Selected Trip status label.
      */
     @FXML
     private Label statusLabel;
+
+    /**
+     * Selected Trip review label.
+     */
+    @FXML
+    private Label detailReviewLabel;
 
     /**
      * Selected Trip Plan list.
@@ -112,6 +118,12 @@ public final class OrganiseController {
      */
     @FXML
     private Label planEmptyState;
+
+    /**
+     * Heading for the selected Trip's Plan list.
+     */
+    @FXML
+    private Label plansLabel;
 
     /**
      * Creates an Organise controller backed by the specified application service.
@@ -342,6 +354,7 @@ public final class OrganiseController {
         statusLabel.setVisible(hasSelection);
         statusLabel.setManaged(hasSelection);
         editTripButton.setDisable(!hasSelection);
+        reviewTripButton.setDisable(!hasSelection);
         deleteTripButton.setDisable(!hasSelection);
         addPlanButton.setDisable(!hasSelection);
         if (!hasSelection) {
@@ -352,7 +365,9 @@ public final class OrganiseController {
         List<Plan> plans = service.getPlans(trip);
         DetailTextSupport.setText(detailTitleLabel, trip.title(), "detail-destination-text");
         detailDatesLabel.setText(formatDateRange(trip));
-        detailSummaryLabel.setText(formatTripSummary(trip, status));
+        plansLabel.setText("Plans (" + plans.size() + ")");
+        reviewTripButton.setText(trip.review().isPresent() ? "Edit Review" : "Add Review");
+        detailReviewLabel.setText(ReviewDisplaySupport.format(trip.review()));
         statusLabel.setText(formatStatus(status));
         statusLabel.getStyleClass().removeAll("status-current", "status-future");
         statusLabel.getStyleClass().add(status == TripStatus.CURRENT
@@ -381,6 +396,20 @@ public final class OrganiseController {
         TripCreationDialog dialog = new TripCreationDialog(service, selectedTrip,
                 editTripButton.getScene().getWindow());
         dialog.showAndWait().ifPresent(tripEditedHandler);
+    }
+
+    /**
+     * Opens the modal form for adding, editing, or removing the selected Trip's Review.
+     */
+    @FXML
+    private void handleReviewTrip() {
+        Trip selectedTrip = tripList.getSelectionModel().getSelectedItem();
+        if (selectedTrip == null) {
+            return;
+        }
+        ReviewDialog<Trip> dialog = ReviewDialog.forTrip(service, selectedTrip,
+                reviewTripButton.getScene().getWindow());
+        dialog.showAndWait().ifPresent(updatedTrip -> refreshAndSelect(updatedTrip.id()));
     }
 
     /**
@@ -438,21 +467,6 @@ public final class OrganiseController {
      */
     private static String formatDateRange(Trip trip) {
         return DATE_FORMATTER.format(trip.startDate()) + " – " + DATE_FORMATTER.format(trip.endDate());
-    }
-
-    /**
-     * Formats a short summary for the selected Trip.
-     *
-     * @param trip Trip whose summary is formatted.
-     * @param status Current status of the Trip.
-     * @return Human-readable Trip summary.
-     */
-    private static String formatTripSummary(Trip trip, TripStatus status) {
-        String planCount = trip.plans().size() == 1 ? "1 plan" : trip.plans().size() + " plans";
-        String statusDescription = status == TripStatus.CURRENT
-                ? "This trip is happening now."
-                : "This trip is ready to be planned.";
-        return planCount + " · " + statusDescription;
     }
 
     /**

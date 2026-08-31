@@ -9,7 +9,6 @@ import doggo.application.DashboardEntry;
 import doggo.application.DoggoService;
 import doggo.application.RepositoryException;
 import doggo.domain.Plan;
-import doggo.domain.Review;
 import doggo.domain.Trip;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -201,10 +200,11 @@ public final class DashboardController {
 
         Plan plan = entry.plan();
         DetailTextSupport.setText(detailDestinationLabel, plan.destination(), "detail-destination-text");
-        DetailTextSupport.setText(detailTripLabel, "Trip · " + entry.tripTitle(), "detail-trip-text");
+        DetailTextSupport.setLabeledText(detailTripLabel, "From ", entry.tripTitle(),
+                "detail-trip-text", "detail-trip-name-text");
         detailScheduleLabel.setText(plan.date().format(DETAIL_DATE_FORMATTER)
                 + " at " + plan.time().format(TIME_FORMATTER));
-        detailReviewLabel.setText(formatReview(plan.review().orElse(null)));
+        detailReviewLabel.setText(ReviewDisplaySupport.format(plan.review()));
     }
 
     /**
@@ -271,23 +271,6 @@ public final class DashboardController {
         return deletedIndex + 1 < entries.size()
                 ? entries.get(deletedIndex + 1)
                 : entries.get(deletedIndex - 1);
-    }
-
-    /**
-     * Formats an optional Plan review for the detail pane.
-     *
-     * @param review Review to display, or null when no review exists.
-     * @return Human-readable review text.
-     */
-    private static String formatReview(Review review) {
-        if (review == null) {
-            return "No review recorded yet.";
-        }
-        String rating = review.rating().isPresent()
-                ? "Rating: " + review.rating().getAsInt() + "/5"
-                : "No rating";
-        String text = review.text().orElse("No written review");
-        return rating + "\n" + text;
     }
 
     /**
