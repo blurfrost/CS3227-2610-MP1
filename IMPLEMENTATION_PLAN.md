@@ -72,7 +72,7 @@ future work.
   and CLI packages independent of JavaFX.
 - Use FXML and controllers for primary views, with CSS for shared styling and
   Java only for small reusable components such as list cells.
-- Use an approximately 1180×760 window with a minimum size around 960×640.
+- Use an approximately 1180×760 window and prevent resizing below its opening dimensions.
 - Add persistent left-sidebar navigation for Dashboard, Organise, and Gallery,
   including active-state and keyboard-focus styling.
 - Use warm cream surfaces, charcoal text, terracotta accents, muted sage
@@ -151,34 +151,110 @@ future work.
 - Retain existing Plan reviews during edits and refresh Dashboard when an
   edited Plan no longer belongs in today's list.
 
-### 12.11 Edit Trips with status-aware routing
+### 12.11 Edit Trips with status-aware routing — Complete
 
 - Reuse the Trip form for editing a Trip's title and inclusive date range.
 - Make Trip editing available in Organise and Gallery.
 - Route the updated Trip to Organise or Gallery according to its resulting
   status, while preserving any existing review.
+- Prevent edited date ranges from excluding existing Plans.
 
-### 12.12 Delete Plans with confirmation
+### 12.12 Delete Plans with confirmation — Complete
 
 - Make Plan deletion available in Organise, Gallery, and Dashboard.
 - Require explicit confirmation and remove the Plan's associated review.
 - Refresh the relevant view and preserve or restore a sensible selection after
   successful deletion.
+- Prefer the next remaining Plan after deletion, falling back to the previous
+  Plan when the deleted Plan was last.
 
-### 12.13 Delete Trips with confirmation
+### 12.13 Delete Trips with confirmation — Complete
 
 - Make Trip deletion available in Organise and Gallery.
 - Require explicit confirmation and remove the Trip, its Plans, and associated
   reviews as one aggregate operation.
 - Refresh the current view and handle the resulting empty or next selection
   state without leaving stale details visible.
+- Reuse the shared deletion confirmation dialog with No as the safe default,
+  and place Delete trip after + Add plan in Organise and Gallery.
 
-### 12.14 Add Trip and Plan review forms — Complete
+### 12.14 Add Trip and Plan review forms
 
-- Add Trip review actions in Organise and Gallery, and Plan review actions in
-  Dashboard and selected Trip views in Organise and Gallery.
-- Preserve the existing rating, text, and clearing rules without restricting
-  reviews by scheduled dates.
+#### Iteration 1 — Add Trip review forms — Complete
+
+- Add state-aware Add Review and Edit Review actions in Organise and Gallery.
+- Reuse an expandable rating-and-Notes dialog with optional fields, existing
+  value prefill, and empty-form review removal.
+- Display Trip reviews consistently in both Trip detail panes without
+  restricting reviews by scheduled dates.
+
+#### Iteration 2 — Add Plan review forms — Complete
+
+- Add state-aware Add Review and Edit Review actions in Dashboard's Plan
+  details pane.
+- Keep Organise and Gallery Plan cells compact with a Details action and a
+  small review status cue.
+- Provide a reusable Plan details inspector containing full Plan information,
+  review content, editing, review, and deletion actions.
+- Reuse the expandable Review dialog for Plans with optional rating, Notes,
+  editing, and clearing behavior.
+
+#### Iteration 3 — Refine Plan inspector sizing and review cues — Complete
+
+- Size the Plan details dialog to its visible content while keeping its 560px
+  default width and allowing expansion.
+- Resize the open dialog when a Plan Review is added, edited, or cleared, and
+  keep long review text scrollable within the existing 200px card maximum.
+- Place compact review cues after the schedule time so destinations use the
+  full details row while the complete `X/5 stars` or `Reviewed` status remains
+  visible.
+
+### 12.15 Stabilize master-detail sizing and text overflow
+
+#### Iteration 1 — Establish equal-width panels — Complete
+
+- Replace the main two-panel `HBox` in Dashboard, Organise, and Gallery with a
+  two-column `GridPane` using an equal 50/50 width split and the existing gap.
+- Allow both panels to shrink within the 1180×760 minimum window size
+  without allowing either panel's content to determine the column widths.
+
+#### Iteration 2 — Fix detail-name wrapping — Complete
+
+- Wrap complete Trip names in detail panes instead of truncating them.
+- Constrain detail labels to the right column so long names increase the
+  label's height without widening the panel or reducing the left panel's space.
+- Add rendered JavaFX regression coverage for unbroken maximum-length names.
+
+#### Iteration 3 — Fix Trip-card ellipses — Complete
+
+- Constrain Trip cards to their `ListView` viewport width.
+- Display overflowing Trip names on one line with an ellipsis while retaining
+  the full-name tooltip.
+- Eliminate horizontal scrolling by correcting card sizing rather than hiding
+  scrollbars.
+
+#### Iteration 4 — Extend constrained cards to Plans — Complete
+
+- Apply the same constrained-width behavior to Plan cards in Dashboard,
+  Organise, and Gallery.
+- Subtract the rendered vertical scrollbar width whenever it is visible so
+  compact cells remain within the reduced ListView viewport.
+- Keep time, status, and action controls visible while allowing primary text
+  labels to shrink and use ellipses.
+- Retain full-value tooltips for truncated labels.
+
+#### Iteration 5 — Verify the integrated layout — Complete
+
+- Verify all three views at the default and minimum 1180×760 size.
+- Confirm navigation and selection do not alter equal panel widths, detail
+  names wrap, compact cards use ellipses, and no horizontal scrollbar appears.
+- Exercise Trip and Plan lists with enough items to require vertical scrolling
+  and verify their cells shrink without enabling horizontal scrolling.
+- Run focused JavaFX tests, the complete Gradle suite, coding-standard review,
+  and visual-diff generation.
+
+This milestone changes only JavaFX presentation code and package-private layout
+helpers; it does not change domain, service, persistence, or public Java APIs.
 
 The remaining CRUD milestones will be implemented as reusable workflows and
 exposed in each view where the selected record context makes the operation
