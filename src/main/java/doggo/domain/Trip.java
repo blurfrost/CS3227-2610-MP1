@@ -11,12 +11,21 @@ import java.util.UUID;
  * Represents an overall journey and its itinerary Plans.
  */
 public final class Trip {
+    /**
+     * Maximum number of Unicode code points allowed in a new Trip title.
+     */
+    public static final int MAX_TITLE_LENGTH = 50;
+
     private final UUID id;
     private final String title;
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final List<Plan> plans;
     private final Optional<Review> review;
+    /**
+     * Whether this Trip was restored with a title exceeding the current limit.
+     */
+    private final boolean hasLegacyTitle;
 
     /**
      * Creates a Trip with the specified title and inclusive date range.
@@ -27,13 +36,14 @@ public final class Trip {
      * @param endDate Trip end date.
      */
     public Trip(UUID id, String title, LocalDate startDate, LocalDate endDate) {
-        this(id, title, startDate, endDate, List.of(), Optional.empty());
+        this(id, title, startDate, endDate, List.of(), Optional.empty(), false);
     }
 
     private Trip(UUID id, String title, LocalDate startDate, LocalDate endDate, List<Plan> plans,
-                 Optional<Review> review) {
+                 Optional<Review> review, boolean isLegacyTitleAllowed) {
         this.id = Objects.requireNonNull(id);
-        this.title = requireText(title, "Trip title");
+        this.title = requireText(title, "Trip title", isLegacyTitleAllowed);
+        this.hasLegacyTitle = isLegacyTitleAllowed && exceedsTitleLimit(this.title);
         this.startDate = Objects.requireNonNull(startDate);
         this.endDate = Objects.requireNonNull(endDate);
         this.plans = List.copyOf(plans);
@@ -63,7 +73,7 @@ public final class Trip {
      */
     public static Trip restore(UUID id, String title, LocalDate startDate, LocalDate endDate,
                                List<Plan> plans, Optional<Review> review) {
-        return new Trip(id, title, startDate, endDate, plans, review);
+        return new Trip(id, title, startDate, endDate, plans, review, true);
     }
 
     public UUID id() {
@@ -121,7 +131,7 @@ public final class Trip {
         }
         List<Plan> updatedPlans = new ArrayList<>(plans);
         updatedPlans.add(plan);
-        return new Trip(id, title, startDate, endDate, updatedPlans, review);
+        return new Trip(id, title, startDate, endDate, updatedPlans, review, hasLegacyTitle);
     }
 
     /**
@@ -139,7 +149,7 @@ public final class Trip {
         if (updatedPlans.size() == plans.size()) {
             throw new IllegalArgumentException("Plan not found.");
         }
-        return new Trip(id, title, startDate, endDate, updatedPlans, review);
+        return new Trip(id, title, startDate, endDate, updatedPlans, review, hasLegacyTitle);
     }
 
     /**
@@ -152,7 +162,10 @@ public final class Trip {
      */
     public Trip withUpdatedDetails(String updatedTitle, LocalDate updatedStartDate,
                                    LocalDate updatedEndDate) {
-        return new Trip(id, updatedTitle, updatedStartDate, updatedEndDate, plans, review);
+        boolean preserveLegacyTitle = hasLegacyTitle
+                && title.equals(Objects.requireNonNull(updatedTitle).trim());
+        return new Trip(id, updatedTitle, updatedStartDate, updatedEndDate, plans, review,
+                preserveLegacyTitle);
     }
 
     /**
@@ -162,7 +175,8 @@ public final class Trip {
      * @return Copy of this Trip with the review attached.
      */
     public Trip withReview(Review review) {
-        return new Trip(id, title, startDate, endDate, plans, Optional.of(Objects.requireNonNull(review)));
+        return new Trip(id, title, startDate, endDate, plans,
+                Optional.of(Objects.requireNonNull(review)), hasLegacyTitle);
     }
 
     /**
@@ -171,7 +185,7 @@ public final class Trip {
      * @return Copy of this Trip without a review.
      */
     public Trip withoutReview() {
-        return new Trip(id, title, startDate, endDate, plans, Optional.empty());
+        return new Trip(id, title, startDate, endDate, plans, Optional.empty(), hasLegacyTitle);
     }
 
     /**
@@ -191,17 +205,39 @@ public final class Trip {
                     throw new IllegalArgumentException("Plan date must fall within the Trip dates.");
                 }
                 updatedPlans.set(index, replacement);
-                return new Trip(id, title, startDate, endDate, updatedPlans, review);
+                return new Trip(id, title, startDate, endDate, updatedPlans, review, hasLegacyTitle);
             }
         }
         throw new IllegalArgumentException("Plan not found.");
     }
 
-    private static String requireText(String value, String fieldName) {
-        Objects.requireNonNull(value, fieldName);
-        if (value.isBlank()) {
+    /**
+     * Validates and trims a Trip title.
+     *
+     * @param value Title to validate.
+     * @param fieldName Name used in validation errors.
+     * @param isLegacyTitleAllowed Whether an over-limit restored title is allowed.
+     * @return Trimmed title.
+     */
+    private static String requireText(String value, String fieldName, boolean isLegacyTitleAllowed) {
+        String trimmedValue = Objects.requireNonNull(value, fieldName).trim();
+        if (trimmedValue.isBlank()) {
             throw new IllegalArgumentException(fieldName + " cannot be blank.");
         }
-        return value.trim();
+        if (!isLegacyTitleAllowed && exceedsTitleLimit(trimmedValue)) {
+            throw new IllegalArgumentException(fieldName + " cannot exceed "
+                    + MAX_TITLE_LENGTH + " characters.");
+        }
+        return trimmedValue;
+    }
+
+    /**
+     * Checks whether a Trip title exceeds the current length limit.
+     *
+     * @param value Title to measure.
+     * @return True when the title exceeds the limit.
+     */
+    private static boolean exceedsTitleLimit(String value) {
+        return value.codePointCount(0, value.length()) > MAX_TITLE_LENGTH;
     }
 }

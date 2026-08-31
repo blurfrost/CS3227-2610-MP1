@@ -79,11 +79,11 @@ final class NewPlanCommand implements Command {
             if (destination == null) {
                 return null;
             }
-            if (!destination.isBlank()) {
+            String validationMessage = CliTextValidator.validatePlanDestination(destination);
+            if (validationMessage.isEmpty()) {
                 return destination;
             }
-            context.output().println(context.formatter().error(
-                    "Plan destination cannot be blank."));
+            context.output().println(context.formatter().error(validationMessage));
         }
     }
 

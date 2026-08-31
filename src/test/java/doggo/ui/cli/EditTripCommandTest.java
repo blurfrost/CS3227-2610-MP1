@@ -29,4 +29,22 @@ class EditTripCommandTest {
         assertTrue(result.message().contains("Japan revised"));
         assertFalse(result.shouldExit());
     }
+
+    @Test
+    void execute_overLimitTitle_repromptsAndUpdatesTrip() {
+        DoggoService service = CommandTestHelper.service();
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 4));
+        String overLimitTitle = "a".repeat(Trip.MAX_TITLE_LENGTH + 1);
+        CliContext context = CommandTestHelper.context(service,
+                overLimitTitle + "\nJapan revised\n\n\n");
+        context.session().enterGallery();
+        context.galleryMenu();
+
+        CommandResult result = new EditTripCommand(1).execute(context);
+
+        assertEquals("Japan revised", service.getTrip(trip.id()).orElseThrow().title());
+        assertTrue(result.message().contains("Trip updated."));
+        assertFalse(result.shouldExit());
+    }
 }

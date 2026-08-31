@@ -36,4 +36,27 @@ class EditPlanCommandTest {
         assertTrue(result.message().contains("Plan updated."));
         assertFalse(result.shouldExit());
     }
+
+    @Test
+    void execute_overLimitDestination_repromptsAndUpdatesPlan() {
+        DoggoService service = CommandTestHelper.service();
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = service.addPlan(trip.id(), "Museum", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        String overLimitDestination = "a".repeat(Plan.MAX_DESTINATION_LENGTH + 1);
+        CliContext context = CommandTestHelper.context(service,
+                overLimitDestination + "\nMuseum updated\n\n10:00\n");
+        context.session().enterTrip(trip.id());
+        context.selectedTripView(service.getTrip(trip.id()).orElseThrow());
+
+        CommandResult result = new EditPlanCommand(1).execute(context);
+
+        Plan updatedPlan = service.getTrip(trip.id()).orElseThrow().plans().getFirst();
+        assertEquals(plan.id(), updatedPlan.id());
+        assertEquals("Museum updated", updatedPlan.destination());
+        assertEquals(LocalTime.of(10, 0), updatedPlan.time());
+        assertTrue(result.message().contains("Plan updated."));
+        assertFalse(result.shouldExit());
+    }
 }

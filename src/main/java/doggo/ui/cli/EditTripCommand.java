@@ -31,12 +31,9 @@ final class EditTripCommand implements Command {
         }
 
         Trip trip = storedTrip.orElseThrow();
-        String title = promptText(context, "Enter trip title [Current: " + trip.title() + "]:");
+        String title = promptTitle(context, trip);
         if (title == null) {
             return new CommandResult("Bye!", true);
-        }
-        if (title.isBlank()) {
-            title = trip.title();
         }
         LocalDate[] dates = promptDates(context, trip);
         if (dates == null) {
@@ -63,6 +60,30 @@ final class EditTripCommand implements Command {
     private static String promptText(CliContext context, String message) {
         String value = context.prompter().prompt(message);
         return value == null ? null : value.trim();
+    }
+
+    /**
+     * Prompts until a valid Trip title is entered or the current title is preserved.
+     *
+     * @param context CLI dependencies.
+     * @param trip Trip being edited.
+     * @return Valid title, current title for blank input, or null when input ends.
+     */
+    private static String promptTitle(CliContext context, Trip trip) {
+        while (true) {
+            String title = promptText(context, "Enter trip title [Current: " + trip.title() + "]:");
+            if (title == null) {
+                return null;
+            }
+            if (title.isBlank()) {
+                return trip.title();
+            }
+            String validationMessage = CliTextValidator.validateTripTitle(title);
+            if (validationMessage.isEmpty()) {
+                return title;
+            }
+            context.output().println(context.formatter().error(validationMessage));
+        }
     }
 
     /**

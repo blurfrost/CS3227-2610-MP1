@@ -28,4 +28,18 @@ class NewTripCommandTest {
         assertTrue(result.message().contains("Japan"));
         assertFalse(result.shouldExit());
     }
+
+    @Test
+    void execute_overLimitTitle_repromptsAndCreatesTrip() {
+        DoggoService service = CommandTestHelper.service();
+        String overLimitTitle = "a".repeat(Trip.MAX_TITLE_LENGTH + 1);
+        CliContext context = CommandTestHelper.context(service,
+                overLimitTitle + "\nJapan\n01/01/2027\n04/01/2027\n");
+
+        CommandResult result = new NewTripCommand().execute(context);
+
+        assertEquals("Japan", service.getTrips().getFirst().title());
+        assertTrue(result.message().contains("Trip successfully added!"));
+        assertFalse(result.shouldExit());
+    }
 }

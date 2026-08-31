@@ -2,6 +2,8 @@ package doggo.ui.javafx;
 
 import java.time.LocalDate;
 
+import doggo.domain.Trip;
+
 /**
  * Validates the fields entered when creating a Trip.
  */
@@ -20,6 +22,9 @@ final class TripFormValidator {
     static String validate(String title, LocalDate startDate, LocalDate endDate) {
         if (title == null || title.isBlank()) {
             return "Enter a name for your trip.";
+        }
+        if (title.trim().codePointCount(0, title.trim().length()) > Trip.MAX_TITLE_LENGTH) {
+            return "Trip name must be " + Trip.MAX_TITLE_LENGTH + " characters or fewer.";
         }
         if (startDate == null) {
             return "Choose a start date.";

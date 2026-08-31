@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDate;
 
+import doggo.domain.Trip;
+
 import org.junit.jupiter.api.Test;
 
 class TripFormValidatorTest {
@@ -14,6 +16,21 @@ class TripFormValidatorTest {
     void validate_blankTitle_rejectsInput() {
         assertEquals("Enter a name for your trip.",
                 TripFormValidator.validate("  ", START_DATE, END_DATE));
+    }
+
+    @Test
+    void validate_titleAtLimit_acceptsInput() {
+        String title = "旅".repeat(Trip.MAX_TITLE_LENGTH);
+
+        assertEquals("", TripFormValidator.validate(title, START_DATE, END_DATE));
+    }
+
+    @Test
+    void validate_titleBeyondLimit_rejectsInput() {
+        String title = "旅".repeat(Trip.MAX_TITLE_LENGTH + 1);
+
+        assertEquals("Trip name must be " + Trip.MAX_TITLE_LENGTH + " characters or fewer.",
+                TripFormValidator.validate(title, START_DATE, END_DATE));
     }
 
     @Test

@@ -25,9 +25,12 @@ public final class DashboardEntryCell extends ListCell<DashboardEntry> {
     public DashboardEntryCell() {
         timeLabel.getStyleClass().add("plan-time");
         destinationLabel.getStyleClass().add("plan-destination");
+        CompactLabelSupport.configure(destinationLabel);
         tripLabel.getStyleClass().add("plan-trip");
+        CompactLabelSupport.configure(tripLabel);
         card.getStyleClass().add("plan-card");
         card.setSpacing(4);
+        CompactCardSupport.bindWidthToCell(card, this);
         setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
     }
 
@@ -45,8 +48,8 @@ public final class DashboardEntryCell extends ListCell<DashboardEntry> {
             return;
         }
         timeLabel.setText(entry.plan().time().format(TIME_FORMATTER));
-        destinationLabel.setText(entry.plan().destination());
-        tripLabel.setText(entry.tripTitle());
+        CompactLabelSupport.setText(destinationLabel, entry.plan().destination());
+        CompactLabelSupport.setText(tripLabel, entry.tripTitle());
         setGraphic(card);
     }
 }

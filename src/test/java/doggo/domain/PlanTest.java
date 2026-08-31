@@ -30,6 +30,24 @@ class PlanTest {
     }
 
     @Test
+    void createPlan_destinationAtLimit_acceptsDestination() {
+        String destination = "旅".repeat(Plan.MAX_DESTINATION_LENGTH);
+
+        Plan plan = new Plan(UUID.randomUUID(), destination, LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        assertEquals(destination, plan.destination());
+    }
+
+    @Test
+    void createPlan_destinationBeyondLimit_throwsException() {
+        String destination = "旅".repeat(Plan.MAX_DESTINATION_LENGTH + 1);
+
+        assertThrows(IllegalArgumentException.class, () -> new Plan(
+                UUID.randomUUID(), destination, LocalDate.of(2027, 1, 5), LocalTime.of(9, 0)));
+    }
+
+    @Test
     void createPlan_destinationWithWhitespace_trimsAndPreservesCasing() {
         Plan plan = new Plan(UUID.randomUUID(), "  Back  ", LocalDate.of(2027, 1, 5),
                 LocalTime.of(9, 0));
@@ -74,6 +92,30 @@ class PlanTest {
                 () -> assertEquals(date, plan.date()),
                 () -> assertEquals(time, plan.time()),
                 () -> assertEquals(Optional.of(REVIEW), plan.review()));
+    }
+
+    @Test
+    void restore_legacyDestinationBeyondLimit_preservesDestinationThroughCopyOperations() {
+        String legacyDestination = "LegacyDestination".repeat(Plan.MAX_DESTINATION_LENGTH);
+        Plan plan = Plan.restore(UUID.randomUUID(), legacyDestination, LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0), Optional.empty());
+
+        Plan updatedPlan = plan.withReview(REVIEW)
+                .withUpdatedDetails(legacyDestination, LocalDate.of(2027, 1, 6),
+                        LocalTime.of(10, 0));
+
+        assertEquals(legacyDestination, updatedPlan.destination());
+        assertEquals(Optional.of(REVIEW), updatedPlan.review());
+    }
+
+    @Test
+    void updatePlan_destinationBeyondLimit_throwsException() {
+        String destination = "旅".repeat(Plan.MAX_DESTINATION_LENGTH + 1);
+        Plan plan = new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+
+        assertThrows(IllegalArgumentException.class, () -> plan.withUpdatedDetails(destination,
+                plan.date(), plan.time()));
     }
 
     @Test

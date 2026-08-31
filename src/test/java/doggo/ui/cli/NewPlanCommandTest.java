@@ -33,4 +33,21 @@ class NewPlanCommandTest {
         assertTrue(result.message().contains("Plan created!"));
         assertFalse(result.shouldExit());
     }
+
+    @Test
+    void execute_overLimitDestination_repromptsAndAddsPlan() {
+        DoggoService service = CommandTestHelper.service();
+        Trip trip = service.createTrip("Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        String overLimitDestination = "a".repeat(Plan.MAX_DESTINATION_LENGTH + 1);
+        CliContext context = CommandTestHelper.context(service,
+                overLimitDestination + "\nMuseum\n05/01/2027\n09:00\n");
+        context.session().enterTrip(trip.id());
+
+        CommandResult result = new NewPlanCommand().execute(context);
+
+        assertEquals("Museum", service.getTrip(trip.id()).orElseThrow().plans().getFirst().destination());
+        assertTrue(result.message().contains("Plan created!"));
+        assertFalse(result.shouldExit());
+    }
 }

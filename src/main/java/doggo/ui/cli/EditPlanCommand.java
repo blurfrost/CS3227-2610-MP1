@@ -59,13 +59,9 @@ final class EditPlanCommand implements Command {
         }
 
         Plan selectedPlan = plan.orElseThrow();
-        String destination = promptText(context,
-                "Enter plan destination [Current: " + selectedPlan.destination() + "]:");
+        String destination = promptDestination(context, selectedPlan);
         if (destination == null) {
             return new CommandResult("Bye!", true);
-        }
-        if (destination.isBlank()) {
-            destination = selectedPlan.destination();
         }
         LocalDate date = promptDate(context, selectedPlan.date());
         if (date == null) {
@@ -98,6 +94,31 @@ final class EditPlanCommand implements Command {
     private static String promptText(CliContext context, String message) {
         String value = context.prompter().prompt(message);
         return value == null ? null : value.trim();
+    }
+
+    /**
+     * Prompts until a valid Plan destination is entered or the current destination is preserved.
+     *
+     * @param context CLI dependencies.
+     * @param plan Plan being edited.
+     * @return Valid destination, current destination for blank input, or null when input ends.
+     */
+    private static String promptDestination(CliContext context, Plan plan) {
+        while (true) {
+            String destination = promptText(context,
+                    "Enter plan destination [Current: " + plan.destination() + "]:");
+            if (destination == null) {
+                return null;
+            }
+            if (destination.isBlank()) {
+                return plan.destination();
+            }
+            String validationMessage = CliTextValidator.validatePlanDestination(destination);
+            if (validationMessage.isEmpty()) {
+                return destination;
+            }
+            context.output().println(context.formatter().error(validationMessage));
+        }
     }
 
     /**

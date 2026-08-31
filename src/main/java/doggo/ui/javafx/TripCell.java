@@ -1,16 +1,13 @@
 package doggo.ui.javafx;
 
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
 
-import doggo.application.DoggoService;
 import doggo.domain.Trip;
-import doggo.domain.TripStatus;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /**
@@ -19,28 +16,24 @@ import javafx.scene.layout.VBox;
 public final class TripCell extends ListCell<Trip> {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy");
 
-    private final DoggoService service;
     private final Label titleLabel = new Label();
     private final Label datesLabel = new Label();
-    private final Label statusLabel = new Label();
-    private final HBox header = new HBox(titleLabel, new Region(), statusLabel);
+    private final HBox header = new HBox(titleLabel);
     private final VBox card = new VBox(header, datesLabel);
 
     /**
-     * Creates a Trip cell backed by the specified application service.
-     *
-     * @param service Application service used to classify Trips.
+     * Creates a Trip cell for compact Trip list cards.
      */
-    public TripCell(DoggoService service) {
-        this.service = Objects.requireNonNull(service);
+    public TripCell() {
         titleLabel.getStyleClass().add("trip-title");
+        CompactLabelSupport.configure(titleLabel);
         datesLabel.getStyleClass().add("trip-dates");
-        statusLabel.getStyleClass().add("trip-status");
         header.getStyleClass().add("trip-card-header");
         header.setSpacing(8);
-        HBox.setHgrow(header.getChildren().get(1), javafx.scene.layout.Priority.ALWAYS);
+        HBox.setHgrow(titleLabel, Priority.ALWAYS);
         card.getStyleClass().add("trip-card");
         card.setSpacing(6);
+        CompactCardSupport.bindWidthToCell(card, this);
         setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
     }
 
@@ -57,41 +50,9 @@ public final class TripCell extends ListCell<Trip> {
             setGraphic(null);
             return;
         }
-        TripStatus status = service.getTripStatus(trip);
-        titleLabel.setText(trip.title());
+        CompactLabelSupport.setText(titleLabel, trip.title());
         datesLabel.setText(DATE_FORMATTER.format(trip.startDate()) + " – "
                 + DATE_FORMATTER.format(trip.endDate()));
-        statusLabel.setText(formatStatus(status));
-        statusLabel.getStyleClass().removeAll("status-current", "status-future", "status-past");
-        statusLabel.getStyleClass().add(statusStyleClass(status));
         setGraphic(card);
-    }
-
-    /**
-     * Formats a Trip status for the card badge.
-     *
-     * @param status Trip status to format.
-     * @return Badge text.
-     */
-    private static String formatStatus(TripStatus status) {
-        return switch (status) {
-        case CURRENT -> "NOW";
-        case FUTURE -> "UPCOMING";
-        case PAST -> "COMPLETED";
-        };
-    }
-
-    /**
-     * Returns the style class matching a Trip status.
-     *
-     * @param status Trip status to style.
-     * @return Status style class.
-     */
-    private static String statusStyleClass(TripStatus status) {
-        return switch (status) {
-        case CURRENT -> "status-current";
-        case FUTURE -> "status-future";
-        case PAST -> "status-past";
-        };
     }
 }

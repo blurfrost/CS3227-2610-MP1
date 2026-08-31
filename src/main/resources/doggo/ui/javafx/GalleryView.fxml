@@ -4,9 +4,14 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.TextFlow?>
 
 <VBox maxWidth="920.0" spacing="10.0" styleClass="page"
       xmlns="http://javafx.com/javafx/25.0.3"
@@ -16,8 +21,16 @@
     <Label styleClass="page-title" text="Gallery" />
     <Label styleClass="page-subtitle" text="Revisit the places and moments behind each trip."
            wrapText="true" />
-    <HBox spacing="18.0" VBox.vgrow="ALWAYS">
-        <VBox minWidth="300.0" spacing="10.0" styleClass="dashboard-list-panel" HBox.hgrow="ALWAYS">
+    <GridPane hgap="18.0" maxWidth="Infinity" VBox.vgrow="ALWAYS">
+        <columnConstraints>
+            <ColumnConstraints maxWidth="Infinity" minWidth="0.0" percentWidth="50.0" />
+            <ColumnConstraints maxWidth="Infinity" minWidth="0.0" percentWidth="50.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints vgrow="ALWAYS" />
+        </rowConstraints>
+        <VBox maxWidth="Infinity" minWidth="0.0" spacing="10.0" styleClass="dashboard-list-panel"
+              GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" GridPane.vgrow="ALWAYS">
             <Label styleClass="panel-title" text="Past trips" />
             <Label styleClass="panel-subtitle" text="Select a trip to revisit its itinerary and review."
                    wrapText="true" />
@@ -25,7 +38,8 @@
             <Label fx:id="emptyState" managed="false" styleClass="empty-state"
                    text="No completed trips yet" visible="false" wrapText="true" />
         </VBox>
-        <VBox minWidth="320.0" spacing="12.0" styleClass="detail-panel" HBox.hgrow="ALWAYS">
+        <VBox maxWidth="Infinity" minWidth="0.0" spacing="12.0" styleClass="detail-panel"
+              GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" GridPane.vgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="10.0">
                 <Label styleClass="panel-title" text="Trip details" />
                 <Region HBox.hgrow="ALWAYS" />
@@ -35,10 +49,11 @@
             <Separator />
             <Label fx:id="detailEmptyState" styleClass="empty-state"
                    text="Select a completed trip to inspect its details." wrapText="true" />
-            <VBox fx:id="detailContent" managed="false" spacing="12.0" visible="false"
+            <VBox fx:id="detailContent" maxWidth="Infinity" minWidth="0.0" managed="false" spacing="12.0" visible="false"
                   VBox.vgrow="ALWAYS">
-                <Label fx:id="detailTitleLabel" styleClass="detail-destination" text="Trip title"
-                       wrapText="true" />
+                <TextFlow fx:id="detailTitleLabel" maxWidth="Infinity" minWidth="0.0">
+                    <Text styleClass="detail-destination-text" text="Trip title" />
+                </TextFlow>
                 <Label fx:id="detailDatesLabel" styleClass="detail-schedule" text="Trip dates"
                        wrapText="true" />
                 <Label fx:id="detailSummaryLabel" styleClass="panel-subtitle" text="Trip summary"
@@ -61,5 +76,5 @@
                        text="No plans were recorded for this trip." visible="false" wrapText="true" />
             </VBox>
         </VBox>
-    </HBox>
+    </GridPane>
 </VBox>

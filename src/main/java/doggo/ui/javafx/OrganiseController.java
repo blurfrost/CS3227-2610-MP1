@@ -16,6 +16,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextFlow;
 
 /**
  * Displays current and future Trips with the selected Trip's itinerary.
@@ -62,7 +63,7 @@ public final class OrganiseController {
      * Selected Trip title label.
      */
     @FXML
-    private Label detailTitleLabel;
+    private TextFlow detailTitleLabel;
 
     /**
      * Selected Trip date range label.
@@ -108,7 +109,7 @@ public final class OrganiseController {
      */
     @FXML
     private void initialize() {
-        tripList.setCellFactory(list -> new TripCell(service));
+        tripList.setCellFactory(list -> new TripCell());
         planList.setCellFactory(list -> new PlanCell(this::handleEditPlan));
         tripList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousTrip, selectedTrip) -> showDetails(selectedTrip));
@@ -255,7 +256,7 @@ public final class OrganiseController {
 
         TripStatus status = service.getTripStatus(trip);
         List<Plan> plans = service.getPlans(trip);
-        detailTitleLabel.setText(trip.title());
+        DetailTextSupport.setText(detailTitleLabel, trip.title(), "detail-destination-text");
         detailDatesLabel.setText(formatDateRange(trip));
         detailSummaryLabel.setText(formatTripSummary(trip, status));
         statusLabel.setText(formatStatus(status));

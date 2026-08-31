@@ -12,7 +12,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
@@ -28,8 +27,7 @@ public final class PlanCell extends ListCell<Plan> {
     private final Button editButton = new Button("Edit");
     private final HBox dateAndTime = new HBox(dateLabel, timeLabel);
     private final VBox details = new VBox(dateAndTime, destinationLabel);
-    private final Region spacer = new Region();
-    private final HBox card = new HBox(details, spacer, editButton);
+    private final HBox card = new HBox(details, editButton);
     private final Consumer<Plan> editHandler;
 
     /**
@@ -48,6 +46,7 @@ public final class PlanCell extends ListCell<Plan> {
         this.editHandler = Objects.requireNonNull(editHandler);
         dateLabel.getStyleClass().add("plan-date");
         destinationLabel.getStyleClass().add("plan-destination");
+        CompactLabelSupport.configure(destinationLabel);
         timeLabel.getStyleClass().add("plan-time");
         editButton.getStyleClass().addAll("secondary-button", "plan-edit-button");
         editButton.setOnAction(event -> {
@@ -56,11 +55,13 @@ public final class PlanCell extends ListCell<Plan> {
                 this.editHandler.accept(plan);
             }
         });
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox.setHgrow(details, Priority.ALWAYS);
+        details.setMinWidth(0);
         card.getStyleClass().add("plan-card");
         card.setAlignment(Pos.CENTER_LEFT);
         details.setSpacing(4);
         dateAndTime.setSpacing(8);
+        CompactCardSupport.bindWidthToCell(card, this);
         setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
     }
 
@@ -78,7 +79,7 @@ public final class PlanCell extends ListCell<Plan> {
             return;
         }
         dateLabel.setText(DATE_FORMATTER.format(plan.date()));
-        destinationLabel.setText(plan.destination());
+        CompactLabelSupport.setText(destinationLabel, plan.destination());
         timeLabel.setText(TIME_FORMATTER.format(plan.time()));
         setGraphic(card);
     }

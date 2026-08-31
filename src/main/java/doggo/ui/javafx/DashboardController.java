@@ -17,6 +17,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextFlow;
 
 /**
  * Displays today's Plans and the details of the selected Dashboard entry.
@@ -65,13 +66,13 @@ public final class DashboardController {
      * Selected Plan destination label.
      */
     @FXML
-    private Label detailDestinationLabel;
+    private TextFlow detailDestinationLabel;
 
     /**
      * Selected Plan Trip label.
      */
     @FXML
-    private Label detailTripLabel;
+    private TextFlow detailTripLabel;
 
     /**
      * Selected Plan schedule label.
@@ -192,8 +193,8 @@ public final class DashboardController {
         }
 
         Plan plan = entry.plan();
-        detailDestinationLabel.setText(plan.destination());
-        detailTripLabel.setText("Trip · " + entry.tripTitle());
+        DetailTextSupport.setText(detailDestinationLabel, plan.destination(), "detail-destination-text");
+        DetailTextSupport.setText(detailTripLabel, "Trip · " + entry.tripTitle(), "detail-trip-text");
         detailScheduleLabel.setText(plan.date().format(DETAIL_DATE_FORMATTER)
                 + " at " + plan.time().format(TIME_FORMATTER));
         detailReviewLabel.setText(formatReview(plan.review().orElse(null)));

@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import doggo.domain.Plan;
+
 import org.junit.jupiter.api.Test;
 
 class PlanFormValidatorTest {
@@ -14,6 +16,21 @@ class PlanFormValidatorTest {
     @Test
     void validate_blankDestination_rejectsInput() {
         assertEquals("Enter a destination.", validate("  ", "09:00", TRIP_START_DATE));
+    }
+
+    @Test
+    void validate_destinationAtLimit_acceptsInput() {
+        String destination = "a".repeat(Plan.MAX_DESTINATION_LENGTH);
+
+        assertEquals("", validate(destination, "09:00", TRIP_START_DATE));
+    }
+
+    @Test
+    void validate_destinationBeyondLimit_rejectsInput() {
+        String destination = "a".repeat(Plan.MAX_DESTINATION_LENGTH + 1);
+
+        assertEquals("Destination must be " + Plan.MAX_DESTINATION_LENGTH + " characters or fewer.",
+                validate(destination, "09:00", TRIP_START_DATE));
     }
 
     @Test

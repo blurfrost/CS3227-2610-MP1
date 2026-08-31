@@ -16,6 +16,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextFlow;
 
 /**
  * Displays completed Trips with their reviews and itineraries.
@@ -62,7 +63,7 @@ public final class GalleryController {
      * Selected Trip title label.
      */
     @FXML
-    private Label detailTitleLabel;
+    private TextFlow detailTitleLabel;
 
     /**
      * Selected Trip date range label.
@@ -114,7 +115,7 @@ public final class GalleryController {
      */
     @FXML
     private void initialize() {
-        tripList.setCellFactory(list -> new TripCell(service));
+        tripList.setCellFactory(list -> new TripCell());
         planList.setCellFactory(list -> new PlanCell(this::handleEditPlan));
         tripList.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousTrip, selectedTrip) -> showDetails(selectedTrip));
@@ -260,7 +261,7 @@ public final class GalleryController {
         }
 
         List<Plan> plans = service.getPlans(trip);
-        detailTitleLabel.setText(trip.title());
+        DetailTextSupport.setText(detailTitleLabel, trip.title(), "detail-destination-text");
         detailDatesLabel.setText(formatDateRange(trip));
         detailSummaryLabel.setText(formatTripSummary(trip));
         detailReviewLabel.setText(formatReview(trip.review().orElse(null)));

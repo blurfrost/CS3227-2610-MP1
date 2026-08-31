@@ -284,7 +284,6 @@
     -fx-font-size: 12px;
 }
 
-.trip-status,
 .status-badge {
     -fx-background-radius: 7px;
     -fx-font-size: 10px;
@@ -313,10 +312,15 @@
     -fx-font-weight: bold;
 }
 
-.detail-destination {
-    -fx-text-fill: #26383b;
+.detail-destination-text {
+    -fx-fill: #26383b;
     -fx-font-size: 24px;
     -fx-font-weight: bold;
+}
+
+.detail-trip-text {
+    -fx-fill: #66736f;
+    -fx-font-size: 13px;
 }
 
 .review-card {

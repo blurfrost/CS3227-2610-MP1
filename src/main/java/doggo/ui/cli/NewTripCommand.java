@@ -57,10 +57,11 @@ final class NewTripCommand implements Command {
             if (title == null) {
                 return null;
             }
-            if (!title.isBlank()) {
+            String validationMessage = CliTextValidator.validateTripTitle(title);
+            if (validationMessage.isEmpty()) {
                 return title;
             }
-            context.output().println(context.formatter().error("Trip title cannot be blank."));
+            context.output().println(context.formatter().error(validationMessage));
         }
     }
 

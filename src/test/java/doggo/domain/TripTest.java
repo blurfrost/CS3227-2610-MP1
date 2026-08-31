@@ -35,6 +35,24 @@ class TripTest {
     }
 
     @Test
+    void createTrip_titleAtLimit_acceptsTitle() {
+        String title = "旅".repeat(Trip.MAX_TITLE_LENGTH);
+
+        Trip trip = new Trip(UUID.randomUUID(), title, LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertEquals(title, trip.title());
+    }
+
+    @Test
+    void createTrip_titleBeyondLimit_throwsException() {
+        String title = "旅".repeat(Trip.MAX_TITLE_LENGTH + 1);
+
+        assertThrows(IllegalArgumentException.class, () -> new Trip(
+                UUID.randomUUID(), title, LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9)));
+    }
+
+    @Test
     void createTrip_blankTitle_throwsException() {
         assertThrows(IllegalArgumentException.class, () -> new Trip(
                 UUID.randomUUID(), "  ", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 9)));
@@ -81,6 +99,33 @@ class TripTest {
                 () -> assertEquals(endDate, trip.endDate()),
                 () -> assertEquals(List.of(plan), trip.plans()),
                 () -> assertEquals(Optional.of(REVIEW), trip.review()));
+    }
+
+    @Test
+    void restore_legacyTitleBeyondLimit_preservesTitleThroughCopyOperations() {
+        String legacyTitle = "LegacyTrip".repeat(Trip.MAX_TITLE_LENGTH);
+        Plan plan = new Plan(UUID.randomUUID(), "Tokyo", LocalDate.of(2027, 1, 5),
+                LocalTime.of(9, 0));
+        Trip trip = Trip.restore(UUID.randomUUID(), legacyTitle, LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9), List.of(), Optional.empty());
+
+        Trip updatedTrip = trip.withAddedPlan(plan).withReview(REVIEW)
+                .withUpdatedDetails(legacyTitle, LocalDate.of(2027, 1, 2),
+                        LocalDate.of(2027, 1, 8));
+
+        assertEquals(legacyTitle, updatedTrip.title());
+        assertEquals(Optional.of(REVIEW), updatedTrip.review());
+        assertEquals(List.of(plan), updatedTrip.plans());
+    }
+
+    @Test
+    void updateTrip_titleBeyondLimit_throwsException() {
+        String title = "旅".repeat(Trip.MAX_TITLE_LENGTH + 1);
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+
+        assertThrows(IllegalArgumentException.class, () -> trip.withUpdatedDetails(title,
+                trip.startDate(), trip.endDate()));
     }
 
     @Test

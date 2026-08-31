@@ -6,6 +6,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 
+import doggo.domain.Plan;
+
 /**
  * Validates fields entered when creating or editing a Plan.
  */
@@ -30,6 +32,10 @@ final class PlanFormValidator {
                            LocalDate tripStartDate, LocalDate tripEndDate) {
         if (destination == null || destination.isBlank()) {
             return "Enter a destination.";
+        }
+        if (destination.trim().codePointCount(0, destination.trim().length())
+                > Plan.MAX_DESTINATION_LENGTH) {
+            return "Destination must be " + Plan.MAX_DESTINATION_LENGTH + " characters or fewer.";
         }
         if (date == null) {
             return "Choose a date for this plan.";

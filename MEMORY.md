@@ -70,6 +70,26 @@
 - Trip creation is available from the persistent sidebar through a modal form
   with a title and inclusive start/end dates; current and future Trips return
   to Organise, while past Trips route to Gallery.
+- New Plan dialogs default to the service Clock's current date when it falls
+  within the selected Trip, otherwise to the Trip start date; Trip and Plan
+  dialogs support expansion while preserving their opening dimensions as
+  minimums.
+- New Trip titles and Plan destinations are limited to 50 Unicode code points
+  for new or changed values. Legacy over-limit values loaded through restore
+  remain usable during non-name updates.
+- JavaFX Trip and Plan form validators surface the same name-length rule and
+  disable submission through the existing dialog validation flow.
+- CLI Trip and Plan creation/edit prompts reject over-limit names and
+  reprompt before calling the application service.
+- Compact GUI Trip and Plan cards keep names on one line with ellipsis and
+  full-value tooltips; detail panes use constrained TextFlow content to retain
+  complete wrapped names, including unbroken names.
+- Compact Trip and Plan cards constrain both their cards and owning list cells
+  to the list viewport, subtracting a visible vertical scrollbar's width so
+  ellipsized names do not introduce horizontal scrolling after item growth,
+  hidden-mode navigation, or window resizing.
+- Dashboard, Organise, and Gallery use equal-width master-detail panels that
+  remain within the existing minimum application size.
 - The JavaFX build packages `win`, `mac`, `mac-aarch64`, and `linux` native
   classifiers in its cross-platform Shadow JAR.
 - Keep this file limited to durable, project-relevant context; keep transient task details in the prompt logs.
