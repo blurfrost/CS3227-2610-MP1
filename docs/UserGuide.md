@@ -139,6 +139,8 @@ The detail pane provides **Edit**, **Add Review** or **Edit Review**, and
 **Delete** actions for the selected Plan. If there are no Plans for today, the
 list and detail pane show an explicit empty state.
 
+![doggo interface](./images/doggo-launch.png)
+
 ### Organise menu
 
 Organise displays current and upcoming Trips. Select a Trip to see its status,
