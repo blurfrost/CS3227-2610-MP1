@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
+    timeout-minutes: 15
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
@@ -23,5 +24,10 @@ jobs:
           java-version: '25'
           java-package: jdk+fx
 
+      - name: Build and check with Gradle (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum ./gradlew check
+
       - name: Build and check with Gradle
+        if: runner.os != 'Linux'
         run: ./gradlew check
