@@ -722,7 +722,91 @@ operation and later restarts doggo.
 | NFR-09 | Accessibility | Core JavaFX controls retain keyboard focus and standard activation behavior; manual keyboard navigation should be checked before release. |
 | NFR-10 | Determinism | Trips, Plans, and Dashboard entries use stable ordering tie-breakers; dates and times use consistent formats. |
 
-## 4. Glossary
+## 4. Software engineering process
+
+doggo was developed using an **iterative and incremental process**. Work was
+split into small, reviewable feature slices, with each slice normally moving
+through requirements clarification, design, implementation, automated tests,
+and review before the next slice began. The project deliberately started with
+a CLI so that domain rules and application behavior could be exercised without
+JavaFX complexity. The JavaFX interface was added later as a second
+presentation over the same application, domain, and persistence layers.
+
+Requirements and implementation decisions were refined throughout development
+rather than treated as fixed after the initial plan. For example, architecture
+reviews led to immutable aggregate updates, stable UUID-backed CLI selections,
+an injected `Clock`, and a repository error boundary before SQLite and JavaFX
+were introduced. Prompt summaries in `logs/`, durable decisions in `MEMORY.md`,
+and the user stories and use cases in this guide provided traceability between
+the evolving requirements and the implementation.
+
+### 4.1 Development milestones
+
+| Milestone | Main outcome | Engineering significance |
+| --- | --- | --- |
+| Project foundation and MVP planning | Established the Java/Gradle project, initial requirements, domain terminology, and a layered CLI architecture. | Defined the Trip/Plan model and separated domain, application, persistence, and presentation responsibilities before feature growth. |
+| Organise CLI MVP | Added Trip and Plan creation, listing, selection, editing, and deletion using an in-memory repository. | Validated the core workflows cheaply and exposed design issues such as stale displayed indices and unsafe mutable updates. |
+| Architecture hardening | Reorganized code into packages, decomposed mode-specific parsers, introduced copy-on-write aggregates, stable UUID targets, repository exceptions, `TripStatus`, and an injected `Clock`. | Prepared the codebase for more modes, deterministic date behavior, and a persistent repository without coupling those concerns to the UI. |
+| Dashboard and Gallery CLI | Added today's chronological itinerary, status-based Trip routing, completed-Trip maintenance, and Trip/Plan reviews. | Completed the main product modes and verified that the shared service could support different presentation contexts. |
+| SQLite persistence | Added a versioned schema, aggregate restoration, transactional writes, and production database wiring. | Replaced volatile storage while preserving the `TripRepository` boundary and protecting aggregate consistency on failed saves. |
+| JavaFX foundation | Configured the cross-platform JavaFX build, composition root, FXML/CSS application shell, and read-only Dashboard. | Introduced the desktop UI as another client of `DoggoService` rather than duplicating domain or persistence logic. |
+| JavaFX feature completion | Added functional Organise and Gallery views; Trip and Plan create, edit, and delete flows; reviews; validation; responsive layouts; and status-aware navigation. | Brought the primary desktop experience to feature parity with the required workflows while reusing established layers. |
+| Release and portability hardening | Standardized JavaFX/JDK versions, added platform-native dependencies, packaged the Shadow JAR, fixed cross-platform line endings and JavaFX test stability, and ran CI on Linux, macOS, and Windows. | Converted the development build into a distributable application and addressed platform-specific behavior before release. |
+| Documentation and release review | Produced user, developer, and reflection documentation and retained manual test instructions. | Captured the implemented behavior, design rationale, verification approach, and deferred features for maintainers and assessors. |
+
+The milestones were cumulative rather than isolated. In particular, the
+in-memory repository, injected `Clock`, and presentation-independent service
+created during earlier milestones later became test seams for SQLite and
+JavaFX work.
+
+### 4.2 AI-assisted development
+
+AI coding assistants supported both the **design** and **execution** of the
+project. During design, AI was used as a discussion partner to break broad
+requirements into reviewable iterations, compare architectural alternatives,
+identify risks, and keep the implementation plan, prompt logs, and developer
+documentation aligned with decisions. Examples include reviewing aggregate
+mutation safety, planning the package boundaries, designing the repository
+port, decomposing CLI parsers, and reasoning about JavaFX navigation and
+layout behavior.
+
+During execution, AI helped inspect the existing code, propose and implement
+focused changes, generate or refine tests, diagnose failing builds, and check
+work against the project's Java, JUnit, and Git conventions. It was also used
+to investigate platform-specific issues such as Windows line endings and
+JavaFX execution under Linux/Xvfb. Changes were made incrementally and were
+reviewed through source diffs and automated verification instead of accepting
+generated code solely because it compiled.
+
+Human judgment remained responsible for scope, product behavior, and final
+acceptance. 
+
+### 4.3 Testing
+
+Testing is documented within the Software Engineering Process because it was
+performed continuously at each milestone, not as a single phase after feature
+completion. Automated tests are organized to mirror production packages, and
+the test type is chosen according to the boundary under test.
+
+| Area | Test types and isolation | Main behavior covered |
+| --- | --- | --- |
+| Domain layer (`doggo.domain`) | Fast unit tests of `Trip`, `Plan`, `Review`, and status calculations. | Constructor and update invariants, inclusive date ranges, immutable/copy-on-write changes, ordering, review rules, name limits, and Clock-relative Trip status. |
+| Application layer (`doggo.application`) | Unit and component tests using `InMemoryTripRepository` and a fixed `Clock`. | CRUD use cases, status-based queries, Dashboard entries and ordering, review mutations, preservation on failed saves, missing-record behavior, and repository error propagation. |
+| Persistence layer (`doggo.storage`) | Repository integration tests against isolated SQLite databases, plus focused reader and schema tests. | Schema creation/version checks, complete aggregate restoration, review persistence, foreign-key behavior, transactions, rollback, replacement writes, and repository exception translation. |
+| CLI presentation (`doggo.ui.cli`) | Unit tests for parsers, formatters, session state, and individual commands; broader acceptance-style tests drive command sequences through an in-memory service. | Input normalization, navigation, retained index-to-UUID targets, stale targets, CRUD/review flows, chronological rendering, error feedback, and platform-neutral output. |
+| JavaFX presentation (`doggo.ui.javafx`) | Unit tests for form validators and display helpers, plus JavaFX/FXML smoke and rendered-layout tests using an in-memory service. | Form validation, FXML/controller/style wiring, navigation shell loading, review display, sizing and wrapping behavior, and key empty/detail states. Visual appearance and interactive workflows are also checked manually. |
+| Composition and packaging | Startup/smoke tests, Shadow JAR builds, and manual launch checks. | Correct composition roots, dependency wiring, packaged resources, application startup/shutdown, and local database creation. |
+| Cross-layer acceptance and portability | Manual scenarios from Section 6 and GitHub Actions `check` runs on Linux, macOS, and Windows; Linux JavaFX tests run under Xvfb. | End-to-end user workflows, persistence across restarts, status-aware navigation, cross-platform line endings, and platform-sensitive JavaFX behavior. |
+
+The suite favors deterministic and isolated tests: date-sensitive code receives
+a fixed `Clock`, application and presentation tests normally use the in-memory
+adapter, and SQLite tests use disposable databases. Manual testing remains
+important for visual styling, keyboard navigation, window resizing, dialog
+interaction, and restart behavior that automated unit tests do not fully
+represent. The commands for running the automated suite are listed in
+Section 7.
+
+## 5. Glossary
 
 | Term | Meaning in doggo |
 | --- | --- |
@@ -744,9 +828,9 @@ operation and later restarts doggo.
 | **MSS** | Main Success Story: the normal sequence of steps in a use case when no extension occurs. |
 | **Extension** | An alternate, error, cancellation, or boundary path from a use case. |
 
-## 5. Instructions for manual testing
+## 6. Instructions for manual testing
 
-### 5.1 Test preparation
+### 6.1 Test preparation
 
 1. Install and select Java 25.0.3.fx-zulu.
 2. Build the packaged application with **./gradlew clean shadowJar** on
@@ -777,7 +861,7 @@ repository root, test data is stored in the repository's **data/doggo.db**.
 For all GUI cases below, use the packaged JAR; **./gradlew run** is only an
 optional developer smoke test.
 
-### 5.2 Launch and shutdown
+### 6.2 Launch and shutdown
 
 **Expected result:** doggo starts without an error and closes cleanly.
 
@@ -802,7 +886,7 @@ Optional CLI smoke check:
 3. Confirm that help is printed and the process returns to the shell without
    changing stored data.
 
-### 5.3 Adding a new Trip
+### 6.3 Adding a new Trip
 
 **Expected result:** valid current/upcoming Trips appear in Organise; valid
 past Trips appear in Gallery; valid input is persisted.
@@ -823,7 +907,7 @@ past Trips appear in Gallery; valid input is persisted.
 9. Click **Cancel** on an additional test form and confirm that no extra Trip
    appears.
 
-### 5.4 Adding a new Plan to a Trip
+### 6.4 Adding a new Plan to a Trip
 
 **Expected result:** a valid Plan is saved under the selected Trip, appears in
 chronological order, and updates the **Plans (N)** count.
@@ -850,7 +934,7 @@ chronological order, and updates the **Plans (N)** count.
 11. Repeat Steps 1 - 10 from Gallery for a past Trip and confirm that adding a Plan works
     in the selected Trip's completed itinerary.
 
-### 5.5 Saving data
+### 6.5 Saving data
 
 **Expected result:** successful mutations survive a restart and failed
 mutations do not replace the last valid state.
@@ -878,7 +962,7 @@ mutations do not replace the last valid state.
    save. Confirm that doggo reports the failure and that the last successful
    records remain intact after restarting with the original database.
 
-### 5.6 Additional manual acceptance checks
+### 6.6 Additional manual acceptance checks
 
 - Edit a Trip so that it changes from current/upcoming to past and confirm it
   moves from Organise to Gallery. Edit it back and confirm the reverse route.
@@ -894,7 +978,7 @@ mutations do not replace the last valid state.
   dialogs, and confirmation controls. Confirm that core workflows do not
   require a mouse.
 
-## 6. Automated verification commands
+## 7. Automated verification commands
 
 The following commands are useful before submitting a change:
 
@@ -908,3 +992,9 @@ transactions and restoration, CLI behavior, form validators, and JavaFX FXML
 loading. Tests that exercise date-sensitive behavior inject a fixed
 **java.time.Clock**; isolated application tests use
 **InMemoryTripRepository** instead of the production database.
+
+## 8. Acknowledgements
+
+- OpenAI LLMs used in assisting the development of this project (GPT-5.6 Sol, Terra, Luna)
+- [SE-EDU](https://se-education.org/) guides that acted as points of reference for code quality and Git Standards. The skills used, /seedu-git-standard, /seedu-java-coding-standard, /seedu-junit-test are adapted from the guides in this resource.
+- [CS3227/CS2103 iP](https://nus-cs2103-ay2627-s1.github.io/website/projectDuke/cs3227.html#level-8-dates-and-times) tutorial that acted as a guide to working with AI in Software Engineering projects.
