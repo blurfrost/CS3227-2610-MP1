@@ -959,3 +959,15 @@ rendered JavaFX coverage for its alignment, relative height, and border thicknes
 The user reported that the Create Trip button's border did not cleanly wrap its background and requested larger,
 more prominent text. Collapsed JavaFX's default background and border insets for the sidebar button, aligned its
 rounded geometry, increased the font size, and expanded the rendered regression coverage for these properties.
+
+## Prompt 111 — Recommend a Dialog Sizing Strategy
+
+The user reported that Edit Plan and Edit Trip dialogs clip or fail to expand when inline validation appears. After
+inspecting the shared dialog implementations, recommended reserving validation space in the initial dialog height
+instead of resizing on every validation change, to avoid visual jitter while typing.
+
+## Prompt 112 — Implement the Reserved Validation Space
+
+The user requested implementation. Kept the validation labels managed in both Plan and Trip dialogs, hid them only
+visually when there is no message, and reserved 30px through the shared form-error style for wrapped validation text.
+Added a regression test covering both edit dialogs. The complete Gradle test suite passes. No commit was created.

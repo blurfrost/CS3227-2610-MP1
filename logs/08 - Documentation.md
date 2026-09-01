@@ -31,4 +31,3 @@ valid flowchart arrows and labels for ownership, optional reviews, derived
 status, and repository implementation. The class diagram retains the original
 UML relationship notation. No Java code was changed; the corrected block was
 checked and the HEAD-versus-WORKTREE visual diff was regenerated successfully.
-
