@@ -1038,6 +1038,37 @@ class AppShellFxmlTest {
     }
 
     @Test
+    void editDialogs_reserveSpaceForValidationMessages()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());
+        Trip trip = new Trip(UUID.randomUUID(), "Japan", LocalDate.of(2027, 1, 1),
+                LocalDate.of(2027, 1, 9));
+        Plan plan = new Plan(UUID.randomUUID(), "Senso-ji Temple", LocalDate.of(2027, 1, 6),
+                LocalTime.of(9, 30));
+        FutureTask<List<Label>> dialogTask = new FutureTask<>(() -> {
+            Stage owner = new Stage();
+            owner.setScene(new Scene(new VBox()));
+            TripCreationDialog tripDialog = new TripCreationDialog(service, trip, owner);
+            PlanCreationDialog planDialog = new PlanCreationDialog(service, trip, plan, owner);
+            Label tripValidationLabel = assertInstanceOf(Label.class,
+                    assertInstanceOf(VBox.class, tripDialog.getDialogPane().getContent()).getChildren().getLast());
+            Label planValidationLabel = assertInstanceOf(Label.class,
+                    assertInstanceOf(VBox.class, planDialog.getDialogPane().getContent()).getChildren().getLast());
+            tripDialog.getDialogPane().getScene().getRoot().applyCss();
+            planDialog.getDialogPane().getScene().getRoot().applyCss();
+            return List.of(tripValidationLabel, planValidationLabel);
+        });
+        Platform.runLater(dialogTask);
+
+        List<Label> validationLabels = dialogTask.get(5, TimeUnit.SECONDS);
+        for (Label validationLabel : validationLabels) {
+            assertFalse(validationLabel.isVisible());
+            assertTrue(validationLabel.isManaged());
+            assertTrue(validationLabel.getMinHeight() >= 30.0);
+        }
+    }
+
+    @Test
     void tripReviewDialog_emptyReview_hasOptionalNumericFieldsAndEnabledSave()
             throws InterruptedException, ExecutionException, TimeoutException {
         DoggoService service = new DoggoService(new InMemoryTripRepository(), TestClock.fixed());

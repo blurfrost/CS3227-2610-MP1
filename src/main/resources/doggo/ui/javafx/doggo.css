@@ -590,3 +590,7 @@
     -fx-text-fill: #a4563e;
     -fx-font-size: 12px;
 }
+
+.trip-form .form-error {
+    -fx-min-height: 30px;
+}
