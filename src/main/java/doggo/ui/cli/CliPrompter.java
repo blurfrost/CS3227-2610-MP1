@@ -10,7 +10,7 @@ final class CliPrompter {
 
     CliPrompter(BufferedReader input, PrintWriter output) {
         this.input = input;
-        this.output = output;
+        this.output = CliOutput.platformWriter(output);
     }
 
     String prompt(String message) {

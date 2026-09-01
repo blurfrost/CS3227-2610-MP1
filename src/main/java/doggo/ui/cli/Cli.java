@@ -30,7 +30,7 @@ public final class Cli {
      */
     public Cli(BufferedReader input, PrintWriter output, DoggoService service) {
         this.input = input;
-        this.output = output;
+        this.output = CliOutput.platformWriter(output);
         this.service = service;
     }
 

@@ -13,6 +13,10 @@ import doggo.domain.TripStatus;
 
 record CliContext(DoggoService service, CliSession session, CliPrompter prompter,
                   CliFormatter formatter, PrintWriter output) {
+    CliContext {
+        output = output == null ? null : CliOutput.platformWriter(output);
+    }
+
     String organiseMenu() {
         List<Trip> trips = service.getCurrentAndFutureTrips();
         session.setDisplayedTripIds(trips.stream().map(Trip::id).toList());

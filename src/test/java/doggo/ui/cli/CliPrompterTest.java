@@ -21,7 +21,8 @@ class CliPrompterTest {
         String answer = prompter.prompt("Enter a value:");
 
         assertEquals("answer", answer);
-        assertEquals("---\nEnter a value:\n> ", output.toString());
+        assertEquals(String.join(System.lineSeparator(), "---", "Enter a value:", "> "),
+                output.toString());
     }
 
     @Test

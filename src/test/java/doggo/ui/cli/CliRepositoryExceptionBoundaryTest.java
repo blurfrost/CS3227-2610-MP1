@@ -79,7 +79,7 @@ class CliRepositoryExceptionBoundaryTest {
     private static void assertRepositoryFailureIsRecoverable(String output) {
         assertTrue(output.contains(GENERIC_ERROR));
         assertFalse(output.contains(INFRASTRUCTURE_DETAILS));
-        assertTrue(output.endsWith("Bye!\n"));
+        assertTrue(output.endsWith("Bye!" + System.lineSeparator()));
     }
 
     private enum FailingOperation {

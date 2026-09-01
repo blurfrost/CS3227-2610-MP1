@@ -27,7 +27,7 @@ class CliTest {
         assertTrue(output.contains("Type \"new\" to create a new Plan."));
         assertTrue(output.contains("Type \"back\" to go back to the Gallery."));
         assertTrue(output.contains("Welcome! Available commands are"));
-        assertTrue(output.endsWith("Bye!\n"));
+        assertTrue(output.endsWith("Bye!" + System.lineSeparator()));
     }
 
     @Test
@@ -64,7 +64,7 @@ class CliTest {
         assertTrue(afterPlanDeletion.contains("1. Park (01/01/2027 at 08:00)"));
         assertTrue(afterPlanDeletion.contains("2. Dinner (03/01/2027 at 19:00)"));
         assertFalse(afterPlanDeletion.contains("Museum updated (02/01/2027 at 10:00)"));
-        assertTrue(output.endsWith("Bye!\n"));
+        assertTrue(output.endsWith("Bye!" + System.lineSeparator()));
     }
 
     @Test
@@ -104,7 +104,7 @@ class CliTest {
         assertTrue(output.contains("Review removed."));
         assertTrue(afterRemoval.contains("[MODE: ORGANISE]"));
         assertFalse(afterRemoval.contains("Review: Updated journey"));
-        assertTrue(output.endsWith("Bye!\n"));
+        assertTrue(output.endsWith("Bye!" + System.lineSeparator()));
     }
 
     @Test
@@ -139,7 +139,7 @@ class CliTest {
         assertTrue(output.contains("Seoul (02/01/2027 at 09:00)"));
         assertTrue(output.contains("Rating: 4/5"));
         assertTrue(output.contains("Review: Gallery plan"));
-        assertTrue(output.endsWith("Bye!\n"));
+        assertTrue(output.endsWith("Bye!" + System.lineSeparator()));
     }
 
     @Test
@@ -150,7 +150,7 @@ class CliTest {
         assertTrue(output.contains("[MODE: DASHBOARD]"));
         assertTrue(output.contains("There are no Plans scheduled for today."));
         assertTrue(output.contains("Welcome! Available commands are"));
-        assertTrue(output.endsWith("Bye!\n"));
+        assertTrue(output.endsWith("Bye!" + System.lineSeparator()));
     }
 
     @Test
@@ -188,7 +188,7 @@ class CliTest {
         assertTrue(output.contains("Viewing: Japan trip (from 01/01/2027 to 09/01/2027)"));
         assertTrue(output.contains("Plan created!"));
         assertTrue(output.contains("Mount Fuji (05/01/2027 at 09:00)"));
-        assertTrue(output.endsWith("Bye!\n"));
+        assertTrue(output.endsWith("Bye!" + System.lineSeparator()));
     }
 
     @Test
@@ -215,7 +215,7 @@ class CliTest {
         assertTrue(output.contains("Date must use the DD/MM/YYYY format"));
         assertTrue(output.contains("Trip successfully added!"));
         assertTrue(output.contains("Trip number should be 1."));
-        assertTrue(output.endsWith("Bye!\n"));
+        assertTrue(output.endsWith("Bye!" + System.lineSeparator()));
     }
 
     @Test
