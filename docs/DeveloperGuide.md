@@ -354,15 +354,33 @@ sequenceDiagram
     participant Shell as AppShellController
 
     User->>Launcher: Start application
+    activate Launcher
     Launcher->>App: Application.launch(...)
+    activate App
     App->>DB: Open or create data/doggo.db
+    activate DB
     DB->>DB: Validate/create schema version 1
+    DB-->>App: Repository ready
+    deactivate DB
     App->>Service: Construct with repository and system Clock
+    activate Service
+    Service-->>App: Service ready
+    deactivate Service
     App->>FXML: Load shell with controller factory
+    activate FXML
     FXML->>Shell: Create shell and page controllers
+    activate Shell
     Shell->>Service: Refresh Dashboard, Organise, Gallery
+    activate Service
     Service-->>Shell: Current view data
+    deactivate Service
+    Shell-->>FXML: Controllers ready
+    deactivate Shell
+    FXML-->>App: Loaded shell
+    deactivate FXML
     App-->>User: Show JavaFX window
+    deactivate App
+    deactivate Launcher
 ~~~
 
 If database initialization or FXML loading fails, the application shows a
@@ -381,21 +399,37 @@ sequenceDiagram
     participant SQLite as SqliteTripRepository
 
     User->>Shell: Click Create Trip
+    activate Shell
     Shell->>Dialog: Open empty Trip form
+    activate Dialog
     User->>Dialog: Enter title and inclusive dates
     Dialog->>Dialog: Validate non-blank title, length, and date range
     User->>Dialog: Click Create trip
     Dialog->>Service: createTrip(title, start, end)
+    activate Service
     Service->>Domain: Construct validated Trip
+    activate Domain
+    Domain-->>Service: Validated Trip
+    deactivate Domain
     Service->>Repo: save(trip)
+    activate Repo
     Repo->>SQLite: Save complete aggregate
+    activate SQLite
     SQLite->>SQLite: Commit transaction
     SQLite-->>Repo: Success
+    deactivate SQLite
     Repo-->>Service: Success
+    deactivate Repo
     Service-->>Dialog: Created Trip
+    deactivate Service
     Dialog-->>Shell: Close with created Trip
+    deactivate Dialog
     Shell->>Service: Refresh status-appropriate list
+    activate Service
+    Service-->>Shell: Refreshed Trip list
+    deactivate Service
     Shell-->>User: Select and display the new Trip
+    deactivate Shell
 ~~~
 
 If validation fails, the dialog remains open and the service is not called. If
@@ -415,23 +449,40 @@ sequenceDiagram
     participant DB as SQLite database
 
     User->>View: Select Trip and click + Add plan
+    activate View
     View->>Dialog: Open form with default date
+    activate Dialog
     User->>Dialog: Enter destination, date, and HH:mm time
     Dialog->>Dialog: Validate text, time, and Trip date range
     User->>Dialog: Click Add plan
     Dialog->>Service: addPlan(tripId, destination, date, time)
+    activate Service
     Service->>Repo: Find Trip by UUID
+    activate Repo
     Repo-->>Service: Trip aggregate
+    deactivate Repo
     Service->>Trip: withAddedPlan(new Plan)
+    activate Trip
     Trip-->>Service: Validated updated Trip
+    deactivate Trip
     Service->>Repo: save(updated Trip)
+    activate Repo
     Repo->>DB: Replace Trip and Plans in transaction
+    activate DB
     DB-->>Repo: Commit
+    deactivate DB
     Repo-->>Service: Success
+    deactivate Repo
     Service-->>Dialog: Created Plan
+    deactivate Service
     Dialog-->>View: Close with Plan
+    deactivate Dialog
     View->>Service: Refresh and select new Plan
+    activate Service
+    Service-->>View: Refreshed Plan list
+    deactivate Service
     View-->>User: Show updated Plans (N)
+    deactivate View
 ~~~
 
 Editing a Plan follows the same path, replacing the Plan by UUID and retaining
