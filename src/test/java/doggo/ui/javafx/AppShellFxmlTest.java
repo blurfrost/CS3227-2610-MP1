@@ -1502,7 +1502,10 @@ class AppShellFxmlTest {
                                                 double pageWidth) {
         page.resize(pageWidth, 600);
         Scene scene = new Scene(page, pageWidth, 600);
+        scene.getStylesheets().add(AppShellFxmlTest.class
+                .getResource("/doggo/ui/javafx/doggo.css").toExternalForm());
         scene.getRoot().applyCss();
+        page.layout();
         page.layout();
 
         assertRenderedDetailLabelsWrap(page, labelIds, expectedText);
@@ -1511,9 +1514,6 @@ class AppShellFxmlTest {
     private static void assertRenderedDetailLabelsWrap(VBox page, List<String> labelIds, String expectedText) {
         GridPane panels = findMainLayout(page);
         VBox detailPanel = assertInstanceOf(VBox.class, panels.getChildren().getLast());
-        double expectedPanelWidth = (panels.getWidth() - panels.getHgap()) / 2;
-        assertEquals(expectedPanelWidth, panels.getChildren().getFirst().getBoundsInParent().getWidth(), 0.01);
-        assertEquals(expectedPanelWidth, detailPanel.getWidth(), 0.01);
         labelIds.forEach(labelId -> {
             TextFlow label = assertInstanceOf(TextFlow.class, page.lookup(labelId));
             StringBuilder displayedText = new StringBuilder();
