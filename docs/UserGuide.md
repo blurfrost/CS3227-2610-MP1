@@ -14,8 +14,8 @@ that the `java` command is available in your terminal.
 
 Download a JDK from one of these providers:
 
-- [OpenJDK 25](https://jdk.java.net/25/)
-- [Azul Zulu JDK downloads](https://www.azul.com/downloads/?package=jdk#zulu)
+- [Oracle](https://www.oracle.com/java/technologies/javase/jdk25-archive-downloads.html)
+- [Azul Zulu JDK downloads](https://www.azul.com/downloads/?version=java-25-lts&os=macos&package=jdk-fx#zulu)
 
 The released `doggo.jar` already contains the JavaFX 25.0.3 and SQLite JDBC
 runtime dependencies, including native JavaFX classifiers for Windows, Intel
@@ -56,8 +56,8 @@ not found, restart the terminal after installing Java and check that the JDK's
 
 ### 2. Download the JAR
 
-Download `doggo.jar` from the latest release of the
-[doggo GitHub repository](https://github.com/blurfrost/CS3227-2610-MP1). On the
+Download `doggo.jar` from the [latest release of the
+doggo GitHub repository](https://github.com/blurfrost/CS3227-2610-MP1/releases) or from the `release` [directory](https://github.com/blurfrost/CS3227-2610-MP1/tree/master/release). On the
 repository page, open **Releases**, choose the latest release, and download
 `doggo.jar` from its **Assets** section. Save it somewhere you can write to,
 such as your Downloads folder.
@@ -69,19 +69,7 @@ repository using `./gradlew clean shadowJar` on macOS/Linux or
 
 ### 3. Open the JAR
 
-#### Using a file explorer
-
-- **Windows:** Open File Explorer, go to the folder containing `doggo.jar`,
-  and double-click it. If Windows asks which application to use, choose the
-  Java platform application.
-- **macOS:** Open Finder, go to the folder containing `doggo.jar`, and
-  double-click it. If macOS displays a security prompt, use **Open** to allow
-  the downloaded application to run.
-- **Linux:** Open your file manager, go to the folder containing `doggo.jar`,
-  and double-click it. If the file manager does not have a Java association,
-  use the terminal command below.
-
-#### Using a terminal
+#### Using a terminal (Recommended)
 
 Running from a terminal is the most predictable way to choose the database
 location. Change into the directory containing the JAR, then run it:
@@ -103,6 +91,18 @@ java -jar doggo.jar
 Replace `Downloads` with the directory where you saved the JAR. The command
 must be run from the directory containing the JAR only if you want the local
 database to be created there.
+
+#### Using a file explorer
+
+- **Windows:** Open File Explorer, go to the folder containing `doggo.jar`,
+  and double-click it. If Windows asks which application to use, choose the
+  Java platform application.
+- **macOS:** Open Finder, go to the folder containing `doggo.jar`, and
+  double-click it. If macOS displays a security prompt, use **Open** to allow
+  the downloaded application to run.
+- **Linux:** Open your file manager, go to the folder containing `doggo.jar`,
+  and double-click it. If the file manager does not have a Java association,
+  use the terminal command below.
 
 ### Local data location
 
@@ -152,12 +152,16 @@ The Trip detail pane provides **Edit trip**, **Add Review** or **Edit Review**,
 and **Delete trip** actions. Newly created current or upcoming Trips and Trips
 edited to one of those statuses appear here.
 
+![organise menu](./images/doggo-empty-organise.png)
+
 ### Gallery menu
 
 Gallery displays completed Trips whose end date has passed. Select a Trip to
 revisit its date range, Trip review, and recorded Plans. Gallery supports the
 same Plan and Trip actions as Organise, including adding or editing Plans and
 adding, editing, or removing reviews.
+
+![gallery menu](./images/doggo-empty-gallery.png)
 
 ## Features
 
@@ -173,6 +177,12 @@ Trip names may contain up to 50 Unicode characters and cannot be blank. The
 start date cannot be after the end date. A Trip ending before today is opened
 in Gallery; a current or upcoming Trip is opened in Organise.
 
+![create trip dialog](./images/doggo-create-trip.png)
+*Clicking the "Create Trip" button launches a dialog*
+
+![after trip creation](./images/doggo-new-trip-organise.png)
+*Fill in the fields and press "Create Trip" in the dialog to add your Trip*
+
 ### 2. Creating a new Plan within a Trip
 
 1. Open **Organise** or **Gallery**.
@@ -187,6 +197,16 @@ date defaults to today when today is in the Trip; otherwise it defaults to the
 Trip's start date. Destinations may contain up to 50 Unicode characters and
 cannot be blank.
 
+![empty trip](./images/doggo-empty-trip.png)
+*Our trip looks empty. Let's click the "Add Plan" button to add a plan within our trip!*
+
+![create plan](./images/doggo-create-plan.png)
+*Fill in the plan with the relevant details and click "Add Plan" when done*
+
+![added plan](./images/doggo-added-plan.png)
+*After adding the plan, you can see it included in the Trip!*
+
+
 ### 3. Viewing a Plan
 
 - In **Dashboard**, select a Plan card from today's list. Its detail pane shows
@@ -194,6 +214,8 @@ cannot be blank.
 - In **Organise** or **Gallery**, select a Trip and click **Details** on a Plan
   card. The Plan details window shows the complete destination, Trip, schedule,
   and review, even when the compact list card truncates long text.
+
+![view plan](./images/doggo-view-plan.png)
 
 ### 4. Editing a Plan
 
@@ -207,6 +229,8 @@ The edited date must remain within the owning Trip's dates. Existing Plan
 reviews are preserved. If a Dashboard Plan is edited so that it is no longer
 scheduled for today, it leaves the Dashboard list after saving.
 
+![edit plan](./images/doggo-edit-plan.png)
+
 ### 5. Reviewing a Plan
 
 1. Select the Plan in Dashboard, or open its **Details** window from Organise
@@ -216,9 +240,15 @@ scheduled for today, it leaves the Dashboard list after saving.
 4. Optionally enter Notes.
 5. Click **Save**.
 
-A review must contain a rating, Notes, or both. To remove an existing review,
+A review must contain a rating, some notes, or both. To remove an existing review,
 clear both the rating and Notes fields and save. Reviews remain attached when
 the Plan itself is edited.
+
+![review plan](./images/doggo-review-plan.png)
+*Add a rating or note to remind yourself of your journey*
+
+![plan with review](./images/doggo-plan-with-review.png)
+*You can see the updated Plan entry!*
 
 ### 6. Deleting a Plan
 
@@ -230,6 +260,8 @@ the Plan itself is edited.
 Deleting a Plan also deletes its review. The application selects a nearby
 remaining Plan when possible. Deletion cannot be undone unless you have a
 backup of the database.
+
+![delete plan](./images/doggo-delete-plan.png)
 
 ### 7. Editing a Trip
 
@@ -243,6 +275,8 @@ dates change the Trip's status, doggo routes it to the matching menu: past
 Trips go to Gallery, while current and upcoming Trips go to Organise. An
 existing Trip review is preserved.
 
+![edit trip](./images/doggo-edit-trip.png)
+
 ### 8. Reviewing a Trip
 
 1. Open **Organise** or **Gallery** and select a Trip.
@@ -254,6 +288,13 @@ Clear both fields and save to remove the Trip review. Trip reviews are shown
 in the selected Trip's detail pane and remain preserved when the Trip is
 edited.
 
+![review trip](./images/doggo-review-trip.png)
+*Give your trip a short summary!*
+
+![reviewed trip](./images/doggo-reviewed-trip.png)
+*The review will be shown as part of the Trip description*
+
+
 ### 9. Deleting a Trip (and all its Plans)
 
 1. Open **Organise** or **Gallery** and select a Trip.
@@ -263,6 +304,9 @@ edited.
 Deleting a Trip permanently removes the Trip, every Plan it contains, and all
 Trip and Plan reviews belonging to that aggregate. The application selects a
 nearby remaining Trip when possible.
+
+![delete trip](./images/doggo-delete-trip.png)
+*Remember that deleting a Trip will delete all plans within it, so be careful!*
 
 
 
@@ -325,10 +369,12 @@ expected location before launching.
 
 ### Why is the Save button disabled?
 
-The form contains invalid or incomplete input. Check the inline validation
-message: Trip names and Plan destinations cannot be blank or longer than 50
-Unicode characters, Plan dates must be within their Trip, and Plan times must
-use valid `HH:mm` notation. A review must include a rating or Notes.
+The form contains invalid or incomplete input. 
+Some common error messages include:
+- Trip names and Plan destinations cannot be blank or longer than 50
+Unicode characters
+- Plan dates must be within their Trip
+- Plan times must use valid `HH:mm` notation
 
 ### Can I use the same JAR on Windows, macOS, and Linux?
 

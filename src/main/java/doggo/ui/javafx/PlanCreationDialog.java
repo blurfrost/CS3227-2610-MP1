@@ -141,6 +141,8 @@ final class PlanCreationDialog extends Dialog<Plan> {
 
         validationLabel.getStyleClass().add("form-error");
         validationLabel.setWrapText(true);
+        validationLabel.setManaged(true);
+        validationLabel.setVisible(false);
 
         destinationField.textProperty().addListener((observable, oldValue, newValue) -> updateValidation());
         datePicker.valueProperty().addListener((observable, oldValue, newValue) -> updateValidation());
@@ -217,7 +219,6 @@ final class PlanCreationDialog extends Dialog<Plan> {
         String validationMessage = getValidationMessage();
         validationLabel.setText(validationMessage);
         validationLabel.setVisible(!validationMessage.isEmpty());
-        validationLabel.setManaged(!validationMessage.isEmpty());
         submitButton.setDisable(!validationMessage.isEmpty());
     }
 
